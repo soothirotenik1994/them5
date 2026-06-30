@@ -116,6 +116,13 @@ export interface BookingRecord extends BookingDetails {
   createdAt: string;
 }
 
+export interface DbStatus {
+  connected: boolean;
+  database: string;
+  url?: string;
+  reason?: string;
+}
+
 interface SettingsContextType {
   settings: WebSettings;
   bookings: BookingRecord[];
@@ -123,6 +130,7 @@ interface SettingsContextType {
   currentMember: Member | null;
   isLoading: boolean;
   error: string | null;
+  dbStatus: DbStatus | null;
   refreshSettings: () => Promise<void>;
   updateSettings: (newSettings: WebSettings) => Promise<boolean>;
   addBooking: (booking: Omit<BookingRecord, "id" | "status" | "createdAt">) => Promise<BookingRecord | null>;
@@ -326,6 +334,7 @@ export function SettingsProvider({ children }: { children: React.ReactNode }) {
   });
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [dbStatus, setDbStatus] = useState<DbStatus | null>(null);
 
   // Custom Toast State
   const [toasts, setToasts] = useState<Toast[]>([]);
@@ -393,8 +402,9 @@ export function SettingsProvider({ children }: { children: React.ReactNode }) {
           // Get local storage backups to intelligently restore data if server got reset
           const localSettingsStr = localStorage.getItem("m5_web_settings");
           const localBookingsStr = localStorage.getItem("m5_bookings");
+          const localMembersStr = localStorage.getItem("m5_members");
 
-          const finalSettings = {
+          let finalSettings = {
             ...data.settings,
             general: { ...defaultGeneral, ...data.settings.general },
             rooms: mergedRooms,
@@ -410,9 +420,7 @@ export function SettingsProvider({ children }: { children: React.ReactNode }) {
             impactEvents: data.settings.impactEvents || []
           };
 
-          let finalBookings = data.bookings || [];
-          let needsSyncBack = false;
-          const bookingsToRestore: any[] = [];
+          let needsSyncSettings = false;
 
           if (localSettingsStr) {
             try {
@@ -420,85 +428,125 @@ export function SettingsProvider({ children }: { children: React.ReactNode }) {
               if (localSettings) {
                 // 1. Merge general settings
                 if (localSettings.general) {
-                  const diffGeneral = Object.keys(localSettings.general).some(
-                    k => localSettings.general[k] !== undefined && localSettings.general[k] !== finalSettings.general[k]
-                  );
-                  if (diffGeneral) {
-                    finalSettings.general = { ...finalSettings.general, ...localSettings.general };
-                    needsSyncBack = true;
+                  const isServerDefault = data.settings?.general?.hotelName === defaultGeneral.hotelName && 
+                                          data.settings?.general?.contactPhone === defaultGeneral.contactPhone &&
+                                          data.settings?.general?.heroTitle === defaultGeneral.heroTitle;
+                                          
+                  const localIsCustom = localSettings.general.hotelName !== defaultGeneral.hotelName || 
+                                        localSettings.general.contactPhone !== defaultGeneral.contactPhone ||
+                                        localSettings.general.heroTitle !== defaultGeneral.heroTitle;
+
+                  if (isServerDefault && localIsCustom) {
+                    finalSettings.general = { ...localSettings.general };
+                    needsSyncSettings = true;
+                  } else {
+                    const mergedGeneral = { ...finalSettings.general, ...localSettings.general };
+                    if (JSON.stringify(mergedGeneral) !== JSON.stringify(finalSettings.general)) {
+                      finalSettings.general = mergedGeneral;
+                      needsSyncSettings = true;
+                    }
                   }
                 }
 
-                // 2. Merge rooms (preserve user additions or edits)
-                if (localSettings.rooms && Array.isArray(localSettings.rooms)) {
-                  localSettings.rooms.forEach((lr: any) => {
-                    const sr = finalSettings.rooms.find(r => r.id === lr.id);
-                    if (!sr) {
-                      finalSettings.rooms.push(lr);
-                      needsSyncBack = true;
-                    } else if (JSON.stringify(sr) !== JSON.stringify(lr)) {
-                      Object.assign(sr, lr);
-                      needsSyncBack = true;
-                    }
-                  });
-                }
+                // 2. Merge list settings
+                const listsToMerge: (keyof typeof finalSettings)[] = [
+                  "rooms", "promotions", "amenities", "faqs", "reviews", "gallery", "blockedDates", "coupons", "slides", "impactEvents"
+                ];
 
-                // 3. Merge other list-based configs if local is larger/newer
-                if (localSettings.blockedDates && localSettings.blockedDates.length > finalSettings.blockedDates.length) {
-                  finalSettings.blockedDates = localSettings.blockedDates;
-                  needsSyncBack = true;
-                }
-                if (localSettings.coupons && localSettings.coupons.length > finalSettings.coupons.length) {
-                  finalSettings.coupons = localSettings.coupons;
-                  needsSyncBack = true;
-                }
-                if (localSettings.faqs && localSettings.faqs.length > finalSettings.faqs.length) {
-                  finalSettings.faqs = localSettings.faqs;
-                  needsSyncBack = true;
-                }
-                if (localSettings.reviews && localSettings.reviews.length > finalSettings.reviews.length) {
-                  finalSettings.reviews = localSettings.reviews;
-                  needsSyncBack = true;
-                }
-                if (localSettings.gallery && localSettings.gallery.length > finalSettings.gallery.length) {
-                  finalSettings.gallery = localSettings.gallery;
-                  needsSyncBack = true;
-                }
+                listsToMerge.forEach((key) => {
+                  const serverList = finalSettings[key] || [];
+                  const localList = localSettings[key] || [];
+                  
+                  if (Array.isArray(localList) && localList.length > 0) {
+                    if (serverList.length === 0) {
+                      (finalSettings as any)[key] = localList;
+                      needsSyncSettings = true;
+                    } else if (key === "rooms") {
+                      let changed = false;
+                      const merged = [...(serverList as any)];
+                      localList.forEach((lr: any) => {
+                        const idx = merged.findIndex((r: any) => r.id === lr.id);
+                        if (idx === -1) {
+                          merged.push(lr);
+                          changed = true;
+                        } else if (JSON.stringify(merged[idx]) !== JSON.stringify(lr)) {
+                          merged[idx] = { ...merged[idx], ...lr };
+                          changed = true;
+                        }
+                      });
+                      if (changed) {
+                        finalSettings.rooms = merged;
+                        needsSyncSettings = true;
+                      }
+                    } else if (key === "blockedDates") {
+                      let changed = false;
+                      const merged = [...(serverList as any)];
+                      localList.forEach((ld: any) => {
+                        const exists = merged.some((d: any) => d.date === ld.date && d.roomId === ld.roomId);
+                        if (!exists) {
+                          merged.push(ld);
+                          changed = true;
+                        }
+                      });
+                      if (changed) {
+                        finalSettings.blockedDates = merged;
+                        needsSyncSettings = true;
+                      }
+                    } else if (key === "coupons") {
+                      let changed = false;
+                      const merged = [...(serverList as any)];
+                      localList.forEach((lc: any) => {
+                        const exists = merged.some((c: any) => c.code?.toUpperCase() === lc.code?.toUpperCase());
+                        if (!exists) {
+                          merged.push(lc);
+                          changed = true;
+                        }
+                      });
+                      if (changed) {
+                        finalSettings.coupons = merged;
+                        needsSyncSettings = true;
+                      }
+                    } else if (localList.length > serverList.length) {
+                      (finalSettings as any)[key] = localList;
+                      needsSyncSettings = true;
+                    }
+                  }
+                });
               }
             } catch (e) {
               console.error("Failed to parse localSettings backup", e);
             }
           }
 
+          let finalBookings = data.bookings || [];
+          const bookingsToSync: any[] = [];
+
           if (localBookingsStr) {
             try {
               const localBookings = JSON.parse(localBookingsStr);
               if (Array.isArray(localBookings)) {
-                localBookings.forEach((b: any) => {
-                  const sb = finalBookings.find((sb: any) => sb.id === b.id || sb.bookingId === b.id);
-                  if (!sb) {
-                    finalBookings.push(b);
-                    bookingsToRestore.push(b);
+                localBookings.forEach((lb: any) => {
+                  const exists = finalBookings.some((sb: any) => sb.id === lb.id || sb.bookingId === lb.id || sb.bookingId === lb.bookingId);
+                  if (!exists) {
+                    finalBookings.push(lb);
+                    bookingsToSync.push(lb);
                   }
                 });
               }
             } catch (e) {
-              console.error("Failed to parse localBookings backup", e);
+              console.error("Failed to parse local bookings backup", e);
             }
           }
 
           setSettings(finalSettings);
-          
-          if (finalBookings) {
-            setBookings(finalBookings);
-          }
+          setBookings(finalBookings);
 
-          // Save back the merged/restored versions into localStorage to ensure consistency
+          // Save fresh server settings and bookings to localStorage for offline cache
           localStorage.setItem("m5_web_settings", JSON.stringify(finalSettings));
           localStorage.setItem("m5_bookings", JSON.stringify(finalBookings));
 
-          // Sync back to the database so that local changes persist on the server side too
-          if (needsSyncBack) {
+          // Sync back to server if client has newer/restored data
+          if (needsSyncSettings) {
             fetch("/api/settings", {
               method: "POST",
               headers: { "Content-Type": "application/json" },
@@ -506,13 +554,34 @@ export function SettingsProvider({ children }: { children: React.ReactNode }) {
             }).catch(err => console.error("Error syncing restored settings back to database:", err));
           }
 
-          if (bookingsToRestore.length > 0) {
-            bookingsToRestore.forEach(b => {
+          if (bookingsToSync.length > 0) {
+            bookingsToSync.forEach(b => {
               fetch("/api/bookings", {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
                 body: JSON.stringify({ booking: b })
               }).catch(err => console.error("Error syncing restored booking back to database:", err));
+            });
+          }
+
+          // Fetch database connection status
+          try {
+            const dbRes = await fetch("/api/db-status");
+            if (dbRes.ok) {
+              const dbData = await dbRes.json();
+              setDbStatus({
+                connected: dbData.connected,
+                database: dbData.database,
+                url: dbData.url,
+                reason: dbData.reason
+              });
+            }
+          } catch (e) {
+            console.error("Error fetching db status", e);
+            setDbStatus({
+              connected: false,
+              database: "Local JSON (db.json Fallback)",
+              reason: "Failed to fetch status"
             });
           }
 
@@ -522,12 +591,43 @@ export function SettingsProvider({ children }: { children: React.ReactNode }) {
             if (memRes.ok) {
               const memData = await memRes.json();
               if (memData.success && memData.members) {
-                setMembers(memData.members);
-                localStorage.setItem("m5_members", JSON.stringify(memData.members));
+                let finalMembers = memData.members;
+                const membersToSync: any[] = [];
+
+                if (localMembersStr) {
+                  try {
+                    const localMembers = JSON.parse(localMembersStr);
+                    if (Array.isArray(localMembers)) {
+                      localMembers.forEach((lm: any) => {
+                        const exists = finalMembers.some((sm: any) => sm.id === lm.id || sm.email === lm.email);
+                        if (!exists) {
+                          finalMembers.push(lm);
+                          membersToSync.push(lm);
+                        }
+                      });
+                    }
+                  } catch (e) {
+                    console.error("Failed to parse local members backup", e);
+                  }
+                }
+
+                setMembers(finalMembers);
+                localStorage.setItem("m5_members", JSON.stringify(finalMembers));
+
+                // Sync back missing members to server database
+                if (membersToSync.length > 0) {
+                  membersToSync.forEach((m: any) => {
+                    fetch("/api/members/register", {
+                      method: "POST",
+                      headers: { "Content-Type": "application/json" },
+                      body: JSON.stringify({ member: m })
+                    }).catch(err => console.error("Error syncing restored member back to database:", err));
+                  });
+                }
 
                 // Sync current logged-in member data if active
                 if (currentMember) {
-                  const refreshedCurrent = memData.members.find((m: Member) => m.id === currentMember.id);
+                  const refreshedCurrent = finalMembers.find((m: Member) => m.id === currentMember.id);
                   if (refreshedCurrent) {
                     setCurrentMember(refreshedCurrent);
                     localStorage.setItem("m5_current_member", JSON.stringify(refreshedCurrent));
@@ -592,6 +692,11 @@ export function SettingsProvider({ children }: { children: React.ReactNode }) {
         } catch (_) {}
       }
       setError("Using offline backup settings.");
+      setDbStatus({
+        connected: false,
+        database: "Local JSON (db.json Fallback)",
+        reason: "Offline / Developer Mode"
+      });
     } finally {
       setIsLoading(false);
     }
@@ -894,6 +999,7 @@ export function SettingsProvider({ children }: { children: React.ReactNode }) {
         currentMember,
         isLoading,
         error,
+        dbStatus,
         refreshSettings,
         updateSettings,
         addBooking,

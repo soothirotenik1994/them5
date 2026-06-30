@@ -1036,8 +1036,8 @@ async function getAdminsFromDirectus() {
         );
         if (localAdmin) {
           return {
-            ...localAdmin,
-            ...remoteAdmin
+            ...remoteAdmin,
+            ...localAdmin
           };
         }
         return remoteAdmin;
@@ -2261,6 +2261,27 @@ ${promosInfo}
     } catch (err: any) {
       console.error("Error deleting event:", err);
       return res.status(500).json({ success: false, error: err.message });
+    }
+  });
+
+  // API: Get Directus connection status
+  app.get("/api/db-status", async (req, res) => {
+    try {
+      await directusFetch("/items/m5_general");
+      return res.json({
+        success: true,
+        connected: true,
+        database: "Directus Cloud",
+        url: DIRECTUS_URL
+      });
+    } catch (err: any) {
+      return res.json({
+        success: true,
+        connected: false,
+        database: "Local JSON (db.json Fallback)",
+        reason: err.message || "Failed to connect to Directus",
+        url: DIRECTUS_URL
+      });
     }
   });
 

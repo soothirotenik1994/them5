@@ -37,7 +37,8 @@ export default function AdminDashboard({ isOpen, onClose, isFullPage = false }: 
     updateMemberOnServer,
     deleteMemberOnServer,
     addMemberOnServer,
-    refreshSettings
+    refreshSettings,
+    dbStatus
   } = useSettings();
   
   // Auth state
@@ -47,7 +48,14 @@ export default function AdminDashboard({ isOpen, onClose, isFullPage = false }: 
   const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
   const [authError, setAuthError] = useState("");
-  const [adminUsers, setAdminUsers] = useState<any[]>([]);
+  const [adminUsers, setAdminUsers] = useState<any[]>(() => {
+    try {
+      const backup = localStorage.getItem("m5_admins_backup");
+      return backup ? JSON.parse(backup) : [];
+    } catch (e) {
+      return [];
+    }
+  });
   const [currentAdmin, setCurrentAdmin] = useState<any>(null);
 
   // Tab State
@@ -257,16 +265,78 @@ export default function AdminDashboard({ isOpen, onClose, isFullPage = false }: 
         const res = await fetch("/api/admins");
         const data = await res.json();
         if (data.success && data.admins) {
-          setAdminUsers(data.admins);
+          let finalAdmins = [...data.admins];
+          let localBackup: any[] = [];
+          try {
+            const backupStr = localStorage.getItem("m5_admins_backup");
+            localBackup = backupStr ? JSON.parse(backupStr) : [];
+          } catch (e) {}
+
+          const adminsToRegister: any[] = [];
+          const adminsToUpdate: any[] = [];
+
+          if (Array.isArray(localBackup) && localBackup.length > 0) {
+            localBackup.forEach((localAd: any) => {
+              const serverAdIdx = finalAdmins.findIndex((sa: any) => 
+                String(sa.username).toLowerCase().trim() === String(localAd.username).toLowerCase().trim()
+              );
+              
+              if (serverAdIdx === -1) {
+                // Admin is missing on server database (e.g. server reset). Register back.
+                adminsToRegister.push(localAd);
+                finalAdmins.push(localAd);
+              } else {
+                const serverAd = finalAdmins[serverAdIdx];
+                const isServerDefaultPassword = serverAd.password === "password123";
+                const isLocalCustomPassword = localAd.password && localAd.password !== "password123";
+                
+                if (isServerDefaultPassword && isLocalCustomPassword) {
+                  // Restore custom password back to the server
+                  serverAd.password = localAd.password;
+                  if (localAd.name) serverAd.name = localAd.name;
+                  if (localAd.role) serverAd.role = localAd.role;
+                  adminsToUpdate.push(serverAd);
+                } else if (localAd.password && localAd.password !== serverAd.password) {
+                  serverAd.password = localAd.password;
+                  adminsToUpdate.push(serverAd);
+                }
+              }
+            });
+          }
+
+          setAdminUsers(finalAdmins);
+          localStorage.setItem("m5_admins_backup", JSON.stringify(finalAdmins));
+
           const storedUser = sessionStorage.getItem("m5_admin_username");
           if (storedUser) {
-            const matched = data.admins.find((a: any) => a.username.toLowerCase() === storedUser.toLowerCase());
+            const matched = finalAdmins.find((a: any) => a.username.toLowerCase() === storedUser.toLowerCase());
             if (matched) {
               setCurrentAdmin(matched);
             }
           } else {
-            const matched = data.admins.find((a: any) => a.username.toLowerCase() === "admin");
+            const matched = finalAdmins.find((a: any) => a.username.toLowerCase() === "admin");
             if (matched) setCurrentAdmin(matched);
+          }
+
+          // Async sync actions
+          if (adminsToRegister.length > 0) {
+            adminsToRegister.forEach((adm) => {
+              fetch("/api/admins/register", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ admin: adm })
+              }).catch(e => console.error("Error syncing missing admin back to server:", e));
+            });
+          }
+
+          if (adminsToUpdate.length > 0) {
+            adminsToUpdate.forEach((adm) => {
+              fetch(`/api/admins/${adm.id || adm.adminId}`, {
+                method: "PUT",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ admin: adm })
+              }).catch(e => console.error("Error syncing updated admin back to server:", e));
+            });
           }
         }
       } catch (err) {
@@ -277,6 +347,13 @@ export default function AdminDashboard({ isOpen, onClose, isFullPage = false }: 
       loadAdmins();
     }
   }, [isOpen]);
+
+  // Sync state changes back to localStorage backup
+  React.useEffect(() => {
+    if (adminUsers && adminUsers.length > 0) {
+      localStorage.setItem("m5_admins_backup", JSON.stringify(adminUsers));
+    }
+  }, [adminUsers]);
 
   if (!isOpen) return null;
 
@@ -787,6 +864,30 @@ export default function AdminDashboard({ isOpen, onClose, isFullPage = false }: 
                     <span className="text-xs font-mono text-neutral-200 block font-semibold">{currentAdmin?.name || "System Chief Manager"}</span>
                     <span className="text-[10px] text-neutral-500 font-mono block">Role: {currentAdmin?.role || "Super Admin"}</span>
                   </div>
+                </div>
+              </div>
+
+              {/* Database Connection Status Block */}
+              <div className="hidden md:block p-4 border-b border-neutral-800/60">
+                <span className="text-[9px] text-neutral-500 font-bold tracking-widest uppercase block mb-1.5 font-mono">DATABASE CONNECTION</span>
+                <div className="flex flex-col space-y-1">
+                  <div className="flex items-center space-x-2">
+                    <div className={`w-2 h-2 rounded-full shrink-0 ${dbStatus?.connected ? "bg-emerald-500 animate-pulse" : "bg-amber-500 animate-pulse"}`}></div>
+                    <span className="text-[11px] font-mono font-medium text-neutral-200 leading-tight">
+                      {dbStatus?.connected ? "Directus Cloud Connected" : "Local db.json (Offline)"}
+                    </span>
+                  </div>
+                  {dbStatus && !dbStatus.connected && (
+                    <div className="text-[9px] text-amber-500/90 font-mono leading-normal mt-1 bg-amber-950/20 border border-amber-900/30 p-1.5 rounded">
+                      <span className="block font-semibold">Status: Offline Fallback</span>
+                      <span className="block text-neutral-400 mt-0.5 truncate" title={dbStatus.reason}>Reason: {dbStatus.reason || "Server 502 Bad Gateway"}</span>
+                    </div>
+                  )}
+                  {dbStatus && dbStatus.connected && (
+                    <span className="text-[9px] text-neutral-500 font-mono block truncate">
+                      Host: data.them5residence.com
+                    </span>
+                  )}
                 </div>
               </div>
               
