@@ -10,8 +10,8 @@ import nodemailer from "nodemailer";
 dotenv.config();
 
 // Safe ESM / CommonJS workaround
-const __filename = typeof __filename !== "undefined" ? __filename : (typeof import.meta !== "undefined" && import.meta?.url ? fileURLToPath(import.meta.url) : "");
-const __dirname = typeof __dirname !== "undefined" ? __dirname : (__filename ? path.dirname(__filename) : process.cwd());
+const resolvedFilename = typeof import.meta !== "undefined" && import.meta?.url ? fileURLToPath(import.meta.url) : "";
+const resolvedDirname = resolvedFilename ? path.dirname(resolvedFilename) : process.cwd();
 
 const DB_PATH = path.join(process.cwd(), "db.json");
 
@@ -236,10 +236,11 @@ async function sendBookingEmail(booking: any, smtp: any) {
 }
 
 const DIRECTUS_URL = process.env.DIRECTUS_URL || "https://data.them5residence.com";
+const DIRECTUS_INTERNAL_URL = process.env.DIRECTUS_INTERNAL_URL || DIRECTUS_URL;
 const DIRECTUS_TOKEN = process.env.DIRECTUS_TOKEN || "ibtpkr40rF1BkNCEA4plXirxaDfn07S5";
 
 async function directusFetch(path: string, options: any = {}) {
-  const url = `${DIRECTUS_URL}${path}`;
+  const url = `${DIRECTUS_INTERNAL_URL}${path}`;
   const headers = {
     "Authorization": `Bearer ${DIRECTUS_TOKEN}`,
     "Content-Type": "application/json",
@@ -2802,7 +2803,7 @@ Generate a short personalized friendly recommendation in Thai for visitors or co
         const formData = new FormData();
         formData.append("file", blob, finalFileName);
 
-        const resDirectus = await fetch(`${DIRECTUS_URL}/files`, {
+        const resDirectus = await fetch(`${DIRECTUS_INTERNAL_URL}/files`, {
           method: "POST",
           headers: {
             "Authorization": `Bearer ${DIRECTUS_TOKEN}`

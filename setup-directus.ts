@@ -1,9 +1,79 @@
 import dotenv from "dotenv";
+import { fileURLToPath } from "url";
+import path from "path";
 
 dotenv.config();
 
-const url = "https://data.them5residence.com";
-const token = "ibtpkr40rF1BkNCEA4plXirxaDfn07S5";
+const url = process.env.DIRECTUS_INTERNAL_URL || process.env.DIRECTUS_URL || "https://data.them5residence.com";
+const token = process.env.DIRECTUS_TOKEN || "ibtpkr40rF1BkNCEA4plXirxaDfn07S5";
+
+const ADMIN_EMAIL = process.env.ADMIN_EMAIL || "admin@them5residence.com";
+const ADMIN_PASSWORD = process.env.ADMIN_PASSWORD || "Admin_P@ssw0rd_M5!";
+
+// Bootstrapping function to login and set the static token for the admin user
+async function bootstrapAdminToken(directusUrl: string, adminEmail: string, adminPass: string, targetToken: string) {
+  console.log(`Attempting to bootstrap static token in Directus at ${directusUrl}...`);
+  try {
+    const loginRes = await fetch(`${directusUrl}/auth/login`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ email: adminEmail, password: adminPass })
+    });
+
+    if (!loginRes.ok) {
+      const txt = await loginRes.text();
+      console.warn(`Login attempt to Directus failed (${loginRes.status}). Maybe token is already configured or credentials differ:`, txt);
+      return false;
+    }
+
+    const loginData = await loginRes.json();
+    const accessToken = loginData.data?.access_token;
+    if (!accessToken) {
+      console.error("No access token returned from login.");
+      return false;
+    }
+
+    console.log("Logged in successfully. Retrieving user profile...");
+    const meRes = await fetch(`${directusUrl}/users/me`, {
+      headers: { "Authorization": `Bearer ${accessToken}` }
+    });
+
+    if (!meRes.ok) {
+      const txt = await meRes.text();
+      console.error(`Fetching user profile failed (${meRes.status}):`, txt);
+      return false;
+    }
+
+    const meData = await meRes.json();
+    const userId = meData.data?.id;
+    if (!userId) {
+      console.error("User ID not found in profile response.");
+      return false;
+    }
+
+    console.log(`Setting static token for admin user (ID: ${userId})...`);
+    const updateRes = await fetch(`${directusUrl}/users/${userId}`, {
+      method: "PATCH",
+      headers: {
+        "Content-Type": "application/json",
+        "Authorization": `Bearer ${accessToken}`
+      },
+      body: JSON.stringify({ token: targetToken })
+    });
+
+    if (!updateRes.ok) {
+      const txt = await updateRes.text();
+      console.error(`Failed to assign static token (${updateRes.status}):`, txt);
+      return false;
+    }
+
+    console.log("SUCCESS: Static token has been assigned to the admin user!");
+    return true;
+  } catch (err) {
+    console.error("Error during admin token bootstrapping:", err);
+    return false;
+  }
+}
 
 // Default seed data
 const initialGeneral = {
@@ -540,6 +610,9 @@ async function main() {
       ]
     }
   ];
+
+  // 0. Bootstrap static API token for admin user
+  await bootstrapAdminToken(url, ADMIN_EMAIL, ADMIN_PASSWORD, token);
 
   // 1. Delete and create each collection, then add fields, then seed
   for (const col of collections) {
