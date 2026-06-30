@@ -258,6 +258,19 @@ async function directusFetch(path: string, options: any = {}) {
   return json.data;
 }
 
+function safeMerge(localObj: any, remoteObj: any) {
+  if (!localObj) return remoteObj || {};
+  if (!remoteObj) return localObj;
+  const merged = { ...localObj };
+  Object.keys(remoteObj).forEach((key) => {
+    const val = remoteObj[key];
+    if (val !== undefined && val !== null && val !== "") {
+      merged[key] = val;
+    }
+  });
+  return merged;
+}
+
 async function getSettingsFromDirectus() {
   try {
     const [
@@ -360,19 +373,15 @@ async function getSettingsFromDirectus() {
     // Keep local db.json in sync with what is fetched, but merging intelligently to never lose local edits/images
     const localDb = getLocalDb();
 
-    // 1. Merge general & smtp
-    localDb.general = { ...(localDb.general || {}), ...result.general };
-    localDb.smtp = { ...(localDb.smtp || {}), ...result.smtp };
+    // 1. Merge general & smtp safely
+    localDb.general = safeMerge(localDb.general || {}, result.general);
+    localDb.smtp = safeMerge(localDb.smtp || {}, result.smtp);
 
-    // 2. Merge rooms (by ID)
+    // 2. Merge rooms (by ID) safely
     const mergedRooms = (localDb.rooms || []).map((localRoom: any) => {
       const directusRoom = (result.rooms || []).find((r: any) => r.id === localRoom.id);
       if (directusRoom) {
-        return {
-          ...localRoom,
-          ...directusRoom,
-          imageUrl: directusRoom.imageUrl || localRoom.imageUrl || ""
-        };
+        return safeMerge(localRoom, directusRoom);
       }
       return localRoom;
     });
@@ -384,11 +393,11 @@ async function getSettingsFromDirectus() {
     });
     localDb.rooms = mergedRooms;
 
-    // 3. Merge promotions (by ID)
+    // 3. Merge promotions (by ID) safely
     const mergedPromotions = (localDb.promotions || []).map((localPromo: any) => {
       const directusPromo = (result.promotions || []).find((p: any) => p.id === localPromo.id);
       if (directusPromo) {
-        return { ...localPromo, ...directusPromo };
+        return safeMerge(localPromo, directusPromo);
       }
       return localPromo;
     });
@@ -399,11 +408,11 @@ async function getSettingsFromDirectus() {
     });
     localDb.promotions = mergedPromotions;
 
-    // 4. Merge amenities (by title or ID)
+    // 4. Merge amenities (by title or ID) safely
     const mergedAmenities = (localDb.amenities || []).map((localA: any) => {
       const directusA = (result.amenities || []).find((a: any) => (a.title || a.id) === (localA.title || localA.id));
       if (directusA) {
-        return { ...localA, ...directusA };
+        return safeMerge(localA, directusA);
       }
       return localA;
     });
@@ -414,11 +423,11 @@ async function getSettingsFromDirectus() {
     });
     localDb.amenities = mergedAmenities;
 
-    // 5. Merge faqs (by q or ID)
+    // 5. Merge faqs (by q or ID) safely
     const mergedFaqs = (localDb.faqs || []).map((localF: any) => {
       const directusF = (result.faqs || []).find((f: any) => (f.q || f.id) === (localF.q || localF.id));
       if (directusF) {
-        return { ...localF, ...directusF };
+        return safeMerge(localF, directusF);
       }
       return localF;
     });
@@ -429,11 +438,11 @@ async function getSettingsFromDirectus() {
     });
     localDb.faqs = mergedFaqs;
 
-    // 6. Merge reviews (by name & review text)
+    // 6. Merge reviews (by name & review text) safely
     const mergedReviews = (localDb.reviews || []).map((localR: any) => {
       const directusR = (result.reviews || []).find((r: any) => `${r.name}_${r.review}` === `${localR.name}_${localR.review}`);
       if (directusR) {
-        return { ...localR, ...directusR };
+        return safeMerge(localR, directusR);
       }
       return localR;
     });
@@ -444,11 +453,11 @@ async function getSettingsFromDirectus() {
     });
     localDb.reviews = mergedReviews;
 
-    // 7. Merge gallery (by url)
+    // 7. Merge gallery (by url) safely
     const mergedGallery = (localDb.gallery || []).map((localG: any) => {
       const directusG = (result.gallery || []).find((g: any) => g.url === localG.url);
       if (directusG) {
-        return { ...localG, ...directusG };
+        return safeMerge(localG, directusG);
       }
       return localG;
     });
@@ -459,7 +468,7 @@ async function getSettingsFromDirectus() {
     });
     localDb.gallery = mergedGallery;
 
-    // 8. Merge blockedDates (by date & roomId key)
+    // 8. Merge blockedDates (by date & roomId key) safely
     const mergedBlockedDates = (localDb.blockedDates || []).map((localBD: any) => {
       const key = localBD.id || localBD.blockedId || `${localBD.date}_${localBD.roomId}`;
       const directusBD = (result.blockedDates || []).find((bd: any) => {
@@ -467,7 +476,7 @@ async function getSettingsFromDirectus() {
         return dKey === key;
       });
       if (directusBD) {
-        return { ...localBD, ...directusBD };
+        return safeMerge(localBD, directusBD);
       }
       return localBD;
     });
@@ -482,12 +491,12 @@ async function getSettingsFromDirectus() {
     });
     localDb.blockedDates = mergedBlockedDates;
 
-    // 9. Merge coupons (by code)
+    // 9. Merge coupons (by code) safely
     const mergedCoupons = (localDb.coupons || []).map((localC: any) => {
       const key = (localC.code || '').toUpperCase();
       const directusC = (result.coupons || []).find((c: any) => (c.code || '').toUpperCase() === key);
       if (directusC) {
-        return { ...localC, ...directusC };
+        return safeMerge(localC, directusC);
       }
       return localC;
     });
@@ -499,11 +508,11 @@ async function getSettingsFromDirectus() {
     });
     localDb.coupons = mergedCoupons;
 
-    // 10. Merge slides
+    // 10. Merge slides safely
     const mergedSlides = (localDb.slides || []).map((localSlide: any, index: number) => {
       const directusSlide = (result.slides || [])[index];
       if (directusSlide) {
-        return { ...localSlide, ...directusSlide };
+        return safeMerge(localSlide, directusSlide);
       }
       return localSlide;
     });
@@ -513,11 +522,11 @@ async function getSettingsFromDirectus() {
     }
     localDb.slides = mergedSlides;
 
-    // 11. Merge impactEvents (by ID or Title)
+    // 11. Merge impactEvents (by ID or Title) safely
     const mergedImpactEvents = (localDb.impactEvents || []).map((localE: any) => {
       const directusE = (result.impactEvents || []).find((e: any) => e.id === localE.id || String(e.title).trim().toLowerCase() === String(localE.title).trim().toLowerCase());
       if (directusE) {
-        return { ...localE, ...directusE };
+        return safeMerge(localE, directusE);
       }
       return localE;
     });
@@ -1584,7 +1593,91 @@ ${promosInfo}
     };
   }
 
-  // 3. API: Weather Widget utilizing Google Search grounding
+  // Helper to fetch weather from the free, reliable Open-Meteo API
+  async function fetchOpenMeteoWeather() {
+    const url = "https://api.open-meteo.com/v1/forecast?latitude=13.9130&longitude=100.5284&current=temperature_2m,relative_humidity_2m,weather_code,wind_speed_10m";
+    const res = await fetch(url);
+    if (!res.ok) {
+      throw new Error(`Open-Meteo response error: ${res.status}`);
+    }
+    const data = await res.json();
+    const current = data?.current;
+    if (!current) {
+      throw new Error("No current weather data in Open-Meteo response");
+    }
+    
+    const temp = Math.round(current.temperature_2m);
+    const humidity = `${current.relative_humidity_2m}%`;
+    const wind = `${Math.round(current.wind_speed_10m)} km/h`;
+    const code = current.weather_code;
+    
+    let condition = "Partly Cloudy";
+    let conditionTh = "มีเมฆบางส่วน";
+    
+    if (code === 0) {
+      condition = "Clear Sky";
+      conditionTh = "ท้องฟ้าแจ่มใส";
+    } else if (code === 1 || code === 2) {
+      condition = "Partly Cloudy";
+      conditionTh = "มีเมฆบางส่วน";
+    } else if (code === 3) {
+      condition = "Overcast";
+      conditionTh = "เมฆมาก";
+    } else if (code === 45 || code === 48) {
+      condition = "Foggy";
+      conditionTh = "มีหมอกลง";
+    } else if (code === 51 || code === 53 || code === 55) {
+      condition = "Light Drizzle";
+      conditionTh = "ฝนตกปรอยๆ";
+    } else if (code === 61 || code === 63 || code === 65) {
+      condition = "Rainy";
+      conditionTh = "ฝนตก";
+    } else if (code === 80 || code === 81 || code === 82) {
+      condition = "Showers";
+      conditionTh = "ฝนตกเป็นแห่งๆ";
+    } else if (code === 95 || code === 96 || code === 99) {
+      condition = "Thunderstorm";
+      conditionTh = "พายุฝนฟ้าคะนอง";
+    }
+    
+    return {
+      temp,
+      condition,
+      conditionTh,
+      humidity,
+      wind
+    };
+  }
+
+  // Helper to generate a clean static Thai recommendation based on conditions
+  function getFriendlyAdviceTh(conditionEng: string, temp: number): string {
+    const cond = conditionEng.toLowerCase();
+    if (cond.includes("rain") || cond.includes("drizzle") || cond.includes("shower") || cond.includes("storm")) {
+      return "ปากเกร็ดมีฝนตก แนะนำให้พกร่มเมื่อเดินทาง และสามารถอุ่นใจกับบริการเครื่องดื่มอุ่นๆ ที่ห้องพักสุดหรูของเราที่ The M5 Residence ครับ";
+    }
+    if (temp >= 33) {
+      return "ช่วงนี้แดดค่อนข้างแรงและอุณหภูมิสูง แนะนำหลบแดดพักผ่อนในห้องพัก Loft ปรับอากาศเย็นสบาย หรือแวะดื่มกาแฟสดรสเลิศที่คาเฟ่ของเราครับ";
+    }
+    return "อากาศวันนี้กำลังดี มีลมพัดสบาย เหมาะแก่การท่องเที่ยวรอบปากเกร็ด หรือเข้าพักผ่อนอย่างผ่อนคลายกับเราที่ The M5 Residence ครับ";
+  }
+
+  // Helper to request a personalized advice from Gemini without Search grounding tool (to completely prevent quota/429 limits)
+  async function getGeminiWeatherAdvice(temp: number, condition: string, conditionTh: string, humidity: string, wind: string): Promise<string> {
+    if (!ai) return "";
+    
+    const prompt = `Based on the current weather in Pak Kret, Nonthaburi, Thailand:
+Temperature: ${temp}°C, Condition: ${condition} (${conditionTh}), Humidity: ${humidity}, Wind: ${wind}.
+Generate a short personalized friendly recommendation in Thai for visitors or concert-goers, maximum 2 short sentences, mentioning whether they should carry an umbrella, wear sunscreen, or enjoy our cozy indoor cafe/loft rooms at The M5 Residence hotel, in a cool friendly hospitable tone. Do not include any HTML tags.`;
+
+    const response = await ai.models.generateContent({
+      model: "gemini-3.5-flash",
+      contents: prompt
+    });
+    
+    return response.text?.trim() || "";
+  }
+
+  // 3. API: Weather Widget utilizing Open-Meteo & Gemini (no grounding search tool to avoid quota/429 limits)
   app.get("/api/weather", async (req, res) => {
     const CACHE_DURATION = 30 * 60 * 1000; // 30 minutes cache duration
     const now = Date.now();
@@ -1595,66 +1688,56 @@ ${promosInfo}
       return res.json({ success: true, ...cachedWeather, source: "cache" });
     }
 
+    let weatherData: any;
+    let source = "open_meteo";
+
+    try {
+      // Try to fetch real-time weather from Open-Meteo
+      weatherData = await fetchOpenMeteoWeather();
+    } catch (apiErr) {
+      // Fallback to local simulation if Open-Meteo fails
+      weatherData = getRealisticPakKretWeather();
+      source = "simulation_fallback";
+    }
+
+    // Now enrich with Gemini weather advice if possible
+    let advice = "";
     try {
       if (ai) {
-        const response = await ai.models.generateContent({
-          model: "gemini-3.5-flash",
-          contents: "Query the current weather for Pak Kret, Nonthaburi, Thailand. Return the weather information in JSON format with exactly the following keys: temp (number in Celsius), condition (string in English e.g. Rain, Cloudy, Sunny, Storm), conditionTh (string in Thai e.g. ฝนตก, เมฆมาก, แดดจัด, พายุฝน), humidity (number or string with % e.g. 78%), wind (string e.g. 12 km/h), advice (short personalized friendly recommendation for visitors or concert goers in Thai, maximum 2 short sentences, mentioning whether they should carry an umbrella or enjoy indoor lounge activities, in a cool friendly tone), lastUpdated (string format with time).",
-          config: {
-            tools: [{ googleSearch: {} }],
-            responseMimeType: "application/json",
-            responseSchema: {
-              type: Type.OBJECT,
-              properties: {
-                temp: { type: Type.NUMBER, description: "Current temperature in Celsius" },
-                condition: { type: Type.STRING, description: "Condition in English" },
-                conditionTh: { type: Type.STRING, description: "Condition in Thai" },
-                humidity: { type: Type.STRING, description: "Humidity percentage" },
-                wind: { type: Type.STRING, description: "Wind speed and direction" },
-                advice: { type: Type.STRING, description: "Advice for visitors in Thai" },
-                lastUpdated: { type: Type.STRING, description: "Time of weather update" },
-              },
-              required: ["temp", "condition", "conditionTh", "humidity", "wind", "advice", "lastUpdated"],
-            },
-          }
-        });
-
-        const textResponse = response.text?.trim() || "{}";
-        const weatherJson = JSON.parse(textResponse);
-        
-        // Cache successful response
-        cachedWeather = {
-          ...weatherJson,
-          timestamp: now
-        };
-
-        return res.json({ success: true, ...weatherJson, source: "gemini_grounding" });
-      } else {
-        // Safe simulated fallback when AI is unavailable
-        const simulatedData = getRealisticPakKretWeather();
-        cachedWeather = {
-          ...simulatedData,
-          timestamp: now
-        };
-        return res.json({ success: true, ...simulatedData, source: "simulation" });
+        advice = await getGeminiWeatherAdvice(
+          weatherData.temp,
+          weatherData.condition,
+          weatherData.conditionTh,
+          weatherData.humidity,
+          weatherData.wind
+        );
       }
-    } catch (err: any) {
-      console.log("[Weather] Grounding request completed via dynamic fallback. Note:", err.message || err);
-      
-      // If we have an expired cache, let's keep serving it rather than failing!
-      if (cachedWeather) {
-        return res.json({ 
-          success: true, 
-          ...cachedWeather, 
-          lastUpdated: cachedWeather.lastUpdated + " ( cached)", 
-          source: "stale_cache_fallback" 
-        });
-      }
-
-      // If no cache, generate dynamic realistic fallback
-      const fallbackData = getRealisticPakKretWeather();
-      return res.json({ success: true, ...fallbackData, source: "dynamic_fallback" });
+    } catch (geminiErr: any) {
+      // Quietly handle Gemini API errors or rate-limits
     }
+
+    // If advice generation failed or returned empty, use clean static fallback advice
+    if (!advice) {
+      advice = getFriendlyAdviceTh(weatherData.condition, weatherData.temp);
+    }
+
+    const finalWeather = {
+      temp: weatherData.temp,
+      condition: weatherData.condition,
+      conditionTh: weatherData.conditionTh,
+      humidity: weatherData.humidity,
+      wind: weatherData.wind,
+      advice: advice,
+      lastUpdated: new Date().toLocaleTimeString("th-TH", { hour: "2-digit", minute: "2-digit" }) + " น. (Realtime Mode)"
+    };
+
+    // Cache successful response
+    cachedWeather = {
+      ...finalWeather,
+      timestamp: now
+    };
+
+    return res.json({ success: true, ...finalWeather, source });
   });
 
   // API: Sync Google Reviews for Hotel
