@@ -1,0 +1,187 @@
+@import url('https://fonts.googleapis.com/css2?family=Prompt:wght@300;400;500;600;700&family=Kanit:wght@300;400;500;600;700&family=IBM+Plex+Sans+Thai:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap');
+@import "tailwindcss";
+
+@theme {
+  --font-sans: "Prompt", "IBM Plex Sans Thai", ui-sans-serif, system-ui, sans-serif;
+  --font-mono: "Prompt", "JetBrains Mono", ui-monospace, monospace;
+  
+  --color-brick-light: #ff9d5c;
+  --color-brick: #ff6a00;
+  --color-brick-dark: #cc5500;
+  
+  --color-copper-gold: #ff6a00;
+  --color-copper: #ff6a00;
+  --color-charcoal-deep: #0a0a0a;
+  --color-charcoal-medium: #121212;
+  --color-charcoal-light: #1f1f1f;
+  --color-neutral-450: #9ca3af;
+}
+
+/* Global Font Override & Readability Scale */
+html {
+  font-size: 104.5%; /* Scaling base rem from 16px to 16.72px to easily make all text slightly larger */
+}
+
+html, body, button, input, select, textarea, span, p, h1, h2, h3, h4, h5, h6, div, label {
+  font-family: "Prompt", "IBM Plex Sans Thai", sans-serif !important;
+  letter-spacing: 0.01em;
+}
+
+/* Enhance readability of micro-texts and compact labels on the page */
+.text-\[9px\] {
+  font-size: 11px !important;
+}
+
+.text-\[10px\] {
+  font-size: 12px !important;
+}
+
+.text-\[11px\] {
+  font-size: 13px !important;
+}
+
+.text-xs {
+  font-size: 13.5px !important;
+  line-height: 1.4 !important;
+}
+
+.text-sm {
+  font-size: 15px !important;
+  line-height: 1.5 !important;
+}
+
+/* Custom background grid or mesh patterns to emulate Loft interior style sheets */
+.industrial-grid {
+  background-size: 40px 40px;
+  background-image: 
+    linear-gradient(to right, rgba(255, 255, 255, 0.03) 1px, transparent 1px),
+    linear-gradient(to bottom, rgba(255, 255, 255, 0.03) 1px, transparent 1px);
+}
+
+.rivet-effect {
+  position: relative;
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.05), inset 1px 0 0 rgba(255, 255, 255, 0.03);
+}
+
+/* Scrollbar styling */
+::-webkit-scrollbar {
+  width: 8px;
+}
+::-webkit-scrollbar-track {
+  background: #0a0a0a;
+}
+::-webkit-scrollbar-thumb {
+  background: #2e2e2e;
+  border-radius: 4px;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: #ff6a00;
+}
+
+/* Dynamic Font Scaling for Admin readability */
+.admin-large-text {
+  font-size: 1.05rem !important;
+}
+.admin-large-text input, 
+.admin-large-text select, 
+.admin-large-text textarea {
+  font-size: 0.95rem !important;
+  padding-top: 0.75rem !important;
+  padding-bottom: 0.75rem !important;
+}
+.admin-large-text label {
+  font-size: 0.95rem !important;
+  font-weight: 600 !important;
+}
+.admin-large-text p {
+  font-size: 0.85rem !important;
+  line-height: 1.6 !important;
+}
+.admin-large-text button {
+  font-size: 0.85rem !important;
+  padding-top: 0.6rem !important;
+  padding-bottom: 0.6rem !important;
+}
+.admin-large-text h3 {
+  font-size: 1.65rem !important;
+}
+.admin-large-text h4 {
+  font-size: 1.25rem !important;
+}
+.admin-large-text .text-xs {
+  font-size: 0.85rem !important;
+}
+.admin-large-text .text-[10px] {
+  font-size: 0.75rem !important;
+}
+.admin-large-text .text-[9px] {
+  font-size: 0.75rem !important;
+}
+.admin-large-text nav button {
+  font-size: 0.9rem !important;
+  padding-top: 0.75rem !important;
+  padding-bottom: 0.75rem !important;
+}
+.admin-large-text table th {
+  font-size: 0.85rem !important;
+  padding: 0.75rem 1rem !important;
+}
+.admin-large-text table td {
+  font-size: 0.9rem !important;
+  padding: 1rem !important;
+}
+
+/* Admin Light Theme overrides */
+.admin-light-theme {
+  background-color: #f8f9fa !important;
+  color: #1f2937 !important;
+}
+.admin-light-theme .bg-neutral-950,
+.admin-light-theme .bg-neutral-900 {
+  background-color: #ffffff !important;
+  border-color: #e5e7eb !important;
+  color: #1f2937 !important;
+  box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.05) !important;
+}
+.admin-light-theme .bg-neutral-900\/90,
+.admin-light-theme .bg-neutral-900\/40,
+.admin-light-theme .bg-neutral-900\/50,
+.admin-light-theme .bg-neutral-900\/60 {
+  background-color: #f3f4f6 !important;
+  border-color: #e5e7eb !important;
+  color: #1f2937 !important;
+}
+.admin-light-theme .bg-neutral-850,
+.admin-light-theme .bg-neutral-800 {
+  background-color: #f1f3f5 !important;
+  border-color: #e5e7eb !important;
+  color: #374151 !important;
+}
+.admin-light-theme .border-neutral-800,
+.admin-light-theme .border-neutral-850,
+.admin-light-theme .border-neutral-900,
+.admin-light-theme .border-neutral-750,
+.admin-light-theme .border-neutral-700 {
+  border-color: #e5e7eb !important;
+}
+.admin-light-theme .text-white,
+.admin-light-theme .text-neutral-100,
+.admin-light-theme .text-neutral-200 {
+  color: #111827 !important;
+}
+.admin-light-theme .text-neutral-400,
+.admin-light-theme .text-neutral-450,
+.admin-light-theme .text-neutral-300 {
+  color: #4b5563 !important;
+}
+.admin-light-theme .text-neutral-500 {
+  color: #6b7280 !important;
+}
+.admin-light-theme input,
+.admin-light-theme select,
+.admin-light-theme textarea {
+  background-color: #ffffff !important;
+  border-color: #d1d5db !important;
+  color: #111827 !important;
+}
+
