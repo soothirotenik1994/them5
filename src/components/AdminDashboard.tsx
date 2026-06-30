@@ -296,9 +296,6 @@ export default function AdminDashboard({ isOpen, onClose, isFullPage = false }: 
                   if (localAd.name) serverAd.name = localAd.name;
                   if (localAd.role) serverAd.role = localAd.role;
                   adminsToUpdate.push(serverAd);
-                } else if (localAd.password && localAd.password !== serverAd.password) {
-                  serverAd.password = localAd.password;
-                  adminsToUpdate.push(serverAd);
                 }
               }
             });

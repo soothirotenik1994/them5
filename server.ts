@@ -1036,8 +1036,8 @@ async function getAdminsFromDirectus() {
         );
         if (localAdmin) {
           return {
-            ...remoteAdmin,
-            ...localAdmin
+            ...localAdmin,
+            ...remoteAdmin
           };
         }
         return remoteAdmin;
