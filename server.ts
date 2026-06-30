@@ -9,9 +9,9 @@ import nodemailer from "nodemailer";
 
 dotenv.config();
 
-// Standard ESM workarounds
-const __filename = fileURLToPath(import.meta.url);
-const __dirname = path.dirname(__filename);
+// Safe ESM / CommonJS workaround
+const __filename = typeof __filename !== "undefined" ? __filename : (typeof import.meta !== "undefined" && import.meta?.url ? fileURLToPath(import.meta.url) : "");
+const __dirname = typeof __dirname !== "undefined" ? __dirname : (__filename ? path.dirname(__filename) : process.cwd());
 
 const DB_PATH = path.join(process.cwd(), "db.json");
 
