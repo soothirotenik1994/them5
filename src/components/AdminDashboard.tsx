@@ -4,7 +4,7 @@ import {
   DollarSign, Plus, Trash2, Check, RefreshCw, Key, LogOut,
   Sparkles, ShieldCheck, Mail, Phone, MapPin, User, Edit2, AlertCircle, Clock,
   Coffee, HelpCircle, MessageSquare, Images, ShieldAlert, Tag, Ticket, Wallpaper,
-  Search, Home, Bell, Sun, Moon
+  Search, Home, Bell, Sun, Moon, Database
 } from "lucide-react";
 import { useSettings, BookingRecord, WebSettings } from "../context/SettingsContext";
 import { RoomType } from "../types";
@@ -16,6 +16,7 @@ import BackgroundsTabContent from "./BackgroundsTabContent";
 import SeoTabContent from "./SeoTabContent";
 import ImageUploadButton from "./ImageUploadButton";
 import ImpactEventsTab from "./ImpactEventsTab";
+import DirectusTabContent from "./DirectusTabContent";
 
 interface AdminDashboardProps {
   isOpen: boolean;
@@ -59,7 +60,7 @@ export default function AdminDashboard({ isOpen, onClose, isFullPage = false }: 
   const [currentAdmin, setCurrentAdmin] = useState<any>(null);
 
   // Tab State
-  const [activeTab, setActiveTab] = useState<"dashboard" | "general" | "rooms" | "promotions" | "bookings" | "amenities" | "faqs" | "reviews" | "gallery" | "members" | "calendar" | "smtp" | "blocked" | "coupons" | "backgrounds" | "seo" | "admins" | "impact">("dashboard");
+  const [activeTab, setActiveTab] = useState<"dashboard" | "general" | "rooms" | "promotions" | "bookings" | "amenities" | "faqs" | "reviews" | "gallery" | "members" | "calendar" | "smtp" | "blocked" | "coupons" | "backgrounds" | "seo" | "admins" | "impact" | "directus">("dashboard");
 
   // Admin Theme state (defaulting to "light" loft clean theme per user picture mockup)
   const [adminTheme, setAdminTheme] = useState<"light" | "dark">(() => {
@@ -1021,6 +1022,13 @@ export default function AdminDashboard({ isOpen, onClose, isFullPage = false }: 
                 >
                   <Sparkles className="h-4 w-4" />
                   <span className="flex-1 text-left">ตั้งค่า SEO / คีย์เวิร์ด</span>
+                </button>
+                <button
+                  onClick={() => setActiveTab("directus")}
+                  className={`flex items-center space-x-3 px-4 py-2.5 rounded text-xs font-medium cursor-pointer transition-colors w-full ${activeTab === "directus" ? "bg-neutral-850 text-white border-l-2 border-brick font-semibold" : "text-neutral-400 hover:text-white hover:bg-neutral-900/40"}`}
+                >
+                  <Database className="h-4 w-4" />
+                  <span className="flex-1 text-left">ตั้งค่าเชื่อมต่อ Directus</span>
                 </button>
                 <button
                   onClick={() => setActiveTab("smtp")}
@@ -3789,6 +3797,10 @@ export default function AdminDashboard({ isOpen, onClose, isFullPage = false }: 
 
               {activeTab === "seo" && (
                 <SeoTabContent settings={settings} updateSettings={updateSettings} />
+              )}
+
+              {activeTab === "directus" && (
+                <DirectusTabContent />
               )}
 
               {activeTab === "smtp" && (

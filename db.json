@@ -5,16 +5,30 @@
     "heroTitle": "นิยามใหม่ของการพักผ่อน",
     "heroSubtitle": "ดื่มด่ำกับดีไซน์ปูนเปลือยขัดมัน อิฐมอญธรรมชาติ และงานไม้โครงเหล็กดำสุดเท่ ยกระดับสุนทรียภาพแห่งชีวิตสมัยใหม่ย่านปากเกร็ด นนทบุรี ใกล้ชิดทุกคอนเสิร์ตและอีเว้นท์ดัง",
     "gps": "13.91230, 100.54321",
-    "contactAddress": "ปากเกร็ด นนทบุรี เลียบคลองประปา ใกล้ป๊อปปูล่าคาร์ดอร์",
-    "contactPhone": "02-M5-LOFT",
+    "contactAddress": "37/93 หมู่ที่ 1 ถนนแจ้งวัฒนะ เลียบคลองประปา ตำบลคลองเกลือ อำเภอปากเกร็ด , Nonthaburi, Thailand, 11120",
+    "contactPhone": "022880965",
     "facebook": "The M5 Residence Loft",
-    "lineId": "@m5residence",
-    "logoUrl": ""
+    "lineId": "@the_m5",
+    "logoUrl": "https://data.them5residence.com/assets/67b5a432-ec41-47b3-bb79-e451981560d3",
+    "coverImg1": "https://data.them5residence.com/assets/c4bbb0ad-efa2-4706-8264-defbc58caea2",
+    "coverImg2": "https://data.them5residence.com/assets/bf8410e2-14fd-47c0-b35f-c08a93648ef2",
+    "coverImg3": "https://data.them5residence.com/assets/abb4164d-3c82-40ba-a8aa-f574f4141b63",
+    "heroCardImg": "",
+    "heroBgImg": "",
+    "seoTitle": "The M5 Residence | ที่พักสไตล์ลอฟท์ ปากเกร็ด นนทบุรี ใกล้อิมแพ็ค อารีน่า",
+    "seoDescription": "เดอะ เอ็มไฟว์ เรสซิเดนซ์ (The M5 Residence) นิยามใหม่ของการพักผ่อนสไตล์อินดัสเทรียลลอฟท์ ปากเกร็ด นนทบุรี เลียบคลองประปา ใกล้ป๊อปปูล่าคาร์ดอน และเมืองทองธานี ห้องพักหรูราคาประหยัด",
+    "seoKeywords": "The M5 Residence, เดอะ เอ็มไฟว์ เรสซิเดนซ์, ที่พักปากเกร็ด, โรงแรมปากเกร็ด, ที่พักใกล้อิมแพ็ค, ที่พักใกล้เมืองทอง, โรงแรมสไตล์ลอฟท์, โรงแรมนนทบุรี, จองห้องพักนนทบุรี",
+    "allowRegistration": false,
+    "bookingEnabled": false,
+    "bookingDisabledMessage": "ขออภัย ระบบจองห้องพักออนไลน์ของทางโรงแรมปิดทำการชั่วคราวเพื่อปรับปรุงระบบ หากมีข้อสงสัยหรือต้องการจองด่วน สามารถติดต่อผ่าน Line ID หรือเบอร์โทรศัพท์ได้โดยตรง",
+    "id": 1,
+    "impactSyncInterval": "weekly",
+    "lastImpactSyncTime": "2026-06-30T06:17:08.950Z"
   },
   "rooms": [
     {
       "id": "superior",
-      "name": "Superior Loft Suite",
+      "name": "STANDARD TWIN BED ROOM",
       "thaiName": "ซูพีเรียร์ ลอฟท์ สวีท",
       "price": 1800,
       "size": 35,
@@ -22,7 +36,7 @@
       "bedType": "King Size Bed (เตียงคิงไซส์ 6 ฟุต)",
       "description": "ห้องพักขนาดกว้างขวาง เหมาะสำหรับผู้เข้าพักที่ต้องการพื้นที่ใช้สอยพิเศษ ผนังปูนเปลือยดีไซน์สูงโปร่งอบอุ่น",
       "longDescription": "สุดยอดแห่งการดีไซน์ในสไตล์แวร์เฮาส์ลอฟต์แท้ๆ ห้องนี้โดดเด่นด้วยเพดานที่ได้รับการออกแบบให้สูงเป็นพิเศษถึง 3.2 เมตร ผนังด้านหลังกรุหน้าด้วยกระเบื้องอิฐมอญสีส้มธรรมชาติเข้ากับโครงเหล็กท่อสีดำด้าน ชุดเครื่องนอนเป็นด้ายคอตตอนเกรดพรีเมียมหนานุ่มพิเศษ มีพื้นที่เลานจ์สำหรับการนั่งเล่นอ่านหนังสือ พร้อมโซลูชันห้องน้ำกระจกเทมเปอร์ดาร์คสไตล์และระบบฝักบัว Rain Shower อุณหภูมิคงที่",
-      "imageUrl": "",
+      "imageUrl": "https://data.them5residence.com/assets/4503cdbe-fbbd-4ace-9a7f-823a3eb8ac46",
       "amenities": [
         "Free High-speed Wi-Fi 1000Mbps",
         "Smart TV 55\" พร้อม Netflix",
@@ -43,7 +57,7 @@
       "bedType": "King Size Bed (เตียงคิงไซส์ 6 ฟุต)",
       "description": "สัมผัสอากาศบริสุทธิ์รอบปากเกร็ดกับระเบียงคอนกรีตขัดมันส่วนตัวสไตล์ธรรมชาติพร้อมพืชพรรณพริ้วไหว",
       "longDescription": "ห้องพักดีไซน์ทันสมัยที่ประยุกต์ความเป็น Loft เข้ากับความโปร่งโล่งสบายตาอย่างลงตัว จุดเด่นคือ ประตูกระจกบานใหญ่แบบเลื่อนไร้เสียงที่สามารถสไลด์เปิดสู่ระเบียงส่วนตัว คอนกรีตบล็อกดีไซน์โมเดิร์นรายล้อมด้วยพืชพรรณสีเขียวชอุ่ม ให้ความเป็นส่วนตัวสูดอากาศพัดสบาย ยามค่ำคืนสามารถดื่มด่ำกับบรรยากาศรื่นรมย์ของแสงไฟในย่านนนทบุรีรอบข้างได้เหมาะสม",
-      "imageUrl": "",
+      "imageUrl": "https://data.them5residence.com/assets/7eceaeb1-7d28-4794-ab24-e6594b238af2",
       "amenities": [
         "ระเบียงส่วนตัวชมวิวเมืองภายนอก",
         "Free High-speed Wi-Fi 1000Mbps",
@@ -64,7 +78,7 @@
       "bedType": "Queen Size Bed (เตียงควีนไซส์ 5 ฟุต)",
       "description": "ห้องสตูดิโอบรรยากาศอบอุ่นคลาสสิก พร้อมโต๊ะทำงานและเก้าอี้หนังสไตล์อินดัสเทรียลเพื่อเหล่านักเดินทางครีเอทีฟ",
       "longDescription": "ความเรียบหรูระดับดีไซน์ในพื้นที่กะทัดรัด ห้อง Studio Loft โชว์พื้นผิวคอนกรีตหล่อแบบผสมผสานแผ่นไม้ธรรมชาติคัดสรร เหมาะสำหรับนักธุรกิจ ศิลปิน ครีเอเตอร์ หรือคู่รักที่มองหาห้องพักอันอบอุ่น ตกแต่งคุ้มค่า มีโต๊ะทำงานขอบเหล็กเข้าสไตล์เก้าอี้หนังแบบย้อนยุครวมถึงโคมไฟกรงนกเหล็กดัด ให้แสงวอร์มไวท์นุ่มสบายสายตาเพื่อปลุกไอเดียสร้างสรรค์ใหม่ๆ",
-      "imageUrl": "",
+      "imageUrl": "https://data.them5residence.com/assets/b2640920-da50-4e38-b462-761d5e3252fe",
       "amenities": [
         "Free High-speed Wi-Fi 1000Mbps",
         "Smart TV 43\" ดีไซน์เรียบหรู",
@@ -82,53 +96,45 @@
       "badge": "CONCERT SPECIAL",
       "title": "Concert Goer Package 🎸",
       "desc": "สำหรับสายรักเสียงดนตรี! เข้าพักห้อง Deluxe Balcony เพียงคุณแสดงบัตรคอนเสิร์ตที่จะแสดง ณ อิมแพ็ค อารีน่า ในรอบสัปดาห์นั้น รับฟรีทันที คูปองเครื่องดื่ม Signature 2 แก้ว เลือกลองได้ที่คราฟต์คาเฟ่ Copper & Steam ของโรงแรม",
-      "highlight": "ฟรีคูปองเครื่องดื่มคราฟต์ 2 แก้ว"
+      "highlight": "ฟรีคูปองเครื่องดื่มคราฟต์ 2 แก้ว",
+      "active": true
     },
     {
       "id": "promo-stay",
       "badge": "STAY & SAVE",
       "title": "พักยาว ประหยัดกว่า (Stay & Save) 📅",
       "desc": "จองห้องพักทุกสไตล์ตั้งแต่ 2 คืนขึ้นไปผ่านหน้าเว็บไซต์หลัก รับส่วนลดค่าห้องทันที 10% พร้อมสิทธิ์เลทเช็คเอาท์ (Late Check-out) ได้ถึงเวลา 14:00 น. เพื่อให้คุณได้พักผ่อนหลังจบคอนเสิร์ตยามดึกอย่างผ่อนคลายเต็มอิ่ม",
-      "highlight": "ส่วนลด 10% + เลทเช็คเอาท์ 14.00 น."
+      "highlight": "ส่วนลด 10% + เลทเช็คเอาท์ 14.00 น.",
+      "active": true
     }
   ],
   "amenities": [
     {
       "iconName": "Wifi",
       "title": "ความเร็วสูงพิเศษ Free Wi-Fi",
-      "desc": "ความเร็วระดับกิกะบิต (1000 Mbps) ครอบคลุมทั่วอาคาร ทำงานสปอร์ตไฟล์ไร้รอยต่อ เช็คตารางคอนเสิร์ตสะดวกทันใจ"
+      "desc": "ความเร็วระดับกิกะบิต (1000 Mbps) ครอบคลุมทั่วอาคาร ทำงานสปอร์ตไฟล์ไร้รอยต่อ เช็คตารางคอนเสิร์ตสะดวกทันใจ",
+      "id": 9
     },
     {
       "iconName": "Coffee",
       "title": "Copper & Steam Cafe / Bar",
-      "desc": "คาเฟ่บรรยากาศดิบพรีเมียมที่จัดเสิร์ฟกาแฟจากเมล็ดพันธุ์ออร์แกนิคชั้นดี และคราฟต์เบียร์แบรนด์ไทย-เทศยามดีกรีช่วงเย็น"
+      "desc": "คาเฟ่บรรยากาศดิบพรีเมียมที่จัดเสิร์ฟกาแฟจากเมล็ดพันธุ์ออร์แกนิคชั้นดี และคราฟต์เบียร์แบรนด์ไทย-เทศยามดีกรีช่วงเย็น",
+      "id": 10
     },
     {
       "iconName": "Dumbbell",
       "title": "Loft Fitness & Gym Hub",
-      "desc": "ยิมออกกำลังกายสไตล์แวร์เฮ้าส์ ดิบเท่สปอร์ต ผนังคอนกรีตฉลุลาย พร้อมอุปกรณ์ออกกำลังและฟรีเวทครบครันครบถ้วน"
+      "desc": "ยิมออกกำลังกายสไตล์แวร์เฮ้าส์ ดิบเท่สปอร์ต ผนังคอนกรีตฉลุลาย พร้อมอุปกรณ์ออกกำลังและฟรีเวทครบครันครบถ้วน",
+      "id": 7
     },
     {
       "iconName": "ShieldCheck",
       "title": "ความปลอดภัยระดับ 24 ชั่วโมง",
-      "desc": "ที่จอดรถในร่มกว้างขวาง ดูแลความปลอดภัยด้วยกล้องโทรทัศน์วงจรปิด CCTV ทุกจุดร่วมกับเจ้าหน้าที่รปภ. มืออาชีพตลอดวัน"
+      "desc": "ที่จอดรถในร่มกว้างขวาง ดูแลความปลอดภัยด้วยกล้องโทรทัศน์วงจรปิด CCTV ทุกจุดร่วมกับเจ้าหน้าที่รปภ. มืออาชีพตลอดวัน",
+      "id": 8
     }
   ],
   "bookings": [
-    {
-      "roomType": "superior",
-      "guestName": "ฟกฟห",
-      "guestEmail": "ads@asda.com",
-      "guestPhone": "123123123",
-      "checkIn": "2026-06-24",
-      "checkOut": "2026-06-25",
-      "guests": 2,
-      "status": "Pending",
-      "totalPrice": 1800,
-      "specialRequest": "",
-      "id": "B-2059",
-      "createdAt": "2026-06-23T09:35:31.477Z"
-    },
     {
       "id": "B-1001",
       "roomType": "deluxe",
@@ -159,5 +165,502 @@
       "specialRequest": "ต้องการเช็คอินช่วงเวลา 21:00 น. เนื่องจากติดคอนเสิร์ต",
       "createdAt": "2026-06-22T14:30:00.000Z"
     }
-  ]
+  ],
+  "blockedDates": [
+    {
+      "id": "bd-1",
+      "date": "2026-06-30",
+      "roomId": "all",
+      "note": "ปิดบำรุงรักษาระบบไฟฟ้าส่วนกลาง"
+    },
+    {
+      "id": "bd-2",
+      "date": "2026-07-05",
+      "roomId": "superior",
+      "note": "ห้อง Superior ปิดพ่นสีและเคลือบเงาเฟอร์นิเจอร์ไม้"
+    }
+  ],
+  "coupons": [
+    {
+      "id": 5,
+      "code": "WELCOME10",
+      "type": "percent",
+      "value": 10,
+      "minNights": 1,
+      "active": false,
+      "description": "ส่วนลดพิเศษ 10% สำหรับผู้ใช้หน้าเว็บใหม่"
+    },
+    {
+      "id": 6,
+      "code": "LOFT100",
+      "type": "fixed",
+      "value": 100,
+      "minNights": 1,
+      "active": false,
+      "description": "ส่วนลดเงินสด 100 บาท ต้อนรับฤดูกาลคอนเสิร์ต"
+    }
+  ],
+  "members": [],
+  "faqs": [
+    {
+      "id": 9,
+      "q": "ห่างจาก อิมแพ็ค เมืองทองธานี กี่นาทีและไปยังไง?",
+      "a": "ห่างเพียง 5-10 นาทีเท่านั้น (ประมาณ 2.5 กิโลเมตร) เดินทางได้สะดวกสุดด่วนโดยรถยนต์, แท็กซี่ หรือมอเตอร์ไซค์รับจ้างที่มีปักหลักตลอดหน้าซอยปากเกร็ด"
+    },
+    {
+      "id": 10,
+      "q": "ทางโรงแรมมีที่จอดรถยนต์ส่วนตัวให้บริการหรือไม่?",
+      "a": "มีครับ เราจัดสรรบริการที่จอดรถยนต์ในร่มส่วนตัวรอบบริเวณอาคารที่พักฟรีสำหรับผู้จองห้องพักทุกท่าน ดูแลปลอดภัยสูงสุดด้วยกล้อง CCTV คู่บุคลากรรปภ. ตลอดเวลา"
+    },
+    {
+      "id": 7,
+      "q": "ถ้าคอนเสิร์ตจบดึก, สามารถเลทเช็คอินได้หรือไม่?",
+      "a": "สามารถเช็คอินตลอด 24 ชั่วโมงได้เลยครับ เนื่องจากเรามีเจ้าหน้าที่บริการที่เคาน์เตอร์ และระบบประตูล็อคอัจฉริยะคีย์การ์ด โดยรบกวนแจ้งความต้องการเช็คอินล่าช้าลงบนคำขอแบบฟอร์มจองห้อง"
+    },
+    {
+      "id": 8,
+      "q": "สามารถเลื่อนนัดวันเข้าพัก หรือยกเลิกการจองอย่างไร?",
+      "a": "คุณสามารถยกเลิกฟรีได้ภายใน 3 วันก่อนเข้าพักจริง หรือสามารถทักแชทสอบถามผู้ช่วยสั่งแก้ข้อมูล ผ่านระบบซัพพอร์ต AI Chatbot ในหน้านี้ หรือติดต่อ Line ID ของโรงแรมได้สะดวกสุด"
+    }
+  ],
+  "reviews": [
+    {
+      "id": 7,
+      "name": "คุณณภัทร สรวิศิษฐ์",
+      "role": "Concert Attendee 🎸",
+      "review": "มาดูคอนเสิร์ตที่อิมแพ็ค สะดวกมากๆ นั่งวินไป 5 นาทีถึง ล็อบบี้ตกแต่งสวย ปูนเปลือยขัดมันเท่และสะอาดสะอ้าน แนะนำเลยค่ะ",
+      "rating": 5,
+      "date": "มิถุนายน 2026"
+    },
+    {
+      "id": 8,
+      "name": "คุณลลินา ชัชวัสส์",
+      "role": "Staycation Lover ☕",
+      "review": "ชอบคราฟต์คาเฟ่ด้านล่างมากค่ะ กาแฟหอมเข้ม เตียงในห้อง Deluxe Balcony หนาหนุ่มนอนแอร์พัดผ่อนฟินๆ พนักงานบริการเอาใจใส่ดีมาก",
+      "rating": 5,
+      "date": "พฤษภาคม 2026"
+    },
+    {
+      "id": 6,
+      "name": "Mr. David Miller",
+      "role": "Digital Nomad 💻",
+      "review": "Wonderful gigabit connection and modern industrial vibes. Safe parking spaces, secure guard check. I'll definitely come back next time.",
+      "rating": 5,
+      "date": "พฤษภาคม 2026"
+    }
+  ],
+  "gallery": [
+    {
+      "id": 9,
+      "url": "https://data.them5residence.com/assets/069bef2d-19f0-4c9e-9ce2-6095134222d4",
+      "title": "ภาพสถานที่",
+      "cat": "Superior Suite"
+    },
+    {
+      "id": 11,
+      "url": "https://data.them5residence.com/assets/7e1d70ea-3cfe-4538-92b1-dfd10bd27fe0",
+      "title": "ภาพสถานที่",
+      "cat": "Superior Suite"
+    },
+    {
+      "id": 7,
+      "url": "https://data.them5residence.com/assets/6846ee1a-486b-4413-9a0c-abd687b54ce3",
+      "title": "ภาพสถานที่",
+      "cat": ""
+    },
+    {
+      "id": 8,
+      "url": "https://data.them5residence.com/assets/a6693f7e-7da8-496d-b671-d3606203848c",
+      "title": "ภาพสถานที่",
+      "cat": "Superior Suite"
+    },
+    {
+      "id": 10,
+      "url": "https://data.them5residence.com/assets/99e66aaf-498e-4a59-9918-6651c45a87b0",
+      "title": "ภาพสถานที่",
+      "cat": ""
+    },
+    {
+      "id": 12,
+      "url": "https://data.them5residence.com/assets/6ba7b3fb-bf7e-4db9-ae99-24d5eab2d783",
+      "title": "ภาพสถานที่",
+      "cat": "Superior Suite"
+    },
+    {
+      "id": 14,
+      "url": "https://data.them5residence.com/assets/55583e3b-3c7b-47b0-94f5-03b8e22d633a",
+      "title": "ภาพสถานที่",
+      "cat": "Superior Suite"
+    },
+    {
+      "id": 16,
+      "url": "https://data.them5residence.com/assets/6cd43308-e959-4b5a-b0dd-47a91abe25f1",
+      "title": "ภาพสถานที่",
+      "cat": "Superior Suite"
+    },
+    {
+      "id": 21,
+      "url": "",
+      "title": "คอนกรีตลอฟท์ล็อบบี้ & คาเฟ่บาร์",
+      "cat": "Copper Cafe Bar"
+    }
+  ],
+  "admins": [
+    {
+      "id": "admin-1",
+      "adminId": "admin-1",
+      "username": "admin",
+      "password": "password123",
+      "name": "System Chief Manager",
+      "role": "Super Admin"
+    },
+    {
+      "id": "admin-2",
+      "adminId": "admin-2",
+      "username": "m5loft",
+      "password": "password123",
+      "name": "M5 Loft Manager",
+      "role": "Loft Admin"
+    }
+  ],
+  "impactEvents": [
+    {
+      "id": "scraped-chvlp02",
+      "title": "บางกอกแพ็ค แอนด์ ลาเบล เอ็กซ์โป 2026",
+      "date": "05-08 พฤศจิกายน 2569",
+      "time": "",
+      "venue": "ศูนย์แสดงสินค้า อิมแพ็ค เมืองทองธานี",
+      "description": "กิจกรรมและงานแสดงระดับแนวหน้า ณ ศูนย์แสดงสินค้า อิมแพ็ค เมืองทองธานี แนะนำผู้เข้าร่วมงานจองห้องพักล่วงหน้าเพื่อหลีกเลี่ยงการจราจรหนาแน่นและเข้าพักผ่อนใกล้สถานที่จัดงานอย่างสะดวกสบาย",
+      "imageUrl": "https://www.impact.co.th/media/com_eventbooking/images/thumbs/0527-bangkok-pack--label-expo-2026.webp",
+      "category": "Exhibition",
+      "active": true
+    },
+    {
+      "id": "scraped-jrxv9k8",
+      "title": "บางกอกดิจิทัล เท็กซ์ไทล์ พริ้นท์ เอ็กซ์โป 2026",
+      "date": "05-08 พฤศจิกายน 2569",
+      "time": "",
+      "venue": "ศูนย์แสดงสินค้า อิมแพ็ค เมืองทองธานี",
+      "description": "กิจกรรมและงานแสดงระดับแนวหน้า ณ ศูนย์แสดงสินค้า อิมแพ็ค เมืองทองธานี แนะนำผู้เข้าร่วมงานจองห้องพักล่วงหน้าเพื่อหลีกเลี่ยงการจราจรหนาแน่นและเข้าพักผ่อนใกล้สถานที่จัดงานอย่างสะดวกสบาย",
+      "imageUrl": "https://www.impact.co.th/media/com_eventbooking/images/thumbs/0527-bangkok-digital-textile-print-expo-2026.webp",
+      "category": "Exhibition",
+      "active": true
+    },
+    {
+      "id": "scraped-oeky08o",
+      "title": "บางกอก แอด แอนด์ ไซน์ เอ็กซ์โป 2026",
+      "date": "05-08 พฤศจิกายน 2569",
+      "time": "",
+      "venue": "ศูนย์แสดงสินค้า อิมแพ็ค เมืองทองธานี",
+      "description": "กิจกรรมและงานแสดงระดับแนวหน้า ณ ศูนย์แสดงสินค้า อิมแพ็ค เมืองทองธานี แนะนำผู้เข้าร่วมงานจองห้องพักล่วงหน้าเพื่อหลีกเลี่ยงการจราจรหนาแน่นและเข้าพักผ่อนใกล้สถานที่จัดงานอย่างสะดวกสบาย",
+      "imageUrl": "https://www.impact.co.th/media/com_eventbooking/images/thumbs/0527-bangkok-ad--sign-expo-2026.webp",
+      "category": "Exhibition",
+      "active": true
+    },
+    {
+      "id": "scraped-4m499mu",
+      "title": "การประชุมสหพันธ์สมาคมเภสัชกรรมแห่งเอเชีย ครั้งที่ 31",
+      "date": "03-07 พฤศจิกายน 2569",
+      "time": "",
+      "venue": "อิมแพ็ค ฟอรั่ม",
+      "description": "กิจกรรมและงานแสดงระดับแนวหน้า ณ อิมแพ็ค ฟอรั่ม แนะนำผู้เข้าร่วมงานจองห้องพักล่วงหน้าเพื่อหลีกเลี่ยงการจราจรหนาแน่นและเข้าพักผ่อนใกล้สถานที่จัดงานอย่างสะดวกสบาย",
+      "imageUrl": "https://www.impact.co.th/media/com_eventbooking/images/thumbs/0216-fapa2026.webp",
+      "category": "Other",
+      "active": true
+    },
+    {
+      "id": "scraped-9wip292",
+      "title": "Thailand Billiards Expo (TBE 2026)",
+      "date": "29-31 ตุลาคม 2569",
+      "time": "",
+      "venue": "ศูนย์แสดงสินค้า อิมแพ็ค เมืองทองธานี",
+      "description": "กิจกรรมและงานแสดงระดับแนวหน้า ณ ศูนย์แสดงสินค้า อิมแพ็ค เมืองทองธานี แนะนำผู้เข้าร่วมงานจองห้องพักล่วงหน้าเพื่อหลีกเลี่ยงการจราจรหนาแน่นและเข้าพักผ่อนใกล้สถานที่จัดงานอย่างสะดวกสบาย",
+      "imageUrl": "https://www.impact.co.th/media/com_eventbooking/images/thumbs/0428-tbe-2026.webp",
+      "category": "Exhibition",
+      "active": true
+    },
+    {
+      "id": "scraped-cv93rgd",
+      "title": "งานแสดงสินค้าเครื่องเล่นสวนสนุก และแหล่งท่องเที่ยว ประเทศไทยประจำปี 2569",
+      "date": "29-31 ตุลาคม 2569",
+      "time": "",
+      "venue": "ศูนย์แสดงสินค้า อิมแพ็ค เมืองทองธานี",
+      "description": "กิจกรรมและงานแสดงระดับแนวหน้า ณ ศูนย์แสดงสินค้า อิมแพ็ค เมืองทองธานี แนะนำผู้เข้าร่วมงานจองห้องพักล่วงหน้าเพื่อหลีกเลี่ยงการจราจรหนาแน่นและเข้าพักผ่อนใกล้สถานที่จัดงานอย่างสะดวกสบาย",
+      "imageUrl": "https://www.impact.co.th/media/com_eventbooking/images/thumbs/0402-taape-2026.webp",
+      "category": "Exhibition",
+      "active": true
+    },
+    {
+      "id": "scraped-qq7y1j1",
+      "title": "งานแสดงสินค้าและสัมมนาระดับนานาชาติด้านเครื่องจักร เทคโนโลยีงานไม้ และอุตสาหกรรมเฟอร์นิเจอร์ 2026",
+      "date": "16-18 กันยายน 2569",
+      "time": "",
+      "venue": "ศูนย์แสดงสินค้า อิมแพ็ค เมืองทองธานี",
+      "description": "กิจกรรมและงานแสดงระดับแนวหน้า ณ ศูนย์แสดงสินค้า อิมแพ็ค เมืองทองธานี แนะนำผู้เข้าร่วมงานจองห้องพักล่วงหน้าเพื่อหลีกเลี่ยงการจราจรหนาแน่นและเข้าพักผ่อนใกล้สถานที่จัดงานอย่างสะดวกสบาย",
+      "imageUrl": "https://www.impact.co.th/media/com_eventbooking/images/thumbs/0416-tiwf-2026.webp",
+      "category": "Exhibition",
+      "active": true
+    },
+    {
+      "id": "scraped-ykkj1ur",
+      "title": "งานแสดงสินค้าและเจรจาธุรกิจสำหรับอุตสาหกรรมอาคาร การก่อสร้าง และเหมืองแร่",
+      "date": "16-18 กันยายน 2569",
+      "time": "",
+      "venue": "ศูนย์แสดงสินค้า อิมแพ็ค เมืองทองธานี",
+      "description": "กิจกรรมและงานแสดงระดับแนวหน้า ณ ศูนย์แสดงสินค้า อิมแพ็ค เมืองทองธานี แนะนำผู้เข้าร่วมงานจองห้องพักล่วงหน้าเพื่อหลีกเลี่ยงการจราจรหนาแน่นและเข้าพักผ่อนใกล้สถานที่จัดงานอย่างสะดวกสบาย",
+      "imageUrl": "https://www.impact.co.th/media/com_eventbooking/images/thumbs/0622-bct-2026.webp",
+      "category": "Exhibition",
+      "active": true
+    },
+    {
+      "id": "scraped-w3kef5l",
+      "title": "นิทรรศการเครื่องจักรกลอุปกรณ์และเทคโนโลยีอาเซียนนานาชาติ 2569",
+      "date": "02-04 กันยายน 2569",
+      "time": "",
+      "venue": "ศูนย์แสดงสินค้า อิมแพ็ค เมืองทองธานี",
+      "description": "กิจกรรมและงานแสดงระดับแนวหน้า ณ ศูนย์แสดงสินค้า อิมแพ็ค เมืองทองธานี แนะนำผู้เข้าร่วมงานจองห้องพักล่วงหน้าเพื่อหลีกเลี่ยงการจราจรหนาแน่นและเข้าพักผ่อนใกล้สถานที่จัดงานอย่างสะดวกสบาย",
+      "imageUrl": "https://www.impact.co.th/media/com_eventbooking/images/thumbs/0520-machinery-equipment--technology.webp",
+      "category": "Exhibition",
+      "active": true
+    },
+    {
+      "id": "scraped-727y04i",
+      "title": "เดอะ ฟู้ดดิซึ่ม ไทยแลนด์ X ไทยแลนด์ เฮลท์ แอนด์ เวลเนส 2026",
+      "date": "27-29 สิงหาคม 2569",
+      "time": "",
+      "venue": "ศูนย์แสดงสินค้า อิมแพ็ค เมืองทองธานี",
+      "description": "กิจกรรมและงานแสดงระดับแนวหน้า ณ ศูนย์แสดงสินค้า อิมแพ็ค เมืองทองธานี แนะนำผู้เข้าร่วมงานจองห้องพักล่วงหน้าเพื่อหลีกเลี่ยงการจราจรหนาแน่นและเข้าพักผ่อนใกล้สถานที่จัดงานอย่างสะดวกสบาย",
+      "imageUrl": "https://www.impact.co.th/media/com_eventbooking/images/thumbs/0526-foodism.webp",
+      "category": "Exhibition",
+      "active": true
+    },
+    {
+      "id": "scraped-ocktob7",
+      "title": "FLURE Life",
+      "date": "22 สิงหาคม 2569",
+      "time": "",
+      "venue": "ธันเดอร์โดม",
+      "description": "กิจกรรมและงานแสดงระดับแนวหน้า ณ ธันเดอร์โดม แนะนำผู้เข้าร่วมงานจองห้องพักล่วงหน้าเพื่อหลีกเลี่ยงการจราจรหนาแน่นและเข้าพักผ่อนใกล้สถานที่จัดงานอย่างสะดวกสบาย",
+      "imageUrl": "https://www.impact.co.th/media/com_eventbooking/images/thumbs/0325-flure-life-2026.webp",
+      "category": "Concert",
+      "active": true
+    },
+    {
+      "id": "scraped-m594zmc",
+      "title": "แฟรนไชส์ เอ็กซ์โป ไทยแลนด์ บาย สมาร์ท เอสเอ็มอี เอ็กซ์โป",
+      "date": "06-09 สิงหาคม 2569",
+      "time": "",
+      "venue": "ศูนย์แสดงสินค้า อิมแพ็ค เมืองทองธานี",
+      "description": "กิจกรรมและงานแสดงระดับแนวหน้า ณ ศูนย์แสดงสินค้า อิมแพ็ค เมืองทองธานี แนะนำผู้เข้าร่วมงานจองห้องพักล่วงหน้าเพื่อหลีกเลี่ยงการจราจรหนาแน่นและเข้าพักผ่อนใกล้สถานที่จัดงานอย่างสะดวกสบาย",
+      "imageUrl": "https://www.impact.co.th/media/com_eventbooking/images/thumbs/0407-franchise-sme-expo-2026.webp",
+      "category": "Exhibition",
+      "active": true
+    },
+    {
+      "id": "scraped-yqvosdf",
+      "title": "F✦FOREVER 1st World Tour in Bangkok",
+      "date": "01-02 สิงหาคม 2569",
+      "time": "",
+      "venue": "อิมแพ็ค อารีน่า",
+      "description": "กิจกรรมและงานแสดงระดับแนวหน้า ณ อิมแพ็ค อารีน่า แนะนำผู้เข้าร่วมงานจองห้องพักล่วงหน้าเพื่อหลีกเลี่ยงการจราจรหนาแน่นและเข้าพักผ่อนใกล้สถานที่จัดงานอย่างสะดวกสบาย",
+      "imageUrl": "https://www.impact.co.th/media/com_eventbooking/images/thumbs/0626 f4.webp",
+      "category": "Concert",
+      "active": true
+    },
+    {
+      "id": "scraped-fv74qv9",
+      "title": "ไทยแลนด์ เบบี้ แอนด์ คิดส์ เบสท์ บาย",
+      "date": "30 กรกฎาคม - 02 สิงหาคม 2569",
+      "time": "",
+      "venue": "อิมแพ็ค ชาเลนเจอร์",
+      "description": "กิจกรรมและงานแสดงระดับแนวหน้า ณ อิมแพ็ค ชาเลนเจอร์ แนะนำผู้เข้าร่วมงานจองห้องพักล่วงหน้าเพื่อหลีกเลี่ยงการจราจรหนาแน่นและเข้าพักผ่อนใกล้สถานที่จัดงานอย่างสะดวกสบาย",
+      "imageUrl": "https://www.impact.co.th/media/com_eventbooking/images/thumbs/0618-BBB.webp",
+      "category": "Exhibition",
+      "active": true
+    },
+    {
+      "id": "scraped-79q56io",
+      "title": "BUS because of you i shine LIGHT AS ONE CONCERT Presented by Gangnam Clinic",
+      "date": "24-26 กรกฎาคม 2569",
+      "time": "",
+      "venue": "อิมแพ็ค อารีน่า",
+      "description": "กิจกรรมและงานแสดงระดับแนวหน้า ณ อิมแพ็ค อารีน่า แนะนำผู้เข้าร่วมงานจองห้องพักล่วงหน้าเพื่อหลีกเลี่ยงการจราจรหนาแน่นและเข้าพักผ่อนใกล้สถานที่จัดงานอย่างสะดวกสบาย",
+      "imageUrl": "https://www.impact.co.th/media/com_eventbooking/images/thumbs/0623 bus.webp",
+      "category": "Concert",
+      "active": true
+    },
+    {
+      "id": "scraped-b8xvn89",
+      "title": "Thailand–China Cooperation Expo 2026",
+      "date": "22-25 กรกฎาคม 2569",
+      "time": "",
+      "venue": "อิมแพ็ค ชาเลนเจอร์",
+      "description": "กิจกรรมและงานแสดงระดับแนวหน้า ณ อิมแพ็ค ชาเลนเจอร์ แนะนำผู้เข้าร่วมงานจองห้องพักล่วงหน้าเพื่อหลีกเลี่ยงการจราจรหนาแน่นและเข้าพักผ่อนใกล้สถานที่จัดงานอย่างสะดวกสบาย",
+      "imageUrl": "https://www.impact.co.th/media/com_eventbooking/images/thumbs/0616-thailand-china-cooperation-expo-2026.webp",
+      "category": "Exhibition",
+      "active": true
+    },
+    {
+      "id": "scraped-go1ea62",
+      "title": "INTELLIGENT MANUFACTURING EXPO SOUTHEAST ASIA 2026 (IME)",
+      "date": "22-24 กรกฎาคม 2569",
+      "time": "",
+      "venue": "ศูนย์แสดงสินค้า อิมแพ็ค เมืองทองธานี",
+      "description": "กิจกรรมและงานแสดงระดับแนวหน้า ณ ศูนย์แสดงสินค้า อิมแพ็ค เมืองทองธานี แนะนำผู้เข้าร่วมงานจองห้องพักล่วงหน้าเพื่อหลีกเลี่ยงการจราจรหนาแน่นและเข้าพักผ่อนใกล้สถานที่จัดงานอย่างสะดวกสบาย",
+      "imageUrl": "https://www.impact.co.th/media/com_eventbooking/images/thumbs/0615-intelligent-manufacturing-expo.webp",
+      "category": "Exhibition",
+      "active": true
+    },
+    {
+      "id": "scraped-kfngi31",
+      "title": "XG WORLD TOUR: THE CORE IN BANGKOK",
+      "date": "19 กรกฎาคม 2569",
+      "time": "",
+      "venue": "อิมแพ็ค อารีน่า",
+      "description": "กิจกรรมและงานแสดงระดับแนวหน้า ณ อิมแพ็ค อารีน่า แนะนำผู้เข้าร่วมงานจองห้องพักล่วงหน้าเพื่อหลีกเลี่ยงการจราจรหนาแน่นและเข้าพักผ่อนใกล้สถานที่จัดงานอย่างสะดวกสบาย",
+      "imageUrl": "https://www.impact.co.th/media/com_eventbooking/images/thumbs/0507-xg-world-tour.webp",
+      "category": "Concert",
+      "active": true
+    },
+    {
+      "id": "scraped-3595ug6",
+      "title": "อิมแพ็ค สปีด เฟส ครั้งที่ 2",
+      "date": "17-19 กรกฎาคม 2569",
+      "time": "",
+      "venue": "อิมแพ็ค ชาเลนเจอร์",
+      "description": "กิจกรรมและงานแสดงระดับแนวหน้า ณ อิมแพ็ค ชาเลนเจอร์ แนะนำผู้เข้าร่วมงานจองห้องพักล่วงหน้าเพื่อหลีกเลี่ยงการจราจรหนาแน่นและเข้าพักผ่อนใกล้สถานที่จัดงานอย่างสะดวกสบาย",
+      "imageUrl": "https://www.impact.co.th/media/com_eventbooking/images/thumbs/0527-speed-fest-2026.webp",
+      "category": "Exhibition",
+      "active": true
+    },
+    {
+      "id": "scraped-dvn0h2t",
+      "title": "2026 JAY B tape: roots bangkok",
+      "date": "11-12 กรกฎาคม 2569",
+      "time": "",
+      "venue": "อิมแพ็ค อารีน่า",
+      "description": "กิจกรรมและงานแสดงระดับแนวหน้า ณ อิมแพ็ค อารีน่า แนะนำผู้เข้าร่วมงานจองห้องพักล่วงหน้าเพื่อหลีกเลี่ยงการจราจรหนาแน่นและเข้าพักผ่อนใกล้สถานที่จัดงานอย่างสะดวกสบาย",
+      "imageUrl": "https://www.impact.co.th/media/com_eventbooking/images/thumbs/0622-2026-jay-b.webp",
+      "category": "Concert",
+      "active": true
+    },
+    {
+      "id": "scraped-1j2ecwb",
+      "title": "iKON FOUREVER WORLD TOUR IN THAILAND",
+      "date": "04 กรกฎาคม 2569",
+      "time": "",
+      "venue": "ธันเดอร์โดม",
+      "description": "กิจกรรมและงานแสดงระดับแนวหน้า ณ ธันเดอร์โดม แนะนำผู้เข้าร่วมงานจองห้องพักล่วงหน้าเพื่อหลีกเลี่ยงการจราจรหนาแน่นและเข้าพักผ่อนใกล้สถานที่จัดงานอย่างสะดวกสบาย",
+      "imageUrl": "https://www.impact.co.th/media/com_eventbooking/images/thumbs/0615-ikon.webp",
+      "category": "Concert",
+      "active": true
+    },
+    {
+      "id": "scraped-uf3d2dg",
+      "title": "ITZY 3RD WORLD TOUR < TUNNEL VISION > in BANGKOK",
+      "date": "04 กรกฎาคม 2569",
+      "time": "",
+      "venue": "อิมแพ็ค อารีน่า",
+      "description": "กิจกรรมและงานแสดงระดับแนวหน้า ณ อิมแพ็ค อารีน่า แนะนำผู้เข้าร่วมงานจองห้องพักล่วงหน้าเพื่อหลีกเลี่ยงการจราจรหนาแน่นและเข้าพักผ่อนใกล้สถานที่จัดงานอย่างสะดวกสบาย",
+      "imageUrl": "https://www.impact.co.th/media/com_eventbooking/images/thumbs/0529-itzy-3rd.webp",
+      "category": "Concert",
+      "active": true
+    },
+    {
+      "id": "scraped-ix5tk4y",
+      "title": "มหกรรมสมุนไพรแห่งชาติ ครั้งที่ ๒๓",
+      "date": "02-05 กรกฎาคม 2569",
+      "time": "",
+      "venue": "ศูนย์แสดงสินค้า อิมแพ็ค เมืองทองธานี",
+      "description": "กิจกรรมและงานแสดงระดับแนวหน้า ณ ศูนย์แสดงสินค้า อิมแพ็ค เมืองทองธานี แนะนำผู้เข้าร่วมงานจองห้องพักล่วงหน้าเพื่อหลีกเลี่ยงการจราจรหนาแน่นและเข้าพักผ่อนใกล้สถานที่จัดงานอย่างสะดวกสบาย",
+      "imageUrl": "https://www.impact.co.th/media/com_eventbooking/images/thumbs/0618-national-herbs-expo.webp",
+      "category": "Exhibition",
+      "active": true
+    },
+    {
+      "id": "scraped-y031ny3",
+      "title": "2026 ASEAN (Thailand) Refrigeration, Air Conditioning, Ventilation and Cold Chain Technology Expo",
+      "date": "01-03 กรกฎาคม 2569",
+      "time": "",
+      "venue": "ศูนย์แสดงสินค้า อิมแพ็ค เมืองทองธานี",
+      "description": "กิจกรรมและงานแสดงระดับแนวหน้า ณ ศูนย์แสดงสินค้า อิมแพ็ค เมืองทองธานี แนะนำผู้เข้าร่วมงานจองห้องพักล่วงหน้าเพื่อหลีกเลี่ยงการจราจรหนาแน่นและเข้าพักผ่อนใกล้สถานที่จัดงานอย่างสะดวกสบาย",
+      "imageUrl": "https://www.impact.co.th/media/com_eventbooking/images/thumbs/0417-racc-asean.webp",
+      "category": "Exhibition",
+      "active": true
+    },
+    {
+      "id": "impact-evt-1",
+      "title": "MAROON 5 Asia Tour 2026 Live in Bangkok 🎸",
+      "date": "1 ก.ค. 2569 - 3 ก.ค. 2569",
+      "time": "19:00 น. เป็นต้นไป",
+      "venue": "IMPACT Arena อิมแพ็ค อารีน่า เมืองทองธานี",
+      "description": "คอนเสิร์ตใหญ่ของวงป๊อปร็อกระดับโลก Maroon 5 กลับมาเยือนเมืองไทยอีกครั้งในรอบ 4 ปี พร้อมขนเพลงฮิตมาแบบจัดเต็ม แฟนเพลงห้ามพลาดเด็ดขาด พักที่ The M5 Residence สะดวกที่สุดเดินทางเพียง 5 นาที!",
+      "imageUrl": "https://images.unsplash.com/photo-1514525253161-7a46d19cd819?auto=format&fit=crop&w=800&q=80",
+      "category": "Concert",
+      "active": true
+    },
+    {
+      "id": "impact-evt-2",
+      "title": "Bangkok International Motor Show 2026 🚗",
+      "date": "6 ก.ค. 2569 - 13 ก.ค. 2569",
+      "time": "11:00 - 22:00 น.",
+      "venue": "Challenger Hall 1-3 ชาเลนเจอร์ ฮอลล์",
+      "description": "งานแสดงยนตรกรรมระดับภูมิภาคสุดยิ่งใหญ่ อัปเดตรถยนต์รุ่นใหม่ รถไฟฟ้า EV และนวัตกรรมยานยนต์แห่งอนาคตจากค่ายรถชั้นนำทั่วโลก พร้อมโปรโมชั่นข้อเสนอพิเศษสุดเร้าใจเฉพาะในงานนี้เท่านั้น",
+      "imageUrl": "https://images.unsplash.com/photo-1503376780353-7e6692767b70?auto=format&fit=crop&w=800&q=80",
+      "category": "Exhibition",
+      "active": true
+    },
+    {
+      "id": "impact-evt-3",
+      "title": "THAIFEX - Anuga Asia 2026 🍲",
+      "date": "14 ก.ค. 2569 - 17 ก.ค. 2569",
+      "time": "10:00 - 20:00 น.",
+      "venue": "IMPACT Exhibition & Convention Center (Hall 5-12)",
+      "description": "งานแสดงสินค้าอาหารและเครื่องดื่มที่ยิ่งใหญ่และครบวงจรที่สุดในเอเชีย พบกับผู้ประกอบการและนวัตกรรมอาหารจากทั่วทุกมุมโลก เปิดเจรจาธุรกิจและจำหน่ายสินค้าคุณภาพส่งออกในราคาพิเศษ",
+      "imageUrl": "https://images.unsplash.com/photo-1555529669-e69e7aa0ba9a?auto=format&fit=crop&w=800&q=80",
+      "category": "Exhibition",
+      "active": true
+    },
+    {
+      "id": "impact-evt-4",
+      "title": "Thailand Coffee Fest 2026 ☕",
+      "date": "19 ก.ค. 2569 - 22 ก.ค. 2569",
+      "time": "10:00 - 20:00 น.",
+      "venue": "IMPACT Exhibition Center Hall 5-8",
+      "description": "เทศกาลเพื่อคนรักกาแฟที่ใหญ่ที่สุดในเอเชียตะวันออกเฉียงใต้ รวบรวมเกษตรกรผู้ปลูกกาแฟ โรงคั่วกาแฟ บาริสต้าชั้นนำ และแบรนด์เครื่องชงกาแฟระดับโลกมาไว้ในงานเดียว ดื่มด่ำรสชาติและเปิดประสบการณ์กาแฟพิเศษ",
+      "imageUrl": "https://images.unsplash.com/photo-1507133750040-4a8f57021571?auto=format&fit=crop&w=800&q=80",
+      "category": "Exhibition",
+      "active": true
+    },
+    {
+      "id": "impact-evt-5",
+      "title": "Big Bad Wolf Book Sale Bangkok 2026 📚",
+      "date": "24 ก.ค. 2569 - 29 ก.ค. 2569",
+      "time": "10:00 - 24:00 น.",
+      "venue": "The Portal Ballroom (IMPACT Muang Thong Thani)",
+      "description": "มหกรรมหนังสือภาษาอังกฤษและภาษาไทยที่ยิ่งใหญ่ที่สุดในโลก ลดราคาสูงสุด 50-90% คัดสรรหนังสือดีจากหลากหลายหมวดหมู่มาให้เลือกสรร ตั้งแต่วรรณกรรมเยาวชนไปจนถึงการพัฒนาตนเอง",
+      "imageUrl": "https://images.unsplash.com/photo-1524995997946-a1c2e315a42f?auto=format&fit=crop&w=800&q=80",
+      "category": "Other",
+      "active": true
+    }
+  ],
+  "smtp": {
+    "id": 1,
+    "host": "smtp.gmail.com",
+    "port": 587,
+    "secure": false,
+    "user": "",
+    "pass": "",
+    "fromName": "The M5 Residence",
+    "fromEmail": "",
+    "adminNotifyEmail": "admin@m5residence.com"
+  },
+  "slides": [],
+  "googlePlaceId": "ChIJXWlJMC-e4jARLqX9OidpWjY",
+  "googleReviewsEnabled": true,
+  "directus": {
+    "url": "https://data.them5residence.com",
+    "internalUrl": "https://data.them5residence.com",
+    "token": "TNV8RUFCErLx11HqTp4a0Dg8fuCu50rx"
+  }
 }

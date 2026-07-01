@@ -1,11 +1,39 @@
 import dotenv from "dotenv";
 import { fileURLToPath } from "url";
 import path from "path";
+import fs from "fs";
 
 dotenv.config();
 
-const url = process.env.DIRECTUS_INTERNAL_URL || process.env.DIRECTUS_URL || "https://data.them5residence.com";
-const token = process.env.DIRECTUS_TOKEN || "ibtpkr40rF1BkNCEA4plXirxaDfn07S5";
+// Load from local db.json if available
+let configUrl = process.env.DIRECTUS_INTERNAL_URL || process.env.DIRECTUS_URL || "https://data.them5residence.com";
+let configToken = process.env.DIRECTUS_TOKEN || "ibtpkr40rF1BkNCEA4plXirxaDfn07S5";
+
+const DB_PATH = path.join(process.cwd(), "db.json");
+if (fs.existsSync(DB_PATH)) {
+  try {
+    const raw = fs.readFileSync(DB_PATH, "utf8");
+    const parsed = JSON.parse(raw);
+    if (parsed.directus) {
+      if (parsed.directus.internalUrl) {
+        configUrl = parsed.directus.internalUrl;
+      } else if (parsed.directus.url) {
+        configUrl = parsed.directus.url;
+      }
+      if (parsed.directus.token) {
+        configToken = parsed.directus.token;
+      }
+    }
+  } catch (e: any) {
+    console.warn("Failed to load db.json in setup-directus.ts:", e.message);
+  }
+}
+
+const url = configUrl;
+const token = configToken;
+
+console.log(`Using Directus URL: ${url}`);
+console.log(`Using Directus Token: ${token ? `${token.substring(0, 4)}...${token.substring(token.length - 4)}` : "None"}`);
 
 const ADMIN_EMAIL = process.env.ADMIN_EMAIL || "admin@them5residence.com";
 const ADMIN_PASSWORD = process.env.ADMIN_PASSWORD || "Admin_P@ssw0rd_M5!";

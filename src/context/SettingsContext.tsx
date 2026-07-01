@@ -120,6 +120,8 @@ export interface DbStatus {
   connected: boolean;
   database: string;
   url?: string;
+  internalUrl?: string;
+  token?: string;
   reason?: string;
 }
 
@@ -573,6 +575,8 @@ export function SettingsProvider({ children }: { children: React.ReactNode }) {
                 connected: dbData.connected,
                 database: dbData.database,
                 url: dbData.url,
+                internalUrl: dbData.internalUrl,
+                token: dbData.token,
                 reason: dbData.reason
               });
             }

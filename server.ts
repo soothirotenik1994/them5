@@ -235,14 +235,20 @@ async function sendBookingEmail(booking: any, smtp: any) {
   }
 }
 
-const DIRECTUS_URL = process.env.DIRECTUS_URL || "https://data.them5residence.com";
-const DIRECTUS_INTERNAL_URL = process.env.DIRECTUS_INTERNAL_URL || DIRECTUS_URL;
-const DIRECTUS_TOKEN = process.env.DIRECTUS_TOKEN || "ibtpkr40rF1BkNCEA4plXirxaDfn07S5";
+function getDirectusConfig() {
+  const localDb = getLocalDb() as any;
+  const directus = localDb.directus || {};
+  const url = directus.url || process.env.DIRECTUS_URL || "https://data.them5residence.com";
+  const internalUrl = directus.internalUrl || process.env.DIRECTUS_INTERNAL_URL || url;
+  const token = directus.token || process.env.DIRECTUS_TOKEN || "ibtpkr40rF1BkNCEA4plXirxaDfn07S5";
+  return { url, internalUrl, token };
+}
 
 async function directusFetch(path: string, options: any = {}) {
-  const url = `${DIRECTUS_INTERNAL_URL}${path}`;
+  const { internalUrl, token } = getDirectusConfig();
+  const url = `${internalUrl}${path}`;
   const headers = {
-    "Authorization": `Bearer ${DIRECTUS_TOKEN}`,
+    "Authorization": `Bearer ${token}`,
     "Content-Type": "application/json",
     ...options.headers
   };
@@ -2350,13 +2356,16 @@ Generate a short personalized friendly recommendation in Thai for visitors or co
 
   // API: Get Directus connection status
   app.get("/api/db-status", async (req, res) => {
+    const { url, internalUrl, token } = getDirectusConfig();
     try {
       await directusFetch("/items/m5_general");
       return res.json({
         success: true,
         connected: true,
         database: "Directus Cloud",
-        url: DIRECTUS_URL
+        url,
+        internalUrl,
+        token
       });
     } catch (err: any) {
       return res.json({
@@ -2364,8 +2373,27 @@ Generate a short personalized friendly recommendation in Thai for visitors or co
         connected: false,
         database: "Local JSON (db.json Fallback)",
         reason: err.message || "Failed to connect to Directus",
-        url: DIRECTUS_URL
+        url,
+        internalUrl,
+        token
       });
+    }
+  });
+
+  // API: Save Directus connection settings
+  app.post("/api/directus-config", async (req, res) => {
+    try {
+      const { url, internalUrl, token } = req.body;
+      const localDb = getLocalDb() as any;
+      localDb.directus = {
+        url: url || "",
+        internalUrl: internalUrl || "",
+        token: token || ""
+      };
+      saveLocalDb(localDb);
+      return res.json({ success: true, message: "บันทึกข้อมูลการตั้งค่า Directus เรียบร้อยแล้ว!" });
+    } catch (err: any) {
+      return res.status(500).json({ success: false, error: err.message });
     }
   });
 
@@ -2803,10 +2831,11 @@ Generate a short personalized friendly recommendation in Thai for visitors or co
         const formData = new FormData();
         formData.append("file", blob, finalFileName);
 
-        const resDirectus = await fetch(`${DIRECTUS_INTERNAL_URL}/files`, {
+        const { url: dUrl, internalUrl: dInternalUrl, token: dToken } = getDirectusConfig();
+        const resDirectus = await fetch(`${dInternalUrl}/files`, {
           method: "POST",
           headers: {
-            "Authorization": `Bearer ${DIRECTUS_TOKEN}`
+            "Authorization": `Bearer ${dToken}`
           },
           body: formData
         });
@@ -2815,7 +2844,7 @@ Generate a short personalized friendly recommendation in Thai for visitors or co
           const resJson = await resDirectus.json();
           if (resJson && resJson.data && resJson.data.id) {
             const fileId = resJson.data.id;
-            const directusFileUrl = `${DIRECTUS_URL}/assets/${fileId}`;
+            const directusFileUrl = `${dUrl}/assets/${fileId}`;
             console.log(`[Upload] persistent upload succeeded via Directus: ${directusFileUrl}`);
             return res.json({
               success: true,
