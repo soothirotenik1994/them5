@@ -131,6 +131,11 @@ export default function AdminDashboard({ isOpen, onClose, isFullPage = false }: 
   const [deletingAmenityIdx, setDeletingAmenityIdx] = useState<number | null>(null);
   const [deletingPromoIdx, setDeletingPromoIdx] = useState<number | null>(null);
   const [deletingRoomIdx, setDeletingRoomIdx] = useState<number | null>(null);
+  const [confirmDeleteModal, setConfirmDeleteModal] = useState<{
+    title: string;
+    message: string;
+    onConfirm: () => void | Promise<void>;
+  } | null>(null);
 
   // Edit states for forms
   const [generalEdit, setGeneralEdit] = useState({ ...settings.general });
@@ -1650,39 +1655,32 @@ export default function AdminDashboard({ isOpen, onClose, isFullPage = false }: 
                           </div>
                           <div className="flex items-center space-x-3 text-xs">
                             <span className="text-xs text-neutral-500 font-mono">ดัชนีห้อง: #{idx + 1}</span>
-                            {deletingRoomIdx === idx ? (
-                              <div className="inline-flex items-center space-x-1 animate-fadeIn">
-                                <button
-                                  type="button"
-                                  onClick={() => {
+                            <button
+                              type="button"
+                              onClick={() => {
+                                setConfirmDeleteModal({
+                                  title: "ยืนยันการลบประเภทห้องพัก",
+                                  message: `คุณแน่ใจหรือไม่ว่าต้องการลบประเภทห้องพัก "${room.thaiName || room.name}" ออกจากฐานข้อมูลถาวรโดยตรง? การลบจะมีผลทันทีและไม่สามารถกู้คืนได้`,
+                                  onConfirm: async () => {
                                     const copy = roomsEdit.filter((_, i) => i !== idx);
                                     setRoomsEdit(copy);
-                                    setDeletingRoomIdx(null);
-                                  }}
-                                  className="px-2.5 py-1 bg-red-600 hover:bg-red-700 text-white rounded transition-all cursor-pointer font-sans text-[11px] font-bold"
-                                  title="ยืนยันการลบประเภทห้องพักนี้ถาวร"
-                                >
-                                  ยืนยันลบ
-                                </button>
-                                <button
-                                  type="button"
-                                  onClick={() => setDeletingRoomIdx(null)}
-                                  className="px-2.5 py-1 bg-neutral-800 hover:bg-neutral-700 text-neutral-300 hover:text-white rounded transition-all cursor-pointer font-sans text-[11px] font-bold"
-                                  title="ยกเลิกการลบ"
-                                >
-                                  ยกเลิก
-                                </button>
-                              </div>
-                            ) : (
-                              <button
-                                type="button"
-                                onClick={() => setDeletingRoomIdx(idx)}
-                                className="flex items-center space-x-1 px-2.5 py-1 bg-red-950/40 hover:bg-red-900/60 border border-red-900/50 hover:border-red-500/50 rounded text-red-400 hover:text-white transition-all cursor-pointer font-sans"
-                              >
-                                <Trash2 className="h-3 w-3" />
-                                <span>ลบประเภทนี้</span>
-                              </button>
-                            )}
+                                    const success = await updateSettings({
+                                      ...settings,
+                                      rooms: copy
+                                    });
+                                    if (success) {
+                                      alert(`ลบประเภทห้องพัก "${room.thaiName || room.name}" ออกจากฐานข้อมูลเรียบร้อยแล้ว! ✨`);
+                                    } else {
+                                      alert("เกิดข้อขัดข้องในการบันทึกข้อมูลการลบลงฐานข้อมูล");
+                                    }
+                                  }
+                                });
+                              }}
+                              className="flex items-center space-x-1 px-2.5 py-1 bg-red-950/40 hover:bg-red-900/60 border border-red-900/50 hover:border-red-500/50 rounded text-red-400 hover:text-white transition-all cursor-pointer font-sans font-bold"
+                            >
+                              <Trash2 className="h-3 w-3" />
+                              <span>ลบประเภทนี้</span>
+                            </button>
                           </div>
                         </div>
 
@@ -1928,36 +1926,31 @@ export default function AdminDashboard({ isOpen, onClose, isFullPage = false }: 
                   <div className="space-y-4">
                     {promotionsEdit.map((p: any, idx: number) => (
                       <div key={p.id} className="p-5 bg-neutral-950 border border-neutral-850 rounded-lg space-y-4 relative">
-                        {deletingPromoIdx === idx ? (
-                          <div className="absolute top-4 right-4 inline-flex items-center space-x-1 bg-neutral-900 p-1 rounded border border-neutral-800 animate-fadeIn z-10">
-                            <button
-                              onClick={() => {
+                        <button
+                          onClick={() => {
+                            setConfirmDeleteModal({
+                              title: "ยืนยันการลบโปรโมชั่น",
+                              message: `คุณแน่ใจหรือไม่ว่าต้องการลบโปรโมชั่น "${p.title}" ออกจากฐานข้อมูลถาวรโดยตรง? การลบจะมีผลทันทีและไม่สามารถกู้คืนได้`,
+                              onConfirm: async () => {
                                 const copy = promotionsEdit.filter((_, i) => i !== idx);
                                 setPromotionsEdit(copy);
-                                setDeletingPromoIdx(null);
-                              }}
-                              className="px-2 py-0.5 bg-red-600 hover:bg-red-700 text-white rounded transition-all cursor-pointer font-sans text-[10px] font-bold"
-                              title="ยืนยันลบ"
-                            >
-                              ยืนยันลบ
-                            </button>
-                            <button
-                              onClick={() => setDeletingPromoIdx(null)}
-                              className="px-2 py-0.5 bg-neutral-800 hover:bg-neutral-700 text-neutral-300 hover:text-white rounded transition-all cursor-pointer font-sans text-[10px] font-bold"
-                              title="ยกเลิก"
-                            >
-                              ยกเลิก
-                            </button>
-                          </div>
-                        ) : (
-                          <button
-                            onClick={() => setDeletingPromoIdx(idx)}
-                            className="absolute top-4 right-4 p-1 text-neutral-500 hover:text-red-400 transition-colors cursor-pointer"
-                            title="ลบโปรโมชั่นนี้"
-                          >
-                            <Trash2 className="h-4 w-4" />
-                          </button>
-                        )}
+                                const success = await updateSettings({
+                                  ...settings,
+                                  promotions: copy
+                                });
+                                if (success) {
+                                  alert(`ลบโปรโมชั่น "${p.title}" ออกจากฐานข้อมูลเรียบร้อยแล้ว! ✨`);
+                                } else {
+                                  alert("เกิดข้อขัดข้องในการบันทึกข้อมูลการลบลงฐานข้อมูล");
+                                }
+                              }
+                            });
+                          }}
+                          className="absolute top-4 right-4 p-1 text-neutral-500 hover:text-red-400 transition-colors cursor-pointer z-10"
+                          title="ลบโปรโมชั่นนี้"
+                        >
+                          <Trash2 className="h-4 w-4" />
+                        </button>
 
                         <div className="flex justify-between items-center pb-2 border-b border-neutral-900">
                           <div className="text-xs font-mono text-brick font-bold uppercase">{p.id.toUpperCase()}_PROMO_SPEC</div>
@@ -2101,36 +2094,31 @@ export default function AdminDashboard({ isOpen, onClose, isFullPage = false }: 
                   <div className="space-y-4">
                     {amenitiesEdit.map((amenity: any, idx: number) => (
                       <div key={idx} className="p-5 bg-neutral-950 border border-neutral-850 rounded-lg space-y-4 relative">
-                        {deletingAmenityIdx === idx ? (
-                          <div className="absolute top-4 right-4 inline-flex items-center space-x-1 bg-neutral-900 p-1 rounded border border-neutral-800 animate-fadeIn z-10">
-                            <button
-                              onClick={() => {
+                        <button
+                          onClick={() => {
+                            setConfirmDeleteModal({
+                              title: "ยืนยันการลบสิ่งอำนวยความสะดวก",
+                              message: `คุณแน่ใจหรือไม่ว่าต้องการลบสิ่งอำนวยความสะดวก "${amenity.title}" ออกจากฐานข้อมูลถาวรโดยตรง? การลบจะมีผลทันทีและไม่สามารถกู้คืนได้`,
+                              onConfirm: async () => {
                                 const copy = amenitiesEdit.filter((_, i) => i !== idx);
                                 setAmenitiesEdit(copy);
-                                setDeletingAmenityIdx(null);
-                              }}
-                              className="px-2 py-0.5 bg-red-600 hover:bg-red-700 text-white rounded transition-all cursor-pointer font-sans text-[10px] font-bold"
-                              title="ยืนยันลบ"
-                            >
-                              ยืนยันลบ
-                            </button>
-                            <button
-                              onClick={() => setDeletingAmenityIdx(null)}
-                              className="px-2 py-0.5 bg-neutral-800 hover:bg-neutral-700 text-neutral-300 hover:text-white rounded transition-all cursor-pointer font-sans text-[10px] font-bold"
-                              title="ยกเลิก"
-                            >
-                              ยกเลิก
-                            </button>
-                          </div>
-                        ) : (
-                          <button
-                            onClick={() => setDeletingAmenityIdx(idx)}
-                            className="absolute top-4 right-4 p-1 text-neutral-500 hover:text-red-400 transition-colors cursor-pointer"
-                            title="ลบสิ่งอำนวยความสะดวกนี้"
-                          >
-                            <Trash2 className="h-4 w-4" />
-                          </button>
-                        )}
+                                const success = await updateSettings({
+                                  ...settings,
+                                  amenities: copy
+                                });
+                                if (success) {
+                                  alert(`ลบสิ่งอำนวยความสะดวก "${amenity.title}" ออกจากฐานข้อมูลเรียบร้อยแล้ว! ✨`);
+                                } else {
+                                  alert("เกิดข้อขัดข้องในการบันทึกข้อมูลการลบลงฐานข้อมูล");
+                                }
+                              }
+                            });
+                          }}
+                          className="absolute top-4 right-4 p-1 text-neutral-500 hover:text-red-400 transition-colors cursor-pointer z-10"
+                          title="ลบสิ่งอำนวยความสะดวกนี้"
+                        >
+                          <Trash2 className="h-4 w-4" />
+                        </button>
 
                         <div className="text-xs font-mono text-brick font-bold uppercase">AMENITY_CARD #{idx + 1}</div>
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -2587,10 +2575,25 @@ export default function AdminDashboard({ isOpen, onClose, isFullPage = false }: 
                       <div key={idx} className="p-5 bg-neutral-950 border border-neutral-850 rounded-lg space-y-4 relative">
                         <button
                           onClick={() => {
-                            const copy = faqsEdit.filter((_: any, i: number) => i !== idx);
-                            setFaqsEdit(copy);
+                            setConfirmDeleteModal({
+                              title: "ยืนยันการลบข้อคำถาม",
+                              message: `คุณแน่ใจหรือไม่ว่าต้องการลบคำถามที่พบบ่อย "${faq.q || ''}" ออกจากฐานข้อมูลถาวรโดยตรง? การลบจะมีผลทันทีและไม่สามารถกู้คืนได้`,
+                              onConfirm: async () => {
+                                const copy = faqsEdit.filter((_: any, i: number) => i !== idx);
+                                setFaqsEdit(copy);
+                                const success = await updateSettings({
+                                  ...settings,
+                                  faqs: copy
+                                });
+                                if (success) {
+                                  alert("ลบข้อคำถามและบันทึกลงฐานข้อมูลเรียบร้อยแล้ว! ✨");
+                                } else {
+                                  alert("เกิดข้อขัดข้องในการบันทึกข้อมูลการลบลงฐานข้อมูล");
+                                }
+                              }
+                            });
                           }}
-                          className="absolute top-4 right-4 p-1 text-neutral-500 hover:text-red-400 transition-colors cursor-pointer"
+                          className="absolute top-4 right-4 p-1 text-neutral-500 hover:text-red-400 transition-colors cursor-pointer z-10"
                           title="ลบคำถามนี้"
                         >
                           <Trash2 className="h-4 w-4" />
@@ -2667,10 +2670,25 @@ export default function AdminDashboard({ isOpen, onClose, isFullPage = false }: 
                       <div key={idx} className="p-5 bg-neutral-950 border border-neutral-850 rounded-lg space-y-4 relative">
                         <button
                           onClick={() => {
-                            const copy = reviewsEdit.filter((_: any, i: number) => i !== idx);
-                            setReviewsEdit(copy);
+                            setConfirmDeleteModal({
+                              title: "ยืนยันการลบบทวิจารณ์",
+                              message: `คุณแน่ใจหรือไม่ว่าต้องการลบบทวิจารณ์ของ "${rev.name || ''}" ออกจากฐานข้อมูลถาวรโดยตรง? การลบจะมีผลทันทีและไม่สามารถกู้คืนได้`,
+                              onConfirm: async () => {
+                                const copy = reviewsEdit.filter((_: any, i: number) => i !== idx);
+                                setReviewsEdit(copy);
+                                const success = await updateSettings({
+                                  ...settings,
+                                  reviews: copy
+                                });
+                                if (success) {
+                                  alert("ลบบทวิจารณ์และบันทึกลงฐานข้อมูลเรียบร้อยแล้ว! ✨");
+                                } else {
+                                  alert("เกิดข้อขัดข้องในการบันทึกข้อมูลการลบลงฐานข้อมูล");
+                                }
+                              }
+                            });
                           }}
-                          className="absolute top-4 right-4 p-1 text-neutral-500 hover:text-red-400 transition-colors cursor-pointer"
+                          className="absolute top-4 right-4 p-1 text-neutral-500 hover:text-red-400 transition-colors cursor-pointer z-10"
                           title="ลบบทวิจารณ์นี้"
                         >
                           <Trash2 className="h-4 w-4" />
@@ -2793,8 +2811,23 @@ export default function AdminDashboard({ isOpen, onClose, isFullPage = false }: 
                       <div key={idx} className="p-5 bg-neutral-950 border border-neutral-850 rounded-lg space-y-4 relative">
                         <button
                           onClick={() => {
-                            const copy = galleryEdit.filter((_: any, i: number) => i !== idx);
-                            setGalleryEdit(copy);
+                            setConfirmDeleteModal({
+                              title: "ยืนยันการลบรูปภาพแกลเลอรี",
+                              message: `คุณแน่ใจหรือไม่ว่าต้องการลบรูปภาพแกลเลอรีลำดับที่ ${idx + 1} "${item.title || ''}" ออกจากฐานข้อมูลถาวรโดยตรง? การลบจะมีผลทันทีและไม่สามารถกู้คืนได้`,
+                              onConfirm: async () => {
+                                const copy = galleryEdit.filter((_: any, i: number) => i !== idx);
+                                setGalleryEdit(copy);
+                                const success = await updateSettings({
+                                  ...settings,
+                                  gallery: copy
+                                });
+                                if (success) {
+                                  alert("ลบรูปภาพแกลเลอรีและบันทึกลงฐานข้อมูลเรียบร้อยแล้ว! ✨");
+                                } else {
+                                  alert("เกิดข้อขัดข้องในการบันทึกข้อมูลการลบลงฐานข้อมูล");
+                                }
+                              }
+                            });
                           }}
                           className="absolute top-4 right-4 p-1 text-neutral-500 hover:text-red-400 transition-colors cursor-pointer z-20"
                           title="ลบรูปภาพนี้"
@@ -3894,6 +3927,39 @@ export default function AdminDashboard({ isOpen, onClose, isFullPage = false }: 
                             </button>
                           </div>
                         </form>
+                      </div>
+                    </div>
+                  )}
+
+                  {/* UNIFIED CONFIRM DELETE MODAL */}
+                  {confirmDeleteModal && (
+                    <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/85 backdrop-blur-md animate-fade-in">
+                      <div className="w-full max-w-md bg-neutral-900 border border-neutral-800 rounded-lg p-6 shadow-2xl space-y-4">
+                        <div className="flex items-center space-x-3 text-red-500">
+                          <Trash2 className="h-6 w-6 shrink-0" />
+                          <h4 className="text-md font-bold font-sans text-white">{confirmDeleteModal.title}</h4>
+                        </div>
+                        <p className="text-xs text-neutral-400 leading-relaxed font-sans">{confirmDeleteModal.message}</p>
+                        <div className="flex justify-end space-x-3 pt-2">
+                          <button
+                            type="button"
+                            onClick={() => setConfirmDeleteModal(null)}
+                            className="px-3.5 py-1.5 bg-neutral-800 hover:bg-neutral-700 text-neutral-300 rounded text-xs font-semibold cursor-pointer transition-colors"
+                          >
+                            ยกเลิก
+                          </button>
+                          <button
+                            type="button"
+                            onClick={async () => {
+                              const onConfirm = confirmDeleteModal.onConfirm;
+                              setConfirmDeleteModal(null);
+                              await onConfirm();
+                            }}
+                            className="px-4 py-1.5 bg-red-600 hover:bg-red-700 text-white rounded text-xs font-semibold cursor-pointer transition-colors shadow-lg shadow-red-900/20"
+                          >
+                            ยืนยันลบถาวร
+                          </button>
+                        </div>
                       </div>
                     </div>
                   )}
