@@ -144,7 +144,8 @@ export default function AdminDashboard({ isOpen, onClose, isFullPage = false }: 
   // Google Reviews Integration state
   const [googlePlaceIdEdit, setGooglePlaceIdEdit] = useState(settings.googlePlaceId || "ChIJXWlJMC-e4jARLqX9OidpWjY");
   const [googleReviewsEnabledEdit, setGoogleReviewsEnabledEdit] = useState(settings.googleReviewsEnabled !== undefined ? settings.googleReviewsEnabled : true);
-  const [customApiKeyEdit, setCustomApiKeyEdit] = useState("");
+  const [customApiKeyEdit, setCustomApiKeyEdit] = useState(settings.general?.googleReviewsApiKey || "");
+  const [googleReviewsSyncIntervalEdit, setGoogleReviewsSyncIntervalEdit] = useState<"manual" | "daily" | "weekly" | "monthly">(settings.general?.googleReviewsSyncInterval || "manual");
   const [isSyncingReviews, setIsSyncingReviews] = useState(false);
 
   // SMTP Edit State
@@ -192,6 +193,7 @@ export default function AdminDashboard({ isOpen, onClose, isFullPage = false }: 
   const [newRoomLongDesc, setNewRoomLongDesc] = useState("");
   const [newRoomImageUrl, setNewRoomImageUrl] = useState("");
   const [newRoomAmenities, setNewRoomAmenities] = useState("Wi-Fi ความเร็วสูง, เครื่องปรับอากาศ, สมาร์ททีวี, ตู้เย็นมินิบาร์, เครื่องทำน้ำอุ่น");
+  const [newRoomMatterportUrl, setNewRoomMatterportUrl] = useState("");
 
   // Helper to handle new room creation
   const handleAddNewRoomType = (e: React.FormEvent) => {
@@ -223,7 +225,8 @@ export default function AdminDashboard({ isOpen, onClose, isFullPage = false }: 
       description: newRoomDesc.trim(),
       longDescription: newRoomLongDesc.trim(),
       imageUrl: newRoomImageUrl.trim(),
-      amenities: newRoomAmenities.split(",").map(a => a.trim()).filter(Boolean)
+      amenities: newRoomAmenities.split(",").map(a => a.trim()).filter(Boolean),
+      matterportUrl: newRoomMatterportUrl.trim() || undefined
     };
 
     setRoomsEdit([...roomsEdit, newRoomObj]);
@@ -239,6 +242,7 @@ export default function AdminDashboard({ isOpen, onClose, isFullPage = false }: 
     setNewRoomDesc("");
     setNewRoomLongDesc("");
     setNewRoomImageUrl("");
+    setNewRoomMatterportUrl("");
     setShowAddRoom(false);
 
     alert("เพิ่มชื่อร่างประเภทห้องพักสำเร็จ! กรุณากดปุ่ม 'บันทึกข้อมูลห้องพักทั้งหมด' ที่อยู่ด้านล่าง เพื่อยืนยันการเซฟเข้าระบบฐานข้อมูล");
@@ -256,6 +260,8 @@ export default function AdminDashboard({ isOpen, onClose, isFullPage = false }: 
       setGalleryEdit(JSON.parse(JSON.stringify(settings.gallery || [])));
       setGooglePlaceIdEdit(settings.googlePlaceId || "ChIJXWlJMC-e4jARLqX9OidpWjY");
       setGoogleReviewsEnabledEdit(settings.googleReviewsEnabled !== undefined ? settings.googleReviewsEnabled : true);
+      setGoogleReviewsSyncIntervalEdit(settings.general?.googleReviewsSyncInterval || "manual");
+      setCustomApiKeyEdit(settings.general?.googleReviewsApiKey || "");
     }
   }, [isOpen, settings]);
 
@@ -465,7 +471,12 @@ export default function AdminDashboard({ isOpen, onClose, isFullPage = false }: 
       ...settings,
       reviews: reviewsEdit,
       googlePlaceId: googlePlaceIdEdit,
-      googleReviewsEnabled: googleReviewsEnabledEdit
+      googleReviewsEnabled: googleReviewsEnabledEdit,
+      general: {
+        ...(settings.general || {}),
+        googleReviewsSyncInterval: googleReviewsSyncIntervalEdit,
+        googleReviewsApiKey: customApiKeyEdit
+      }
     });
     if (success) {
       alert("บันทึกข้อมูลรีวิวและตั้งค่า Google Reviews สำเร็จเรียบร้อยแล้ว!");
@@ -1295,6 +1306,47 @@ export default function AdminDashboard({ isOpen, onClose, isFullPage = false }: 
                       />
                     </div>
 
+                    <div className="pt-4 border-t border-neutral-900 space-y-4">
+                      <h4 className="text-xs font-bold text-brick uppercase tracking-wider font-mono">
+                        🔍 ตั้งค่าหัวข้อเว็บและการค้นหา (SEO & Web Browser Title Settings)
+                      </h4>
+                      
+                      <div className="space-y-1">
+                        <label className="text-xs text-neutral-400 font-mono">ชื่อหัวข้อเว็บเบราว์เซอร์ (Web Page Title - seoTitle)</label>
+                        <input 
+                          type="text"
+                          value={generalEdit.seoTitle || ""}
+                          onChange={(e) => setGeneralEdit({ ...generalEdit, seoTitle: e.target.value })}
+                          placeholder="เช่น The M5 Residence | ที่พักสุดชิคสไตล์ Loft ย่านปากเกร็ด นนทบุรี"
+                          className="w-full px-3 py-2 bg-neutral-900 border border-neutral-800 rounded text-sm text-white focus:outline-none focus:border-brick font-sans placeholder-neutral-600"
+                        />
+                      </div>
+
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <div className="space-y-1">
+                          <label className="text-xs text-neutral-400 font-mono">คำค้นหาหลัก / คีย์เวิร์ด (SEO Keywords - seoKeywords)</label>
+                          <textarea 
+                            rows={3}
+                            value={generalEdit.seoKeywords || ""}
+                            onChange={(e) => setGeneralEdit({ ...generalEdit, seoKeywords: e.target.value })}
+                            placeholder="เช่น ที่พักปากเกร็ด, โรงแรมใกล้อิมแพ็ค, โรงแรมเมืองทองธานี, m5 residence"
+                            className="w-full px-3 py-2 bg-neutral-900 border border-neutral-800 rounded text-sm text-white focus:outline-none focus:border-brick font-sans placeholder-neutral-600"
+                          />
+                        </div>
+
+                        <div className="space-y-1">
+                          <label className="text-xs text-neutral-400 font-mono">คำอธิบายหน้าเว็บสั้นๆ (SEO Description - seoDescription)</label>
+                          <textarea 
+                            rows={3}
+                            value={generalEdit.seoDescription || ""}
+                            onChange={(e) => setGeneralEdit({ ...generalEdit, seoDescription: e.target.value })}
+                            placeholder="รายละเอียดสั้นๆ แสดงเมื่อค้นหาบน Google หรือแชร์ลิงก์..."
+                            className="w-full px-3 py-2 bg-neutral-900 border border-neutral-800 rounded text-sm text-white focus:outline-none focus:border-brick font-sans placeholder-neutral-600"
+                          />
+                        </div>
+                      </div>
+                    </div>
+
                     <div className="pt-4 border-t border-neutral-900 flex items-center justify-between">
                       <div>
                         <span className="text-xs font-semibold text-white block">ระบบรับสมัครสมาชิก (User Registration)</span>
@@ -1558,6 +1610,20 @@ export default function AdminDashboard({ isOpen, onClose, isFullPage = false }: 
                           onChange={(e) => setNewRoomAmenities(e.target.value)}
                           className="w-full px-3 py-2 bg-neutral-900 border border-neutral-800 rounded text-xs text-white font-mono focus:outline-none focus:border-brick"
                         />
+                      </div>
+
+                      <div className="space-y-1">
+                        <label className="text-xs text-neutral-400 font-mono block">ลิงก์ดูห้อง 360 องศาของ Matterport (Matterport Virtual Tour 360° URL)</label>
+                        <input 
+                          type="text"
+                          placeholder="ระบุลิงก์หรือรหัส Matterport เช่น https://my.matterport.com/show/?m=Pcjj9wmA98W"
+                          value={newRoomMatterportUrl}
+                          onChange={(e) => setNewRoomMatterportUrl(e.target.value)}
+                          className="w-full px-3 py-2 bg-neutral-900 border border-neutral-800 rounded text-xs text-white focus:outline-none focus:border-brick font-mono placeholder-neutral-600"
+                        />
+                        <p className="text-[10px] text-neutral-500 font-sans leading-relaxed">
+                          รองรับรูปแบบลิงก์ของ Matterport เช่น <span className="font-mono text-neutral-400">https://my.matterport.com/show/?m=Pcjj9wmA98W</span> หรือ URL พอร์ทัล <span className="font-mono text-neutral-400">https://discover.matterport.com/space/Pcjj9wmA98W</span>
+                        </p>
                       </div>
 
                       <div className="flex justify-end pt-2">
@@ -2195,6 +2261,66 @@ export default function AdminDashboard({ isOpen, onClose, isFullPage = false }: 
                         <p className="text-[10px] text-neutral-500 leading-normal">
                           หากเว้นว่างไว้ ระบบจะใช้ <strong>GOOGLE_MAPS_PLATFORM_KEY</strong> จากส่วนจัดเก็บ Secrets ของแอปพลิเคชันโดยอัตโนมัติ
                         </p>
+                      </div>
+                    </div>
+
+                    {/* AUTO SYNC SCHEDULER SECTION */}
+                    <div className="p-4 bg-neutral-900/60 border border-neutral-850 rounded-xl space-y-4">
+                      <div className="flex items-center space-x-2">
+                        <Clock className="h-4 w-4 text-emerald-500 animate-pulse" />
+                        <span className="text-xs font-semibold text-neutral-200">ตั้งค่าการดึงรีวิวอัตโนมัติ (Google Reviews Auto-Sync Scheduler)</span>
+                      </div>
+                      <p className="text-[11px] text-neutral-400 font-light leading-normal">
+                        เลือกรอบระยะเวลาที่ต้องการให้ระบบเบื้องหลังทำการติดต่อสื่อสารกับ Google Maps API เพื่อตรวจสอบและดึงรีวิวใหม่ๆ เข้ามาบันทึกในระบบโดยอัตโนมัติ
+                      </p>
+
+                      <div className="flex flex-wrap gap-1.5 justify-start">
+                        {[
+                          { value: "manual", label: "จัดการซิงค์เอง (Manual)" },
+                          { value: "daily", label: "ดึงอัตโนมัติทุกวัน (Daily)" },
+                          { value: "weekly", label: "ดึงอัตโนมัติทุกสัปดาห์ (Weekly)" },
+                          { value: "monthly", label: "ดึงอัตโนมัติทุกเดือน (Monthly)" }
+                        ].map((item) => {
+                          const isSelected = googleReviewsSyncIntervalEdit === item.value;
+                          return (
+                            <button
+                              key={item.value}
+                              type="button"
+                              onClick={() => setGoogleReviewsSyncIntervalEdit(item.value as any)}
+                              className={`px-3 py-2 rounded text-xs font-medium cursor-pointer transition-all duration-200 ${
+                                isSelected 
+                                  ? "bg-emerald-600/20 text-emerald-400 border border-emerald-500/35 font-semibold shadow-inner" 
+                                  : "bg-neutral-950 text-neutral-400 border border-neutral-850 hover:text-white hover:border-neutral-800"
+                              }`}
+                            >
+                              {item.label}
+                            </button>
+                          );
+                        })}
+                      </div>
+
+                      <div className="text-left text-[11px] text-neutral-400 space-y-1 font-light border-t border-neutral-850/60 pt-3 flex flex-col sm:flex-row sm:justify-between sm:items-center font-sans">
+                        <div>
+                          สถานะออโต้ซิงค์:{" "}
+                          <span className={`font-bold ${
+                            googleReviewsSyncIntervalEdit === "manual" ? "text-neutral-500" : "text-emerald-400"
+                          }`}>
+                            {googleReviewsSyncIntervalEdit === "manual" ? "● ปิดใช้งาน (แมนนวล)" : "● เปิดใช้งาน (อัตโนมัติ)"}
+                          </span>
+                        </div>
+                        <div>
+                          ซิงค์อัตโนมัติล่าสุดเมื่อ: <span className="font-mono text-neutral-300 font-semibold">{
+                            settings.general?.lastGoogleReviewsSyncTime
+                              ? new Date(settings.general.lastGoogleReviewsSyncTime).toLocaleString("th-TH", {
+                                  year: "numeric",
+                                  month: "long",
+                                  day: "numeric",
+                                  hour: "2-digit",
+                                  minute: "2-digit"
+                                }) + " น."
+                              : "ยังไม่มีการซิงค์"
+                          }</span>
+                        </div>
                       </div>
                     </div>
 

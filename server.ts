@@ -1780,81 +1780,13 @@ Generate a short personalized friendly recommendation in Thai for visitors or co
         }
       }
 
-      // Now query details to get the reviews!
-      const detailsUrl = `https://maps.googleapis.com/maps/api/place/details/json?place_id=${placeId}&fields=reviews,rating,user_ratings_total,name,formatted_address&key=${apiKey}&language=th`;
-      const detailsRes = await fetch(detailsUrl);
-      
-      if (!detailsRes.ok) {
-        const errText = await detailsRes.text();
-        return res.status(detailsRes.status).json({ success: false, error: `Google Place Details Error: ${errText}` });
-      }
-
-      const detailsData = await detailsRes.json();
-      if (detailsData.status !== "OK") {
-        return res.status(400).json({ 
-          success: false, 
-          error: `Google API Status Error: ${detailsData.status}. ${detailsData.error_message || ""}` 
-        });
-      }
-
-      const place = detailsData.result || {};
-      const rawReviews = place.reviews || [];
-
-      // Map google reviews to our settings structure
-      const mappedReviews = rawReviews.map((rev: any) => {
-        let role = "Guest Reviewer 🌐";
-        if (rev.rating >= 4) {
-          role = "Verified Stay 🌐";
-        }
-        return {
-          name: rev.author_name || "Google User",
-          role: role,
-          review: rev.text || "",
-          rating: rev.rating || 5,
-          date: rev.relative_time_description || "เมื่อเร็วๆ นี้",
-          avatarUrl: rev.profile_photo_url || ""
-        };
+      // Execute sync using helper
+      const syncResult = await runGoogleReviewsSync(apiKey, placeId);
+      return res.json({
+        ...syncResult
       });
-
-      // Save to local DB!
-      const localDb = getLocalDb();
-      if (mappedReviews.length > 0) {
-        localDb.reviews = mappedReviews;
-        localDb.googlePlaceId = placeId;
-        localDb.googleReviewsEnabled = true;
-        saveLocalDb(localDb);
-
-        // Try syncing with Directus if configured
-        try {
-          await syncCollection("m5_reviews", mappedReviews, (rev: any) => ({
-            name: rev.name,
-            role: rev.role,
-            review: rev.review,
-            rating: Number(rev.rating),
-            date: rev.date,
-            avatarUrl: rev.avatarUrl
-          }));
-        } catch (directusErr) {
-          console.warn("Could not sync Google reviews to Directus:", directusErr);
-        }
-
-        return res.json({ 
-          success: true, 
-          message: `ดึงข้อมูลรีวิวของ "${place.name || "The M5 Residence Hotel"}" จาก Google สำเร็จ จำนวน ${mappedReviews.length} รายการ`,
-          reviews: mappedReviews,
-          placeName: place.name,
-          address: place.formatted_address,
-          rating: place.rating,
-          placeId: placeId
-        });
-      } else {
-        return res.status(400).json({ 
-          success: false, 
-          error: "ไม่พบข้อมูลรีวิวสาธารณะจากสถานที่นี้ หรือสิทธิ์ของ API Key ไม่ครอบคลุมฟิลด์ reviews" 
-        });
-      }
     } catch (err: any) {
-      console.error("Error in sync-google reviews:", err);
+      console.error("Error in sync-google reviews endpoint:", err);
       return res.status(500).json({ success: false, error: err.message || "Internal Server Error" });
     }
   });
@@ -2223,6 +2155,164 @@ Generate a short personalized friendly recommendation in Thai for visitors or co
     }, 15000);
   }
 
+  async function runGoogleReviewsSync(customApiKey?: string, customPlaceId?: string) {
+    try {
+      console.log("[Scheduler] Starting Google Reviews sync...");
+      const localDb = getLocalDb();
+      
+      const apiKey = customApiKey || localDb.general?.googleReviewsApiKey || process.env.GOOGLE_MAPS_PLATFORM_KEY;
+      if (!apiKey) {
+        throw new Error("Missing Google Maps API Key. Please provide it in Admin Dashboard or set GOOGLE_MAPS_PLATFORM_KEY env var.");
+      }
+
+      const placeId = customPlaceId || localDb.googlePlaceId || "ChIJXWlJMC-e4jARLqX9OidpWjY";
+      
+      // Query details to get the reviews!
+      const detailsUrl = `https://maps.googleapis.com/maps/api/place/details/json?place_id=${placeId}&fields=reviews,rating,user_ratings_total,name,formatted_address&key=${apiKey}&language=th`;
+      const detailsRes = await fetch(detailsUrl);
+      
+      if (!detailsRes.ok) {
+        const errText = await detailsRes.text();
+        throw new Error(`Google Place Details API returned error: ${errText}`);
+      }
+
+      const detailsData = await detailsRes.json();
+      if (detailsData.status !== "OK") {
+        throw new Error(`Google API Status Error: ${detailsData.status}. ${detailsData.error_message || ""}`);
+      }
+
+      const place = detailsData.result || {};
+      const rawReviews = place.reviews || [];
+
+      if (rawReviews.length === 0) {
+        throw new Error("No public reviews returned from Google Maps API for this Place ID.");
+      }
+
+      // Map google reviews to our settings structure
+      const mappedReviews = rawReviews.map((rev: any) => {
+        let role = "Guest Reviewer 🌐";
+        if (rev.rating >= 4) {
+          role = "Verified Stay 🌐";
+        }
+        return {
+          name: rev.author_name || "Google User",
+          role: role,
+          review: rev.text || "",
+          rating: rev.rating || 5,
+          date: rev.relative_time_description || "เมื่อเร็วๆ นี้",
+          avatarUrl: rev.profile_photo_url || ""
+        };
+      });
+
+      // Update local db
+      localDb.reviews = mappedReviews;
+      localDb.googlePlaceId = placeId;
+      localDb.googleReviewsEnabled = true;
+      if (!localDb.general) localDb.general = {};
+      localDb.general.lastGoogleReviewsSyncTime = new Date().toISOString();
+      saveLocalDb(localDb);
+
+      // Try syncing with Directus if configured
+      try {
+        await syncCollection("m5_reviews", mappedReviews, (rev: any) => ({
+          name: rev.name,
+          role: rev.role,
+          review: rev.review,
+          rating: Number(rev.rating),
+          date: rev.date,
+          avatarUrl: rev.avatarUrl
+        }));
+      } catch (directusErr) {
+        console.warn("[Scheduler] Could not sync Google reviews to Directus:", directusErr);
+      }
+
+      console.log(`[Scheduler] Google Reviews sync completed successfully! Synced ${mappedReviews.length} reviews.`);
+      return {
+        success: true,
+        reviews: mappedReviews,
+        placeName: place.name,
+        address: place.formatted_address,
+        rating: place.rating,
+        placeId: placeId
+      };
+    } catch (err: any) {
+      console.error("[Scheduler] Error running Google Reviews sync:", err.message || err);
+      throw err;
+    }
+  }
+
+  function startGoogleReviewsSyncScheduler() {
+    console.log("[Scheduler] Initializing background Google Reviews sync scheduler...");
+    
+    // Check every 10 minutes
+    setInterval(async () => {
+      try {
+        const localDb = getLocalDb();
+        const interval = localDb.general?.googleReviewsSyncInterval || "manual";
+        
+        if (interval === "manual") {
+          return;
+        }
+        
+        const lastSyncStr = localDb.general?.lastGoogleReviewsSyncTime;
+        const now = new Date();
+        let shouldSync = false;
+        
+        if (!lastSyncStr) {
+          shouldSync = true;
+        } else {
+          const lastSync = new Date(lastSyncStr);
+          const diffMs = now.getTime() - lastSync.getTime();
+          const diffDays = diffMs / (1000 * 60 * 60 * 24);
+          
+          if (interval === "daily" && diffDays >= 1) {
+            shouldSync = true;
+          } else if (interval === "weekly" && diffDays >= 7) {
+            shouldSync = true;
+          } else if (interval === "monthly" && diffDays >= 30) {
+            shouldSync = true;
+          }
+        }
+        
+        if (shouldSync) {
+          console.log(`[Scheduler] Triggering auto Google Reviews sync because interval is [${interval}] and last sync was ${lastSyncStr || "never"}`);
+          await runGoogleReviewsSync().catch(() => {});
+        }
+      } catch (err: any) {
+        console.error("[Scheduler] Error in background Google Reviews scheduler run:", err.message || err);
+      }
+    }, 10 * 60 * 1000);
+
+    // Initial check after boot
+    setTimeout(async () => {
+      try {
+        const localDb = getLocalDb();
+        const interval = localDb.general?.googleReviewsSyncInterval || "manual";
+        if (interval !== "manual") {
+          const lastSyncStr = localDb.general?.lastGoogleReviewsSyncTime;
+          const now = new Date();
+          let shouldSync = false;
+          if (!lastSyncStr) {
+            shouldSync = true;
+          } else {
+            const lastSync = new Date(lastSyncStr);
+            const diffMs = now.getTime() - lastSync.getTime();
+            const diffDays = diffMs / (1000 * 60 * 60 * 24);
+            if (interval === "daily" && diffDays >= 1) shouldSync = true;
+            if (interval === "weekly" && diffDays >= 7) shouldSync = true;
+            if (interval === "monthly" && diffDays >= 30) shouldSync = true;
+          }
+          if (shouldSync) {
+            console.log(`[Scheduler] Initial boot check triggered Google Reviews sync for [${interval}]`);
+            await runGoogleReviewsSync().catch(() => {});
+          }
+        }
+      } catch (e: any) {
+        console.error("[Scheduler] Initial boot Google Reviews sync error:", e.message || e);
+      }
+    }, 25000); // 25 seconds after boot (staggered with impact events)
+  }
+
   // 2. POST: Trigger scraping sync
   app.post("/api/impact-events/sync", async (req, res) => {
     try {
@@ -2443,7 +2533,14 @@ Generate a short personalized friendly recommendation in Thai for visitors or co
       // Now attempt to sync with Directus in a try/catch block so that if Directus fails, the user request STILL succeeds!
       try {
         if (settings.general) {
-          const { impactSyncInterval, lastImpactSyncTime, ...directusGeneral } = settings.general;
+          const { 
+            impactSyncInterval, 
+            lastImpactSyncTime, 
+            googleReviewsSyncInterval, 
+            lastGoogleReviewsSyncTime, 
+            googleReviewsApiKey, 
+            ...directusGeneral 
+          } = settings.general;
           await updateSingleton("m5_general", directusGeneral);
         }
         if (settings.smtp) {
@@ -2904,6 +3001,7 @@ Generate a short personalized friendly recommendation in Thai for visitors or co
   app.listen(PORT, "0.0.0.0", () => {
     console.log(`The M5 Residence Server running on http://0.0.0.0:${PORT}`);
     startImpactSyncScheduler();
+    startGoogleReviewsSyncScheduler();
   });
 }
 

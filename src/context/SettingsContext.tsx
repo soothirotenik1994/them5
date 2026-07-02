@@ -25,6 +25,9 @@ export interface GeneralSettings {
   bookingDisabledMessage?: string;
   impactSyncInterval?: "manual" | "daily" | "weekly" | "monthly";
   lastImpactSyncTime?: string;
+  googleReviewsSyncInterval?: "manual" | "daily" | "weekly" | "monthly";
+  lastGoogleReviewsSyncTime?: string;
+  googleReviewsApiKey?: string;
 }
 
 export interface SmtpSettings {
@@ -428,12 +431,12 @@ export function SettingsProvider({ children }: { children: React.ReactNode }) {
             try {
               const localSettings = JSON.parse(localSettingsStr);
               if (localSettings) {
+                const isServerDefault = data.settings?.general?.hotelName === defaultGeneral.hotelName && 
+                                        data.settings?.general?.contactPhone === defaultGeneral.contactPhone &&
+                                        data.settings?.general?.heroTitle === defaultGeneral.heroTitle;
+
                 // 1. Merge general settings
                 if (localSettings.general) {
-                  const isServerDefault = data.settings?.general?.hotelName === defaultGeneral.hotelName && 
-                                          data.settings?.general?.contactPhone === defaultGeneral.contactPhone &&
-                                          data.settings?.general?.heroTitle === defaultGeneral.heroTitle;
-                                          
                   const localIsCustom = localSettings.general.hotelName !== defaultGeneral.hotelName || 
                                         localSettings.general.contactPhone !== defaultGeneral.contactPhone ||
                                         localSettings.general.heroTitle !== defaultGeneral.heroTitle;
@@ -450,70 +453,72 @@ export function SettingsProvider({ children }: { children: React.ReactNode }) {
                   }
                 }
 
-                // 2. Merge list settings
-                const listsToMerge: (keyof typeof finalSettings)[] = [
-                  "rooms", "promotions", "amenities", "faqs", "reviews", "gallery", "blockedDates", "coupons", "slides", "impactEvents"
-                ];
+                // 2. Merge list settings ONLY if the server is in default state (database reset fallback)
+                if (isServerDefault) {
+                  const listsToMerge: (keyof typeof finalSettings)[] = [
+                    "rooms", "promotions", "amenities", "faqs", "reviews", "gallery", "blockedDates", "coupons", "slides", "impactEvents"
+                  ];
 
-                listsToMerge.forEach((key) => {
-                  const serverList = finalSettings[key] || [];
-                  const localList = localSettings[key] || [];
-                  
-                  if (Array.isArray(localList) && localList.length > 0) {
-                    if (serverList.length === 0) {
-                      (finalSettings as any)[key] = localList;
-                      needsSyncSettings = true;
-                    } else if (key === "rooms") {
-                      let changed = false;
-                      const merged = [...(serverList as any)];
-                      localList.forEach((lr: any) => {
-                        const idx = merged.findIndex((r: any) => r.id === lr.id);
-                        if (idx === -1) {
-                          merged.push(lr);
-                          changed = true;
-                        } else if (JSON.stringify(merged[idx]) !== JSON.stringify(lr)) {
-                          merged[idx] = { ...merged[idx], ...lr };
-                          changed = true;
+                  listsToMerge.forEach((key) => {
+                    const serverList = finalSettings[key] || [];
+                    const localList = localSettings[key] || [];
+                    
+                    if (Array.isArray(localList) && localList.length > 0) {
+                      if (serverList.length === 0) {
+                        (finalSettings as any)[key] = localList;
+                        needsSyncSettings = true;
+                      } else if (key === "rooms") {
+                        let changed = false;
+                        const merged = [...(serverList as any)];
+                        localList.forEach((lr: any) => {
+                          const idx = merged.findIndex((r: any) => r.id === lr.id);
+                          if (idx === -1) {
+                            merged.push(lr);
+                            changed = true;
+                          } else if (JSON.stringify(merged[idx]) !== JSON.stringify(lr)) {
+                            merged[idx] = { ...merged[idx], ...lr };
+                            changed = true;
+                          }
+                        });
+                        if (changed) {
+                          finalSettings.rooms = merged;
+                          needsSyncSettings = true;
                         }
-                      });
-                      if (changed) {
-                        finalSettings.rooms = merged;
+                      } else if (key === "blockedDates") {
+                        let changed = false;
+                        const merged = [...(serverList as any)];
+                        localList.forEach((ld: any) => {
+                          const exists = merged.some((d: any) => d.date === ld.date && d.roomId === ld.roomId);
+                          if (!exists) {
+                            merged.push(ld);
+                            changed = true;
+                          }
+                        });
+                        if (changed) {
+                          finalSettings.blockedDates = merged;
+                          needsSyncSettings = true;
+                        }
+                      } else if (key === "coupons") {
+                        let changed = false;
+                        const merged = [...(serverList as any)];
+                        localList.forEach((lc: any) => {
+                          const exists = merged.some((c: any) => c.code?.toUpperCase() === lc.code?.toUpperCase());
+                          if (!exists) {
+                            merged.push(lc);
+                            changed = true;
+                          }
+                        });
+                        if (changed) {
+                          finalSettings.coupons = merged;
+                          needsSyncSettings = true;
+                        }
+                      } else if (localList.length > serverList.length) {
+                        (finalSettings as any)[key] = localList;
                         needsSyncSettings = true;
                       }
-                    } else if (key === "blockedDates") {
-                      let changed = false;
-                      const merged = [...(serverList as any)];
-                      localList.forEach((ld: any) => {
-                        const exists = merged.some((d: any) => d.date === ld.date && d.roomId === ld.roomId);
-                        if (!exists) {
-                          merged.push(ld);
-                          changed = true;
-                        }
-                      });
-                      if (changed) {
-                        finalSettings.blockedDates = merged;
-                        needsSyncSettings = true;
-                      }
-                    } else if (key === "coupons") {
-                      let changed = false;
-                      const merged = [...(serverList as any)];
-                      localList.forEach((lc: any) => {
-                        const exists = merged.some((c: any) => c.code?.toUpperCase() === lc.code?.toUpperCase());
-                        if (!exists) {
-                          merged.push(lc);
-                          changed = true;
-                        }
-                      });
-                      if (changed) {
-                        finalSettings.coupons = merged;
-                        needsSyncSettings = true;
-                      }
-                    } else if (localList.length > serverList.length) {
-                      (finalSettings as any)[key] = localList;
-                      needsSyncSettings = true;
                     }
-                  }
-                });
+                  });
+                }
               }
             } catch (e) {
               console.error("Failed to parse localSettings backup", e);
