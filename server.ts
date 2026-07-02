@@ -392,12 +392,14 @@ async function getSettingsFromDirectus() {
       }
       return localRoom;
     });
-    // Append any room from Directus that is not locally present
-    (result.rooms || []).forEach((directusRoom: any) => {
-      if (!mergedRooms.some((r: any) => r.id === directusRoom.id)) {
-        mergedRooms.push(directusRoom);
-      }
-    });
+    // Append any room from Directus that is not locally present ONLY if local list is empty
+    if ((localDb.rooms || []).length === 0) {
+      (result.rooms || []).forEach((directusRoom: any) => {
+        if (!mergedRooms.some((r: any) => r.id === directusRoom.id)) {
+          mergedRooms.push(directusRoom);
+        }
+      });
+    }
     localDb.rooms = mergedRooms;
 
     // 3. Merge promotions (by ID) safely
@@ -408,11 +410,14 @@ async function getSettingsFromDirectus() {
       }
       return localPromo;
     });
-    (result.promotions || []).forEach((directusPromo: any) => {
-      if (!mergedPromotions.some((p: any) => p.id === directusPromo.id)) {
-        mergedPromotions.push(directusPromo);
-      }
-    });
+    // Append promotions only if local list is empty to prevent resurrecting deleted ones
+    if ((localDb.promotions || []).length === 0) {
+      (result.promotions || []).forEach((directusPromo: any) => {
+        if (!mergedPromotions.some((p: any) => p.id === directusPromo.id)) {
+          mergedPromotions.push(directusPromo);
+        }
+      });
+    }
     localDb.promotions = mergedPromotions;
 
     // 4. Merge amenities (by title or ID) safely
@@ -423,11 +428,14 @@ async function getSettingsFromDirectus() {
       }
       return localA;
     });
-    (result.amenities || []).forEach((directusA: any) => {
-      if (!mergedAmenities.some((a: any) => (a.title || a.id) === (directusA.title || directusA.id))) {
-        mergedAmenities.push(directusA);
-      }
-    });
+    // Append amenities only if local list is empty to prevent resurrecting deleted ones
+    if ((localDb.amenities || []).length === 0) {
+      (result.amenities || []).forEach((directusA: any) => {
+        if (!mergedAmenities.some((a: any) => (a.title || a.id) === (directusA.title || directusA.id))) {
+          mergedAmenities.push(directusA);
+        }
+      });
+    }
     localDb.amenities = mergedAmenities;
 
     // 5. Merge faqs (by q or ID) safely
@@ -438,11 +446,14 @@ async function getSettingsFromDirectus() {
       }
       return localF;
     });
-    (result.faqs || []).forEach((directusF: any) => {
-      if (!mergedFaqs.some((f: any) => (f.q || f.id) === (directusF.q || directusF.id))) {
-        mergedFaqs.push(directusF);
-      }
-    });
+    // Append FAQs only if local list is empty to prevent resurrecting deleted ones
+    if ((localDb.faqs || []).length === 0) {
+      (result.faqs || []).forEach((directusF: any) => {
+        if (!mergedFaqs.some((f: any) => (f.q || f.id) === (directusF.q || directusF.id))) {
+          mergedFaqs.push(directusF);
+        }
+      });
+    }
     localDb.faqs = mergedFaqs;
 
     // 6. Merge reviews (by name & review text) safely
@@ -453,11 +464,14 @@ async function getSettingsFromDirectus() {
       }
       return localR;
     });
-    (result.reviews || []).forEach((directusR: any) => {
-      if (!mergedReviews.some((r: any) => `${r.name}_${r.review}` === `${directusR.name}_${directusR.review}`)) {
-        mergedReviews.push(directusR);
-      }
-    });
+    // Append reviews only if local list is empty to prevent resurrecting deleted ones
+    if ((localDb.reviews || []).length === 0) {
+      (result.reviews || []).forEach((directusR: any) => {
+        if (!mergedReviews.some((r: any) => `${r.name}_${r.review}` === `${directusR.name}_${directusR.review}`)) {
+          mergedReviews.push(directusR);
+        }
+      });
+    }
     localDb.reviews = mergedReviews;
 
     // 7. Merge gallery (by url) safely
@@ -468,11 +482,14 @@ async function getSettingsFromDirectus() {
       }
       return localG;
     });
-    (result.gallery || []).forEach((directusG: any) => {
-      if (!mergedGallery.some((g: any) => g.url === directusG.url)) {
-        mergedGallery.push(directusG);
-      }
-    });
+    // Append gallery items only if local list is empty to prevent resurrecting deleted ones
+    if ((localDb.gallery || []).length === 0) {
+      (result.gallery || []).forEach((directusG: any) => {
+        if (!mergedGallery.some((g: any) => g.url === directusG.url)) {
+          mergedGallery.push(directusG);
+        }
+      });
+    }
     localDb.gallery = mergedGallery;
 
     // 8. Merge blockedDates (by date & roomId key) safely
@@ -487,15 +504,18 @@ async function getSettingsFromDirectus() {
       }
       return localBD;
     });
-    (result.blockedDates || []).forEach((directusBD: any) => {
-      const dKey = directusBD.id || directusBD.blockedId || `${directusBD.date}_${directusBD.roomId}`;
-      if (!mergedBlockedDates.some((bd: any) => {
-        const key = bd.id || bd.blockedId || `${bd.date}_${bd.roomId}`;
-        return dKey === key;
-      })) {
-        mergedBlockedDates.push(directusBD);
-      }
-    });
+    // Append blocked dates only if local list is empty to prevent resurrecting deleted ones
+    if ((localDb.blockedDates || []).length === 0) {
+      (result.blockedDates || []).forEach((directusBD: any) => {
+        const dKey = directusBD.id || directusBD.blockedId || `${directusBD.date}_${directusBD.roomId}`;
+        if (!mergedBlockedDates.some((bd: any) => {
+          const key = bd.id || bd.blockedId || `${bd.date}_${bd.roomId}`;
+          return dKey === key;
+        })) {
+          mergedBlockedDates.push(directusBD);
+        }
+      });
+    }
     localDb.blockedDates = mergedBlockedDates;
 
     // 9. Merge coupons (by code) safely
@@ -507,12 +527,15 @@ async function getSettingsFromDirectus() {
       }
       return localC;
     });
-    (result.coupons || []).forEach((directusC: any) => {
-      const dKey = (directusC.code || '').toUpperCase();
-      if (!mergedCoupons.some((c: any) => (c.code || '').toUpperCase() === dKey)) {
-        mergedCoupons.push(directusC);
-      }
-    });
+    // Append coupons only if local list is empty to prevent resurrecting deleted ones
+    if ((localDb.coupons || []).length === 0) {
+      (result.coupons || []).forEach((directusC: any) => {
+        const dKey = (directusC.code || '').toUpperCase();
+        if (!mergedCoupons.some((c: any) => (c.code || '').toUpperCase() === dKey)) {
+          mergedCoupons.push(directusC);
+        }
+      });
+    }
     localDb.coupons = mergedCoupons;
 
     // 10. Merge slides safely
@@ -523,9 +546,9 @@ async function getSettingsFromDirectus() {
       }
       return localSlide;
     });
-    // Append any slides from Directus that are not locally present
-    if (result.slides && result.slides.length > mergedSlides.length) {
-      result.slides.slice(mergedSlides.length).forEach((s: any) => mergedSlides.push(s));
+    // Append slides from Directus only if local slides list is empty to prevent resurrecting deleted ones
+    if ((localDb.slides || []).length === 0 && result.slides) {
+      result.slides.forEach((s: any) => mergedSlides.push(s));
     }
     localDb.slides = mergedSlides;
 
@@ -537,11 +560,14 @@ async function getSettingsFromDirectus() {
       }
       return localE;
     });
-    (result.impactEvents || []).forEach((directusE: any) => {
-      if (!mergedImpactEvents.some((e: any) => e.id === directusE.id || String(e.title).trim().toLowerCase() === String(directusE.title).trim().toLowerCase())) {
-        mergedImpactEvents.push(directusE);
-      }
-    });
+    // Append impact events only if local list is empty to prevent resurrecting deleted ones
+    if ((localDb.impactEvents || []).length === 0) {
+      (result.impactEvents || []).forEach((directusE: any) => {
+        if (!mergedImpactEvents.some((e: any) => e.id === directusE.id || String(e.title).trim().toLowerCase() === String(directusE.title).trim().toLowerCase())) {
+          mergedImpactEvents.push(directusE);
+        }
+      });
+    }
     localDb.impactEvents = mergedImpactEvents;
 
     if (localDb.googlePlaceId === undefined) {

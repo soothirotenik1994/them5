@@ -467,54 +467,6 @@ export function SettingsProvider({ children }: { children: React.ReactNode }) {
                       if (serverList.length === 0) {
                         (finalSettings as any)[key] = localList;
                         needsSyncSettings = true;
-                      } else if (key === "rooms") {
-                        let changed = false;
-                        const merged = [...(serverList as any)];
-                        localList.forEach((lr: any) => {
-                          const idx = merged.findIndex((r: any) => r.id === lr.id);
-                          if (idx === -1) {
-                            merged.push(lr);
-                            changed = true;
-                          } else if (JSON.stringify(merged[idx]) !== JSON.stringify(lr)) {
-                            merged[idx] = { ...merged[idx], ...lr };
-                            changed = true;
-                          }
-                        });
-                        if (changed) {
-                          finalSettings.rooms = merged;
-                          needsSyncSettings = true;
-                        }
-                      } else if (key === "blockedDates") {
-                        let changed = false;
-                        const merged = [...(serverList as any)];
-                        localList.forEach((ld: any) => {
-                          const exists = merged.some((d: any) => d.date === ld.date && d.roomId === ld.roomId);
-                          if (!exists) {
-                            merged.push(ld);
-                            changed = true;
-                          }
-                        });
-                        if (changed) {
-                          finalSettings.blockedDates = merged;
-                          needsSyncSettings = true;
-                        }
-                      } else if (key === "coupons") {
-                        let changed = false;
-                        const merged = [...(serverList as any)];
-                        localList.forEach((lc: any) => {
-                          const exists = merged.some((c: any) => c.code?.toUpperCase() === lc.code?.toUpperCase());
-                          if (!exists) {
-                            merged.push(lc);
-                            changed = true;
-                          }
-                        });
-                        if (changed) {
-                          finalSettings.coupons = merged;
-                          needsSyncSettings = true;
-                        }
-                      } else if (localList.length > serverList.length) {
-                        (finalSettings as any)[key] = localList;
-                        needsSyncSettings = true;
                       }
                     }
                   });

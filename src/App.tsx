@@ -870,7 +870,12 @@ export default function App() {
 
             {/* Renders dynamic catalog directly from database */}
             <div className="space-y-5">
-              {rooms.map((room, idx) => {
+              {rooms.length === 0 ? (
+                <div className="p-8 text-center bg-[#111111] border border-neutral-900 rounded-lg">
+                  <p className="text-xs text-neutral-500 font-sans">ขออภัย ขณะนี้ยังไม่มีข้อมูลห้องพักที่เปิดให้บริการ</p>
+                </div>
+              ) : (
+                rooms.map((room, idx) => {
                 const roomImg = room.imageUrl || resolvedImages[room.id] || deluxeImg;
                 const isExpanded = expandedRoomIdx === idx;
 
@@ -988,13 +993,14 @@ export default function App() {
 
                   </div>
                 );
-              })}
+              })
+              )}
             </div>
           </div>
 
           {/* INTERACTIVE LIFESTYLE GALLERY (คลังภาพความสวยเด่นสไตล์ลอฟท์) */}
           {(() => {
-            const rawGalleryItems = (settings.gallery && settings.gallery.length > 0) ? settings.gallery : defaultGallery;
+            const rawGalleryItems = (settings.gallery !== undefined && settings.gallery !== null) ? settings.gallery : defaultGallery;
             const fallbackGalleryImages = [lobbyImg, superiorImg, deluxeImg, studioImg];
             const galleryItems = rawGalleryItems.map((item, idx) => ({
               ...item,
@@ -1057,26 +1063,32 @@ export default function App() {
                 </div>
 
                 {/* Gallery Grid */}
-                <div className="grid grid-cols-2 gap-3.5 transition-all duration-500">
-                  {displayedGalleryItems.map((item, idx) => (
-                    <div 
-                      key={idx}
-                      onClick={() => {
-                        setLightboxItems(filteredGalleryItems);
-                        setLightboxIndex(idx);
-                      }}
-                      className="relative group h-28 sm:h-32 rounded overflow-hidden border border-neutral-900 cursor-pointer bg-neutral-950 hover:border-brick/50 transition-all duration-350 shadow-md hover:shadow-lg"
-                    >
-                      <img src={item.resolvedUrl} referrerPolicy="no-referrer" className="w-full h-full object-cover brightness-90 group-hover:scale-105 duration-500" />
-                      <div className="absolute inset-0 bg-gradient-to-t from-black/85 via-black/10 to-transparent flex flex-col justify-end p-2.5">
-                        <span className="text-[7.5px] font-mono text-brick font-bold tracking-wider">{item.cat?.toUpperCase() || "ทั่วไป"}</span>
-                        <span className="text-[10px] text-white font-medium font-sans leading-tight block truncate mt-0.5 group-hover:text-brick-light duration-200">
-                          {item.title}
-                        </span>
+                {displayedGalleryItems.length === 0 ? (
+                  <div className="p-8 text-center bg-[#111111] border border-neutral-900 rounded-lg">
+                    <p className="text-xs text-neutral-500 font-sans">ยังไม่มีรูปภาพในอัลบั้มแกลเลอรี</p>
+                  </div>
+                ) : (
+                  <div className="grid grid-cols-2 gap-3.5 transition-all duration-500">
+                    {displayedGalleryItems.map((item, idx) => (
+                      <div 
+                        key={idx}
+                        onClick={() => {
+                          setLightboxItems(filteredGalleryItems);
+                          setLightboxIndex(idx);
+                        }}
+                        className="relative group h-28 sm:h-32 rounded overflow-hidden border border-neutral-900 cursor-pointer bg-neutral-950 hover:border-brick/50 transition-all duration-350 shadow-md hover:shadow-lg"
+                      >
+                        <img src={item.resolvedUrl} referrerPolicy="no-referrer" className="w-full h-full object-cover brightness-90 group-hover:scale-105 duration-500" />
+                        <div className="absolute inset-0 bg-gradient-to-t from-black/85 via-black/10 to-transparent flex flex-col justify-end p-2.5">
+                          <span className="text-[7.5px] font-mono text-brick font-bold tracking-wider">{item.cat?.toUpperCase() || "ทั่วไป"}</span>
+                          <span className="text-[10px] text-white font-medium font-sans leading-tight block truncate mt-0.5 group-hover:text-brick-light duration-200">
+                            {item.title}
+                          </span>
+                        </div>
                       </div>
-                    </div>
-                  ))}
-                </div>
+                    ))}
+                  </div>
+                )}
 
                 {/* Load More Button */}
                 {hasMoreGallery && (
@@ -1336,44 +1348,54 @@ export default function App() {
             </div>
 
             <div className="space-y-4 pt-1">
-              {((settings.reviews && settings.reviews.length > 0) ? settings.reviews : defaultReviews).map((rev, idx) => (
-                <div key={idx} className="p-3.5 bg-[#111111] border border-neutral-900 rounded-lg space-y-3.5 text-xs">
-                  <div className="flex justify-between items-start">
-                    <div className="flex items-center space-x-2.5">
-                      {rev.avatarUrl ? (
-                        <img 
-                          src={rev.avatarUrl} 
-                          alt={rev.name} 
-                          className="h-8 w-8 rounded-full object-cover border border-neutral-850 shrink-0" 
-                          referrerPolicy="no-referrer"
-                        />
-                      ) : (
-                        <div className="h-8 w-8 rounded-full bg-neutral-850 text-neutral-350 border border-neutral-800 flex items-center justify-center font-bold text-[10px] uppercase font-mono shrink-0">
-                          {rev.name ? rev.name.charAt(0) : "G"}
+              {(() => {
+                const reviewsList = (settings.reviews !== undefined && settings.reviews !== null) ? settings.reviews : defaultReviews;
+                if (reviewsList.length === 0) {
+                  return (
+                    <div className="p-8 text-center bg-[#111111] border border-neutral-900 rounded-lg">
+                      <p className="text-xs text-neutral-500 font-sans">ยังไม่มีรีวิวจากผู้เข้าพักในขณะนี้</p>
+                    </div>
+                  );
+                }
+                return reviewsList.map((rev, idx) => (
+                  <div key={idx} className="p-3.5 bg-[#111111] border border-neutral-900 rounded-lg space-y-3.5 text-xs">
+                    <div className="flex justify-between items-start">
+                      <div className="flex items-center space-x-2.5">
+                        {rev.avatarUrl ? (
+                          <img 
+                            src={rev.avatarUrl} 
+                            alt={rev.name} 
+                            className="h-8 w-8 rounded-full object-cover border border-neutral-850 shrink-0" 
+                            referrerPolicy="no-referrer"
+                          />
+                        ) : (
+                          <div className="h-8 w-8 rounded-full bg-neutral-850 text-neutral-350 border border-neutral-800 flex items-center justify-center font-bold text-[10px] uppercase font-mono shrink-0">
+                            {rev.name ? rev.name.charAt(0) : "G"}
+                          </div>
+                        )}
+                        <div>
+                          <h4 className="font-bold text-white font-sans text-xs">{rev.name}</h4>
+                          <span className="text-[9px] text-brick font-mono uppercase bg-brick/5 border border-brick/15 px-1.5 py-0.5 rounded inline-block mt-0.5">
+                            {rev.role}
+                          </span>
                         </div>
-                      )}
-                      <div>
-                        <h4 className="font-bold text-white font-sans text-xs">{rev.name}</h4>
-                        <span className="text-[9px] text-brick font-mono uppercase bg-brick/5 border border-brick/15 px-1.5 py-0.5 rounded inline-block mt-0.5">
-                          {rev.role}
-                        </span>
+                      </div>
+                      {/* Golden Stars Rating Row */}
+                      <div className="flex items-center space-x-0.5 mt-1">
+                        {[...Array(rev.rating || 5)].map((_, i) => (
+                          <Star key={i} className="h-3 w-3 text-amber-500 fill-amber-500 shrink-0" />
+                        ))}
                       </div>
                     </div>
-                    {/* Golden Stars Rating Row */}
-                    <div className="flex items-center space-x-0.5 mt-1">
-                      {[...Array(rev.rating || 5)].map((_, i) => (
-                        <Star key={i} className="h-3 w-3 text-amber-500 fill-amber-500 shrink-0" />
-                      ))}
+                    <p className="text-neutral-350 leading-relaxed font-sans font-light">
+                      "{rev.review}"
+                    </p>
+                    <div className="text-[9px] text-neutral-500 font-mono flex justify-end pt-0.5 border-t border-neutral-900/40">
+                      <span>รีวิวเมื่อ: {rev.date}</span>
                     </div>
                   </div>
-                  <p className="text-neutral-350 leading-relaxed font-sans font-light">
-                    "{rev.review}"
-                  </p>
-                  <div className="text-[9px] text-neutral-500 font-mono flex justify-end pt-0.5 border-t border-neutral-900/40">
-                    <span>รีวิวเมื่อ: {rev.date}</span>
-                  </div>
-                </div>
-              ))}
+                ));
+              })()}
             </div>
           </div>
 

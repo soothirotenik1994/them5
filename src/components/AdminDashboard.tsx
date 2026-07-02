@@ -6,7 +6,7 @@ import {
   Coffee, HelpCircle, MessageSquare, Images, ShieldAlert, Tag, Ticket, Wallpaper,
   Search, Home, Bell, Sun, Moon, Database
 } from "lucide-react";
-import { useSettings, BookingRecord, WebSettings } from "../context/SettingsContext";
+import { useSettings, BookingRecord, WebSettings, defaultGallery } from "../context/SettingsContext";
 import { RoomType } from "../types";
 import CalendarTabContent from "./CalendarTabContent";
 import SmtpTabContent from "./SmtpTabContent";
@@ -139,7 +139,10 @@ export default function AdminDashboard({ isOpen, onClose, isFullPage = false }: 
   const [amenitiesEdit, setAmenitiesEdit] = useState(JSON.parse(JSON.stringify(settings.amenities || [])));
   const [faqsEdit, setFaqsEdit] = useState(JSON.parse(JSON.stringify(settings.faqs || [])));
   const [reviewsEdit, setReviewsEdit] = useState(JSON.parse(JSON.stringify(settings.reviews || [])));
-  const [galleryEdit, setGalleryEdit] = useState(JSON.parse(JSON.stringify(settings.gallery || [])));
+  const [galleryEdit, setGalleryEdit] = useState(() => {
+    const list = settings.gallery;
+    return JSON.parse(JSON.stringify(Array.isArray(list) && list.length > 0 ? list : defaultGallery));
+  });
 
   // Google Reviews Integration state
   const [googlePlaceIdEdit, setGooglePlaceIdEdit] = useState(settings.googlePlaceId || "ChIJXWlJMC-e4jARLqX9OidpWjY");
@@ -257,7 +260,7 @@ export default function AdminDashboard({ isOpen, onClose, isFullPage = false }: 
       setAmenitiesEdit(JSON.parse(JSON.stringify(settings.amenities || [])));
       setFaqsEdit(JSON.parse(JSON.stringify(settings.faqs || [])));
       setReviewsEdit(JSON.parse(JSON.stringify(settings.reviews || [])));
-      setGalleryEdit(JSON.parse(JSON.stringify(settings.gallery || [])));
+      setGalleryEdit(JSON.parse(JSON.stringify(settings.gallery && settings.gallery.length > 0 ? settings.gallery : defaultGallery)));
       setGooglePlaceIdEdit(settings.googlePlaceId || "ChIJXWlJMC-e4jARLqX9OidpWjY");
       setGoogleReviewsEnabledEdit(settings.googleReviewsEnabled !== undefined ? settings.googleReviewsEnabled : true);
       setGoogleReviewsSyncIntervalEdit(settings.general?.googleReviewsSyncInterval || "manual");
