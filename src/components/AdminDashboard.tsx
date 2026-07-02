@@ -146,7 +146,7 @@ export default function AdminDashboard({ isOpen, onClose, isFullPage = false }: 
   const [reviewsEdit, setReviewsEdit] = useState(JSON.parse(JSON.stringify(settings.reviews || [])));
   const [galleryEdit, setGalleryEdit] = useState(() => {
     const list = settings.gallery;
-    return JSON.parse(JSON.stringify(Array.isArray(list) && list.length > 0 ? list : defaultGallery));
+    return JSON.parse(JSON.stringify(Array.isArray(list) ? list : defaultGallery));
   });
 
   // Google Reviews Integration state
@@ -265,7 +265,7 @@ export default function AdminDashboard({ isOpen, onClose, isFullPage = false }: 
       setAmenitiesEdit(JSON.parse(JSON.stringify(settings.amenities || [])));
       setFaqsEdit(JSON.parse(JSON.stringify(settings.faqs || [])));
       setReviewsEdit(JSON.parse(JSON.stringify(settings.reviews || [])));
-      setGalleryEdit(JSON.parse(JSON.stringify(settings.gallery && settings.gallery.length > 0 ? settings.gallery : defaultGallery)));
+      setGalleryEdit(JSON.parse(JSON.stringify(Array.isArray(settings.gallery) ? settings.gallery : defaultGallery)));
       setGooglePlaceIdEdit(settings.googlePlaceId || "ChIJXWlJMC-e4jARLqX9OidpWjY");
       setGoogleReviewsEnabledEdit(settings.googleReviewsEnabled !== undefined ? settings.googleReviewsEnabled : true);
       setGoogleReviewsSyncIntervalEdit(settings.general?.googleReviewsSyncInterval || "manual");
@@ -3930,39 +3930,6 @@ export default function AdminDashboard({ isOpen, onClose, isFullPage = false }: 
                       </div>
                     </div>
                   )}
-
-                  {/* UNIFIED CONFIRM DELETE MODAL */}
-                  {confirmDeleteModal && (
-                    <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/85 backdrop-blur-md animate-fade-in">
-                      <div className="w-full max-w-md bg-neutral-900 border border-neutral-800 rounded-lg p-6 shadow-2xl space-y-4">
-                        <div className="flex items-center space-x-3 text-red-500">
-                          <Trash2 className="h-6 w-6 shrink-0" />
-                          <h4 className="text-md font-bold font-sans text-white">{confirmDeleteModal.title}</h4>
-                        </div>
-                        <p className="text-xs text-neutral-400 leading-relaxed font-sans">{confirmDeleteModal.message}</p>
-                        <div className="flex justify-end space-x-3 pt-2">
-                          <button
-                            type="button"
-                            onClick={() => setConfirmDeleteModal(null)}
-                            className="px-3.5 py-1.5 bg-neutral-800 hover:bg-neutral-700 text-neutral-300 rounded text-xs font-semibold cursor-pointer transition-colors"
-                          >
-                            ยกเลิก
-                          </button>
-                          <button
-                            type="button"
-                            onClick={async () => {
-                              const onConfirm = confirmDeleteModal.onConfirm;
-                              setConfirmDeleteModal(null);
-                              await onConfirm();
-                            }}
-                            className="px-4 py-1.5 bg-red-600 hover:bg-red-700 text-white rounded text-xs font-semibold cursor-pointer transition-colors shadow-lg shadow-red-900/20"
-                          >
-                            ยืนยันลบถาวร
-                          </button>
-                        </div>
-                      </div>
-                    </div>
-                  )}
                 </div>
               )}
 
@@ -4011,6 +3978,39 @@ export default function AdminDashboard({ isOpen, onClose, isFullPage = false }: 
         )}
 
       </div>
+
+      {/* UNIFIED CONFIRM DELETE MODAL */}
+      {confirmDeleteModal && (
+        <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/85 backdrop-blur-md animate-fade-in">
+          <div className="w-full max-w-md bg-neutral-900 border border-neutral-800 rounded-lg p-6 shadow-2xl space-y-4">
+            <div className="flex items-center space-x-3 text-red-500">
+              <Trash2 className="h-6 w-6 shrink-0" />
+              <h4 className="text-md font-bold font-sans text-white">{confirmDeleteModal.title}</h4>
+            </div>
+            <p className="text-xs text-neutral-400 leading-relaxed font-sans">{confirmDeleteModal.message}</p>
+            <div className="flex justify-end space-x-3 pt-2">
+              <button
+                type="button"
+                onClick={() => setConfirmDeleteModal(null)}
+                className="px-3.5 py-1.5 bg-neutral-800 hover:bg-neutral-700 text-neutral-300 rounded text-xs font-semibold cursor-pointer transition-colors"
+              >
+                ยกเลิก
+              </button>
+              <button
+                type="button"
+                onClick={async () => {
+                  const onConfirm = confirmDeleteModal.onConfirm;
+                  setConfirmDeleteModal(null);
+                  await onConfirm();
+                }}
+                className="px-4 py-1.5 bg-red-600 hover:bg-red-700 text-white rounded text-xs font-semibold cursor-pointer transition-colors shadow-lg shadow-red-900/20"
+              >
+                ยืนยันลบถาวร
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
