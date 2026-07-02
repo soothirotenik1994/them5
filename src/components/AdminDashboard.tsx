@@ -15,6 +15,7 @@ import CouponsTabContent from "./CouponsTabContent";
 import BackgroundsTabContent from "./BackgroundsTabContent";
 import SeoTabContent from "./SeoTabContent";
 import ImageUploadButton from "./ImageUploadButton";
+import MultiImageUploadButton from "./MultiImageUploadButton";
 import ImpactEventsTab from "./ImpactEventsTab";
 import DirectusTabContent from "./DirectusTabContent";
 
@@ -280,42 +281,7 @@ export default function AdminDashboard({ isOpen, onClose, isFullPage = false }: 
         const res = await fetch("/api/admins");
         const data = await res.json();
         if (data.success && data.admins) {
-          let finalAdmins = [...data.admins];
-          let localBackup: any[] = [];
-          try {
-            const backupStr = localStorage.getItem("m5_admins_backup");
-            localBackup = backupStr ? JSON.parse(backupStr) : [];
-          } catch (e) {}
-
-          const adminsToRegister: any[] = [];
-          const adminsToUpdate: any[] = [];
-
-          if (Array.isArray(localBackup) && localBackup.length > 0) {
-            localBackup.forEach((localAd: any) => {
-              const serverAdIdx = finalAdmins.findIndex((sa: any) => 
-                String(sa.username).toLowerCase().trim() === String(localAd.username).toLowerCase().trim()
-              );
-              
-              if (serverAdIdx === -1) {
-                // Admin is missing on server database (e.g. server reset). Register back.
-                adminsToRegister.push(localAd);
-                finalAdmins.push(localAd);
-              } else {
-                const serverAd = finalAdmins[serverAdIdx];
-                const isServerDefaultPassword = serverAd.password === "password123";
-                const isLocalCustomPassword = localAd.password && localAd.password !== "password123";
-                
-                if (isServerDefaultPassword && isLocalCustomPassword) {
-                  // Restore custom password back to the server
-                  serverAd.password = localAd.password;
-                  if (localAd.name) serverAd.name = localAd.name;
-                  if (localAd.role) serverAd.role = localAd.role;
-                  adminsToUpdate.push(serverAd);
-                }
-              }
-            });
-          }
-
+          const finalAdmins = [...data.admins];
           setAdminUsers(finalAdmins);
           localStorage.setItem("m5_admins_backup", JSON.stringify(finalAdmins));
 
@@ -328,27 +294,6 @@ export default function AdminDashboard({ isOpen, onClose, isFullPage = false }: 
           } else {
             const matched = finalAdmins.find((a: any) => a.username.toLowerCase() === "admin");
             if (matched) setCurrentAdmin(matched);
-          }
-
-          // Async sync actions
-          if (adminsToRegister.length > 0) {
-            adminsToRegister.forEach((adm) => {
-              fetch("/api/admins/register", {
-                method: "POST",
-                headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({ admin: adm })
-              }).catch(e => console.error("Error syncing missing admin back to server:", e));
-            });
-          }
-
-          if (adminsToUpdate.length > 0) {
-            adminsToUpdate.forEach((adm) => {
-              fetch(`/api/admins/${adm.id || adm.adminId}`, {
-                method: "PUT",
-                headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({ admin: adm })
-              }).catch(e => console.error("Error syncing updated admin back to server:", e));
-            });
           }
         }
       } catch (err) {
@@ -2790,20 +2735,43 @@ export default function AdminDashboard({ isOpen, onClose, isFullPage = false }: 
               {/* TAB: GALLERY EDIT */}
               {activeTab === "gallery" && (
                 <div className="space-y-6">
-                  <div className="flex justify-between items-center">
+                  <div className="flex flex-col sm:flex-row justify-between sm:items-center gap-4">
                     <div>
                       <h3 className="text-xl font-bold text-white">รูปภาพแกลเลอรีรูปถ่าย (Lifestyle Gallery Images)</h3>
                       <p className="text-xs text-neutral-450 font-light">กำหนด URL รูปภาพ คำอธิบาย และหมวดหมู่หัวข้อเพื่อประชาสัมพันธ์แกลเลอรีแบบไดนามิก</p>
                     </div>
-                    <button
-                      onClick={() => {
-                        setGalleryEdit([...galleryEdit, { url: "", title: "คำภาพจำลอง", cat: "Superior Suite" }]);
-                      }}
-                      className="px-3 py-1.5 bg-emerald-600 hover:bg-emerald-700 text-white rounded text-xs font-mono font-bold cursor-pointer flex items-center space-x-1"
-                    >
-                      <Plus className="h-4 w-4" />
-                      <span>เพิ่มรูปภาพ (Add Gallery Image)</span>
-                    </button>
+                    <div className="flex flex-wrap items-center gap-2">
+                      <MultiImageUploadButton
+                        onUploadsSuccess={(urls, fileNames) => {
+                          const newItems = urls.map((url, i) => {
+                            let name = fileNames[i] || "";
+                            if (name.includes(".")) {
+                              const parts = name.split(".");
+                              parts.pop();
+                              name = parts.join(".");
+                            }
+                            name = name.replace(/[_\-]/g, " ").trim();
+                            if (!name) name = `รูปภาพแกลเลอรี #${galleryEdit.length + i + 1}`;
+                            return {
+                              url,
+                              title: name,
+                              cat: "Superior Suite"
+                            };
+                          });
+                          setGalleryEdit([...galleryEdit, ...newItems]);
+                        }}
+                      />
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setGalleryEdit([...galleryEdit, { url: "", title: "คำภาพจำลอง", cat: "Superior Suite" }]);
+                        }}
+                        className="px-3 py-1.5 bg-emerald-600 hover:bg-emerald-700 text-white rounded text-xs font-sans font-bold cursor-pointer flex items-center space-x-1"
+                      >
+                        <Plus className="h-4 w-4" />
+                        <span>เพิ่มกรอบข้อมูล (Add Slot)</span>
+                      </button>
+                    </div>
                   </div>
 
                   <div className="space-y-4">
