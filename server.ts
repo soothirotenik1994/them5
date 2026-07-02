@@ -385,191 +385,73 @@ async function getSettingsFromDirectus() {
     localDb.general = safeMerge(localDb.general || {}, result.general);
     localDb.smtp = safeMerge(localDb.smtp || {}, result.smtp);
 
-    // 2. Merge rooms (by ID) safely
-    const mergedRooms = (localDb.rooms || []).map((localRoom: any) => {
-      const directusRoom = (result.rooms || []).find((r: any) => r.id === localRoom.id);
-      if (directusRoom) {
-        return safeMerge(localRoom, directusRoom);
-      }
-      return localRoom;
-    });
-    // Append any room from Directus that is not locally present ONLY if first-time initialization
-    if (firstTimeInit) {
-      (result.rooms || []).forEach((directusRoom: any) => {
-        if (!mergedRooms.some((r: any) => r.id === directusRoom.id)) {
-          mergedRooms.push(directusRoom);
-        }
-      });
+    // 2. Merge rooms (by ID) safely. Trust Directus as source of truth if it has items.
+    if (result.rooms && result.rooms.length > 0) {
+      localDb.rooms = result.rooms;
+    } else if (localDb.initialized) {
+      localDb.rooms = [];
     }
-    localDb.rooms = mergedRooms;
 
-    // 3. Merge promotions (by ID) safely
-    const mergedPromotions = (localDb.promotions || []).map((localPromo: any) => {
-      const directusPromo = (result.promotions || []).find((p: any) => p.id === localPromo.id);
-      if (directusPromo) {
-        return safeMerge(localPromo, directusPromo);
-      }
-      return localPromo;
-    });
-    // Append promotions only if first-time initialization to prevent resurrecting deleted ones
-    if (firstTimeInit) {
-      (result.promotions || []).forEach((directusPromo: any) => {
-        if (!mergedPromotions.some((p: any) => p.id === directusPromo.id)) {
-          mergedPromotions.push(directusPromo);
-        }
-      });
+    // 3. Merge promotions (by ID) safely. Trust Directus as source of truth if it has items.
+    if (result.promotions && result.promotions.length > 0) {
+      localDb.promotions = result.promotions;
+    } else if (localDb.initialized) {
+      localDb.promotions = [];
     }
-    localDb.promotions = mergedPromotions;
 
-    // 4. Merge amenities (by title or ID) safely
-    const mergedAmenities = (localDb.amenities || []).map((localA: any) => {
-      const directusA = (result.amenities || []).find((a: any) => (a.title || a.id) === (localA.title || localA.id));
-      if (directusA) {
-        return safeMerge(localA, directusA);
-      }
-      return localA;
-    });
-    // Append amenities only if first-time initialization to prevent resurrecting deleted ones
-    if (firstTimeInit) {
-      (result.amenities || []).forEach((directusA: any) => {
-        if (!mergedAmenities.some((a: any) => (a.title || a.id) === (directusA.title || directusA.id))) {
-          mergedAmenities.push(directusA);
-        }
-      });
+    // 4. Merge amenities (by title or ID) safely. Trust Directus as source of truth if it has items.
+    if (result.amenities && result.amenities.length > 0) {
+      localDb.amenities = result.amenities;
+    } else if (localDb.initialized) {
+      localDb.amenities = [];
     }
-    localDb.amenities = mergedAmenities;
 
-    // 5. Merge faqs (by q or ID) safely
-    const mergedFaqs = (localDb.faqs || []).map((localF: any) => {
-      const directusF = (result.faqs || []).find((f: any) => (f.q || f.id) === (localF.q || localF.id));
-      if (directusF) {
-        return safeMerge(localF, directusF);
-      }
-      return localF;
-    });
-    // Append FAQs only if first-time initialization to prevent resurrecting deleted ones
-    if (firstTimeInit) {
-      (result.faqs || []).forEach((directusF: any) => {
-        if (!mergedFaqs.some((f: any) => (f.q || f.id) === (directusF.q || directusF.id))) {
-          mergedFaqs.push(directusF);
-        }
-      });
+    // 5. Merge faqs (by q or ID) safely. Trust Directus as source of truth if it has items.
+    if (result.faqs && result.faqs.length > 0) {
+      localDb.faqs = result.faqs;
+    } else if (localDb.initialized) {
+      localDb.faqs = [];
     }
-    localDb.faqs = mergedFaqs;
 
-    // 6. Merge reviews (by name & review text) safely
-    const mergedReviews = (localDb.reviews || []).map((localR: any) => {
-      const directusR = (result.reviews || []).find((r: any) => `${r.name}_${r.review}` === `${localR.name}_${localR.review}`);
-      if (directusR) {
-        return safeMerge(localR, directusR);
-      }
-      return localR;
-    });
-    // Append reviews only if first-time initialization to prevent resurrecting deleted ones
-    if (firstTimeInit) {
-      (result.reviews || []).forEach((directusR: any) => {
-        if (!mergedReviews.some((r: any) => `${r.name}_${r.review}` === `${directusR.name}_${directusR.review}`)) {
-          mergedReviews.push(directusR);
-        }
-      });
+    // 6. Merge reviews (by name & review text) safely. Trust Directus as source of truth if it has items.
+    if (result.reviews && result.reviews.length > 0) {
+      localDb.reviews = result.reviews;
+    } else if (localDb.initialized) {
+      localDb.reviews = [];
     }
-    localDb.reviews = mergedReviews;
 
-    // 7. Merge gallery (by url) safely
-    const mergedGallery = (localDb.gallery || []).map((localG: any) => {
-      const directusG = (result.gallery || []).find((g: any) => g.url === localG.url);
-      if (directusG) {
-        return safeMerge(localG, directusG);
-      }
-      return localG;
-    });
-    // Append gallery items only if first-time initialization to prevent resurrecting deleted ones
-    if (firstTimeInit) {
-      (result.gallery || []).forEach((directusG: any) => {
-        if (!mergedGallery.some((g: any) => g.url === directusG.url)) {
-          mergedGallery.push(directusG);
-        }
-      });
+    // 7. Merge gallery (by url) safely. Trust Directus as source of truth if it has items.
+    if (result.gallery && result.gallery.length > 0) {
+      localDb.gallery = result.gallery;
+    } else if (localDb.initialized) {
+      localDb.gallery = [];
     }
-    localDb.gallery = mergedGallery;
 
-    // 8. Merge blockedDates (by date & roomId key) safely
-    const mergedBlockedDates = (localDb.blockedDates || []).map((localBD: any) => {
-      const key = localBD.id || localBD.blockedId || `${localBD.date}_${localBD.roomId}`;
-      const directusBD = (result.blockedDates || []).find((bd: any) => {
-        const dKey = bd.id || bd.blockedId || `${bd.date}_${bd.roomId}`;
-        return dKey === key;
-      });
-      if (directusBD) {
-        return safeMerge(localBD, directusBD);
-      }
-      return localBD;
-    });
-    // Append blocked dates only if first-time initialization to prevent resurrecting deleted ones
-    if (firstTimeInit) {
-      (result.blockedDates || []).forEach((directusBD: any) => {
-        const dKey = directusBD.id || directusBD.blockedId || `${directusBD.date}_${directusBD.roomId}`;
-        if (!mergedBlockedDates.some((bd: any) => {
-          const key = bd.id || bd.blockedId || `${bd.date}_${bd.roomId}`;
-          return dKey === key;
-        })) {
-          mergedBlockedDates.push(directusBD);
-        }
-      });
+    // 8. Merge blockedDates (by date & roomId key) safely. Trust Directus as source of truth if it has items.
+    if (result.blockedDates && result.blockedDates.length > 0) {
+      localDb.blockedDates = result.blockedDates;
+    } else if (localDb.initialized) {
+      localDb.blockedDates = [];
     }
-    localDb.blockedDates = mergedBlockedDates;
 
-    // 9. Merge coupons (by code) safely
-    const mergedCoupons = (localDb.coupons || []).map((localC: any) => {
-      const key = (localC.code || '').toUpperCase();
-      const directusC = (result.coupons || []).find((c: any) => (c.code || '').toUpperCase() === key);
-      if (directusC) {
-        return safeMerge(localC, directusC);
-      }
-      return localC;
-    });
-    // Append coupons only if first-time initialization to prevent resurrecting deleted ones
-    if (firstTimeInit) {
-      (result.coupons || []).forEach((directusC: any) => {
-        const dKey = (directusC.code || '').toUpperCase();
-        if (!mergedCoupons.some((c: any) => (c.code || '').toUpperCase() === dKey)) {
-          mergedCoupons.push(directusC);
-        }
-      });
+    // 9. Merge coupons (by code) safely. Trust Directus as source of truth if it has items.
+    if (result.coupons && result.coupons.length > 0) {
+      localDb.coupons = result.coupons;
+    } else if (localDb.initialized) {
+      localDb.coupons = [];
     }
-    localDb.coupons = mergedCoupons;
 
-    // 10. Merge slides safely
-    const mergedSlides = (localDb.slides || []).map((localSlide: any, index: number) => {
-      const directusSlide = (result.slides || [])[index];
-      if (directusSlide) {
-        return safeMerge(localSlide, directusSlide);
-      }
-      return localSlide;
-    });
-    // Append slides from Directus only if first-time initialization to prevent resurrecting deleted ones
-    if (firstTimeInit && result.slides) {
-      result.slides.forEach((s: any) => mergedSlides.push(s));
+    // 10. Merge slides safely (only local)
+    if (!localDb.slides) {
+      localDb.slides = [];
     }
-    localDb.slides = mergedSlides;
 
-    // 11. Merge impactEvents (by ID or Title) safely
-    const mergedImpactEvents = (localDb.impactEvents || []).map((localE: any) => {
-      const directusE = (result.impactEvents || []).find((e: any) => e.id === localE.id || String(e.title).trim().toLowerCase() === String(localE.title).trim().toLowerCase());
-      if (directusE) {
-        return safeMerge(localE, directusE);
-      }
-      return localE;
-    });
-    // Append impact events only if first-time initialization to prevent resurrecting deleted ones
-    if (firstTimeInit) {
-      (result.impactEvents || []).forEach((directusE: any) => {
-        if (!mergedImpactEvents.some((e: any) => e.id === directusE.id || String(e.title).trim().toLowerCase() === String(directusE.title).trim().toLowerCase())) {
-          mergedImpactEvents.push(directusE);
-        }
-      });
+    // 11. Merge impactEvents (by ID or Title) safely. Trust Directus as source of truth if it has items.
+    if (result.impactEvents && result.impactEvents.length > 0) {
+      localDb.impactEvents = result.impactEvents;
+    } else if (localDb.initialized) {
+      localDb.impactEvents = [];
     }
-    localDb.impactEvents = mergedImpactEvents;
 
     if (localDb.googlePlaceId === undefined) {
       localDb.googlePlaceId = "ChIJXWlJMC-e4jARLqX9OidpWjY";
@@ -2560,6 +2442,82 @@ Generate a short personalized friendly recommendation in Thai for visitors or co
     } catch (err: any) {
       console.error("Error building settings response:", err);
       return res.status(500).json({ error: err.message });
+    }
+  });
+
+  // Diagnostics API to check Directus collections
+  app.get("/api/debug-directus", async (req, res) => {
+    const report: any = {
+      success: false,
+      collection: "m5_gallery",
+      readResult: null,
+      postResult: null,
+      deleteResult: null,
+      errors: []
+    };
+
+    try {
+      // 1. Test Read
+      const rawGallery = await directusFetch("/items/m5_gallery");
+      report.readResult = {
+        success: true,
+        count: rawGallery ? rawGallery.length : 0,
+        items: rawGallery
+      };
+
+      // 2. Test Post/Write
+      try {
+        const testItem = {
+          url: "https://example.com/test-image.jpg",
+          title: "Test Image via Debug API",
+          cat: "Debug Category"
+        };
+        const posted = await directusFetch("/items/m5_gallery", {
+          method: "POST",
+          body: JSON.stringify(testItem)
+        });
+        report.postResult = {
+          success: true,
+          data: posted
+        };
+
+        // 3. Test Delete
+        if (posted && posted.id) {
+          try {
+            await directusFetch(`/items/m5_gallery/${posted.id}`, {
+              method: "DELETE"
+            });
+            report.deleteResult = {
+              success: true,
+              message: `Successfully deleted item ${posted.id}`
+            };
+          } catch (delErr: any) {
+            report.deleteResult = {
+              success: false,
+              error: delErr.message || delErr
+            };
+            report.errors.push(`Delete failed: ${delErr.message}`);
+          }
+        } else {
+          report.deleteResult = {
+            success: false,
+            error: "No ID returned from POST to delete"
+          };
+          report.errors.push("No ID returned from POST");
+        }
+      } catch (postErr: any) {
+        report.postResult = {
+          success: false,
+          error: postErr.message || postErr
+        };
+        report.errors.push(`Post failed: ${postErr.message}`);
+      }
+
+      report.success = report.errors.length === 0;
+      return res.json(report);
+    } catch (err: any) {
+      report.errors.push(`Read failed: ${err.message}`);
+      return res.json(report);
     }
   });
 
