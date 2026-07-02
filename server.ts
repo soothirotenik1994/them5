@@ -41,7 +41,7 @@ function deduplicateLocalDb(db: any) {
   db.amenities = deduplicateArray(db.amenities || [], (a: any) => a.title || a.id);
   db.faqs = deduplicateArray(db.faqs || [], (f: any) => f.q || f.id);
   db.reviews = deduplicateArray(db.reviews || [], (r: any) => `${r.name}_${r.review}`);
-  db.gallery = deduplicateArray(db.gallery || [], (g: any) => g.url);
+  db.gallery = deduplicateArray(db.gallery || [], (g: any) => g.id || g.url || Math.random().toString());
   db.admins = deduplicateArray(db.admins || [], (ad: any) => String(ad.username || ad.id || ad.adminId || '').toLowerCase().trim());
   db.impactEvents = deduplicateArray(db.impactEvents || [], (e: any) => e.id || e.eventId);
   return db;
@@ -378,7 +378,8 @@ async function getSettingsFromDirectus() {
     });
 
     // Keep local db.json in sync with what is fetched, but merging intelligently to never lose local edits/images
-    const localDb = getLocalDb();
+    const localDb = getLocalDb() as any;
+    const firstTimeInit = !localDb.initialized;
 
     // 1. Merge general & smtp safely
     localDb.general = safeMerge(localDb.general || {}, result.general);
@@ -392,8 +393,8 @@ async function getSettingsFromDirectus() {
       }
       return localRoom;
     });
-    // Append any room from Directus that is not locally present ONLY if local list is empty
-    if ((localDb.rooms || []).length === 0) {
+    // Append any room from Directus that is not locally present ONLY if first-time initialization
+    if (firstTimeInit) {
       (result.rooms || []).forEach((directusRoom: any) => {
         if (!mergedRooms.some((r: any) => r.id === directusRoom.id)) {
           mergedRooms.push(directusRoom);
@@ -410,8 +411,8 @@ async function getSettingsFromDirectus() {
       }
       return localPromo;
     });
-    // Append promotions only if local list is empty to prevent resurrecting deleted ones
-    if ((localDb.promotions || []).length === 0) {
+    // Append promotions only if first-time initialization to prevent resurrecting deleted ones
+    if (firstTimeInit) {
       (result.promotions || []).forEach((directusPromo: any) => {
         if (!mergedPromotions.some((p: any) => p.id === directusPromo.id)) {
           mergedPromotions.push(directusPromo);
@@ -428,8 +429,8 @@ async function getSettingsFromDirectus() {
       }
       return localA;
     });
-    // Append amenities only if local list is empty to prevent resurrecting deleted ones
-    if ((localDb.amenities || []).length === 0) {
+    // Append amenities only if first-time initialization to prevent resurrecting deleted ones
+    if (firstTimeInit) {
       (result.amenities || []).forEach((directusA: any) => {
         if (!mergedAmenities.some((a: any) => (a.title || a.id) === (directusA.title || directusA.id))) {
           mergedAmenities.push(directusA);
@@ -446,8 +447,8 @@ async function getSettingsFromDirectus() {
       }
       return localF;
     });
-    // Append FAQs only if local list is empty to prevent resurrecting deleted ones
-    if ((localDb.faqs || []).length === 0) {
+    // Append FAQs only if first-time initialization to prevent resurrecting deleted ones
+    if (firstTimeInit) {
       (result.faqs || []).forEach((directusF: any) => {
         if (!mergedFaqs.some((f: any) => (f.q || f.id) === (directusF.q || directusF.id))) {
           mergedFaqs.push(directusF);
@@ -464,8 +465,8 @@ async function getSettingsFromDirectus() {
       }
       return localR;
     });
-    // Append reviews only if local list is empty to prevent resurrecting deleted ones
-    if ((localDb.reviews || []).length === 0) {
+    // Append reviews only if first-time initialization to prevent resurrecting deleted ones
+    if (firstTimeInit) {
       (result.reviews || []).forEach((directusR: any) => {
         if (!mergedReviews.some((r: any) => `${r.name}_${r.review}` === `${directusR.name}_${directusR.review}`)) {
           mergedReviews.push(directusR);
@@ -482,8 +483,8 @@ async function getSettingsFromDirectus() {
       }
       return localG;
     });
-    // Append gallery items only if local list is empty to prevent resurrecting deleted ones
-    if ((localDb.gallery || []).length === 0) {
+    // Append gallery items only if first-time initialization to prevent resurrecting deleted ones
+    if (firstTimeInit) {
       (result.gallery || []).forEach((directusG: any) => {
         if (!mergedGallery.some((g: any) => g.url === directusG.url)) {
           mergedGallery.push(directusG);
@@ -504,8 +505,8 @@ async function getSettingsFromDirectus() {
       }
       return localBD;
     });
-    // Append blocked dates only if local list is empty to prevent resurrecting deleted ones
-    if ((localDb.blockedDates || []).length === 0) {
+    // Append blocked dates only if first-time initialization to prevent resurrecting deleted ones
+    if (firstTimeInit) {
       (result.blockedDates || []).forEach((directusBD: any) => {
         const dKey = directusBD.id || directusBD.blockedId || `${directusBD.date}_${directusBD.roomId}`;
         if (!mergedBlockedDates.some((bd: any) => {
@@ -527,8 +528,8 @@ async function getSettingsFromDirectus() {
       }
       return localC;
     });
-    // Append coupons only if local list is empty to prevent resurrecting deleted ones
-    if ((localDb.coupons || []).length === 0) {
+    // Append coupons only if first-time initialization to prevent resurrecting deleted ones
+    if (firstTimeInit) {
       (result.coupons || []).forEach((directusC: any) => {
         const dKey = (directusC.code || '').toUpperCase();
         if (!mergedCoupons.some((c: any) => (c.code || '').toUpperCase() === dKey)) {
@@ -546,8 +547,8 @@ async function getSettingsFromDirectus() {
       }
       return localSlide;
     });
-    // Append slides from Directus only if local slides list is empty to prevent resurrecting deleted ones
-    if ((localDb.slides || []).length === 0 && result.slides) {
+    // Append slides from Directus only if first-time initialization to prevent resurrecting deleted ones
+    if (firstTimeInit && result.slides) {
       result.slides.forEach((s: any) => mergedSlides.push(s));
     }
     localDb.slides = mergedSlides;
@@ -560,8 +561,8 @@ async function getSettingsFromDirectus() {
       }
       return localE;
     });
-    // Append impact events only if local list is empty to prevent resurrecting deleted ones
-    if ((localDb.impactEvents || []).length === 0) {
+    // Append impact events only if first-time initialization to prevent resurrecting deleted ones
+    if (firstTimeInit) {
       (result.impactEvents || []).forEach((directusE: any) => {
         if (!mergedImpactEvents.some((e: any) => e.id === directusE.id || String(e.title).trim().toLowerCase() === String(directusE.title).trim().toLowerCase())) {
           mergedImpactEvents.push(directusE);
@@ -577,6 +578,7 @@ async function getSettingsFromDirectus() {
       localDb.googleReviewsEnabled = true;
     }
 
+    localDb.initialized = true;
     saveLocalDb(localDb);
 
     return localDb;
@@ -1265,20 +1267,51 @@ async function updateSingleton(collection: string, data: any) {
 }
 
 async function syncCollection(collection: string, items: any[], mapItemFn: (item: any) => any) {
-  const current = await directusFetch(`/items/${collection}`);
+  const current = await directusFetch(`/items/${collection}`) || [];
   if (current && current.length > 0) {
     const idsToDelete = current.map((item: any) => item.id);
-    await directusFetch(`/items/${collection}`, {
-      method: "DELETE",
-      body: JSON.stringify(idsToDelete)
-    });
+    try {
+      // Try Directus standard array delete
+      await directusFetch(`/items/${collection}`, {
+        method: "DELETE",
+        body: JSON.stringify(idsToDelete)
+      });
+      console.log(`[Sync] Successfully bulk deleted ${idsToDelete.length} items from ${collection}`);
+    } catch (bulkErr: any) {
+      console.warn(`[Sync] Bulk array delete failed for ${collection}, trying { keys: ... } wrapper:`, bulkErr.message || bulkErr);
+      try {
+        // Try Directus keys-wrapped delete
+        await directusFetch(`/items/${collection}`, {
+          method: "DELETE",
+          body: JSON.stringify({ keys: idsToDelete })
+        });
+        console.log(`[Sync] Successfully bulk deleted ${idsToDelete.length} items from ${collection} using keys wrapper`);
+      } catch (wrapperErr: any) {
+        console.warn(`[Sync] Bulk wrapper delete failed for ${collection}, falling back to individual deletes:`, wrapperErr.message || wrapperErr);
+        // Fallback: individual delete
+        for (const id of idsToDelete) {
+          try {
+            await directusFetch(`/items/${collection}/${id}`, {
+              method: "DELETE"
+            });
+            console.log(`[Sync] Individually deleted item ${id} from ${collection}`);
+          } catch (indErr: any) {
+            console.error(`[Sync] Failed to individually delete item ${id} from ${collection}:`, indErr.message || indErr);
+          }
+        }
+      }
+    }
   }
   for (const item of items) {
-    const mapped = mapItemFn(item);
-    await directusFetch(`/items/${collection}`, {
-      method: "POST",
-      body: JSON.stringify(mapped)
-    });
+    try {
+      const mapped = mapItemFn(item);
+      await directusFetch(`/items/${collection}`, {
+        method: "POST",
+        body: JSON.stringify(mapped)
+      });
+    } catch (postErr: any) {
+      console.error(`[Sync] Failed to post item in ${collection}:`, postErr.message || postErr);
+    }
   }
 }
 

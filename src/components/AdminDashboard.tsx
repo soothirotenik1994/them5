@@ -2796,7 +2796,7 @@ export default function AdminDashboard({ isOpen, onClose, isFullPage = false }: 
                             const copy = galleryEdit.filter((_: any, i: number) => i !== idx);
                             setGalleryEdit(copy);
                           }}
-                          className="absolute top-4 right-4 p-1 text-neutral-500 hover:text-red-400 transition-colors cursor-pointer"
+                          className="absolute top-4 right-4 p-1 text-neutral-500 hover:text-red-400 transition-colors cursor-pointer z-20"
                           title="ลบรูปภาพนี้"
                         >
                           <Trash2 className="h-4 w-4" />
