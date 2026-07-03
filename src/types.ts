@@ -11,6 +11,7 @@ export interface RoomType {
   imageUrl: string;
   amenities: string[];
   matterportUrl?: string;
+  active?: boolean;
 }
 
 export interface ChatMessage {

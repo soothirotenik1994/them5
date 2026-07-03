@@ -93,7 +93,7 @@ export default function BookingModal({ initialRoomId = "deluxe", isOpen, onClose
 
   if (!isOpen) return null;
 
-  const roomOptions = rooms.map(room => ({
+  const roomOptions = rooms.filter(room => room.active !== false).map(room => ({
     id: room.id,
     name: room.name,
     price: room.price,
@@ -101,7 +101,7 @@ export default function BookingModal({ initialRoomId = "deluxe", isOpen, onClose
   }));
 
   // Helper calculation logic
-  const selectedRoom = roomOptions.find((r) => r.id === roomType) || roomOptions[1] || { id: "deluxe", name: "Deluxe Balcony Loft", price: 1500, img: deluxeImg };
+  const selectedRoom = roomOptions.find((r) => r.id === roomType) || roomOptions[0] || { id: "deluxe", name: "Deluxe Balcony Loft", price: 1500, img: deluxeImg };
   
   const calculateNights = () => {
     if (!checkIn || !checkOut) return 1;

@@ -152,6 +152,39 @@ interface SettingsContextType {
   showToast?: (message: string, type?: "success" | "error" | "info" | "warning") => void;
 }
 
+export function proxifyImageUrl(url: string): string {
+  if (typeof url !== "string") return url;
+  
+  // Match Directus assets URLs (e.g. https://data.them5residence.com/assets/e67fc6de-49d5-436c-9d44-64bc64164ac7)
+  const match = url.match(/https?:\/\/[^\/]+\/assets\/([a-zA-Z0-9\-]+)(.*)/);
+  if (match) {
+    const fileId = match[1];
+    const query = match[2] || "";
+    return `/api/assets/${fileId}${query}`;
+  }
+  return url;
+}
+
+export function proxifyImagesInObject(obj: any): any {
+  if (!obj) return obj;
+  if (typeof obj === "string") {
+    return proxifyImageUrl(obj);
+  }
+  if (Array.isArray(obj)) {
+    return obj.map(item => proxifyImagesInObject(item));
+  }
+  if (typeof obj === "object") {
+    const res: any = {};
+    for (const key in obj) {
+      if (Object.prototype.hasOwnProperty.call(obj, key)) {
+        res[key] = proxifyImagesInObject(obj[key]);
+      }
+    }
+    return res;
+  }
+  return obj;
+}
+
 const defaultGeneral: GeneralSettings = {
   hotelName: "The M5 Residence",
   thaiName: "เดอะ เอ็มไฟว์ เรสซิเดนซ์",
@@ -391,21 +424,46 @@ export function SettingsProvider({ children }: { children: React.ReactNode }) {
       if (res.ok) {
         const data = await res.json();
         if (data.success && data.settings) {
+          // Parse local room settings first as a backup
+          let localRooms: RoomType[] = [];
+          const localSettingsStr = localStorage.getItem("m5_web_settings");
+          if (localSettingsStr) {
+            try {
+              const localSettings = JSON.parse(localSettingsStr);
+              if (localSettings && Array.isArray(localSettings.rooms)) {
+                localRooms = localSettings.rooms;
+              }
+            } catch (_) {}
+          }
+
           // Merge images loaded client side if backend does not return them and deduplicate rooms by ID
           const uniqueRoomsMap = new Map();
-          const rawRooms = data.settings.rooms || [];
-          rawRooms.forEach((room: RoomType) => {
+          
+          // Seed with local rooms to prevent losing custom rooms
+          localRooms.forEach((room: RoomType) => {
             const defRoom = defaultRooms.find(r => r.id === room.id);
             const merged = {
               ...room,
-              imageUrl: room.imageUrl || defRoom?.imageUrl || ""
+              imageUrl: room.imageUrl || defRoom?.imageUrl || "",
+              active: room.active !== undefined ? room.active : (defRoom?.active !== false)
+            };
+            uniqueRoomsMap.set(room.id, merged);
+          });
+
+          const rawRooms = data.settings.rooms || [];
+          rawRooms.forEach((room: RoomType) => {
+            const defRoom = defaultRooms.find(r => r.id === room.id);
+            const localRoom = localRooms.find(r => r.id === room.id);
+            const merged = {
+              ...room,
+              imageUrl: room.imageUrl || localRoom?.imageUrl || defRoom?.imageUrl || "",
+              active: room.active !== undefined ? room.active : (localRoom?.active !== undefined ? localRoom.active : (defRoom?.active !== false))
             };
             uniqueRoomsMap.set(room.id, merged);
           });
           const mergedRooms = Array.from(uniqueRoomsMap.values());
 
           // Get local storage backups to intelligently restore data if server got reset
-          const localSettingsStr = localStorage.getItem("m5_web_settings");
           const localBookingsStr = localStorage.getItem("m5_bookings");
           const localMembersStr = localStorage.getItem("m5_members");
 
@@ -477,7 +535,12 @@ export function SettingsProvider({ children }: { children: React.ReactNode }) {
             }
           }
 
-          let finalBookings = data.bookings || [];
+          let localDeletedBookingIds: string[] = [];
+          try {
+            localDeletedBookingIds = JSON.parse(localStorage.getItem("m5_deleted_booking_ids") || "[]");
+          } catch (_) {}
+
+          let finalBookings = (data.bookings || []).filter((b: any) => !localDeletedBookingIds.includes(b.id) && !localDeletedBookingIds.includes(b.bookingId));
           const bookingsToSync: any[] = [];
 
           if (localBookingsStr) {
@@ -485,6 +548,7 @@ export function SettingsProvider({ children }: { children: React.ReactNode }) {
               const localBookings = JSON.parse(localBookingsStr);
               if (Array.isArray(localBookings)) {
                 localBookings.forEach((lb: any) => {
+                  if (localDeletedBookingIds.includes(lb.id) || localDeletedBookingIds.includes(lb.bookingId)) return;
                   const exists = finalBookings.some((sb: any) => sb.id === lb.id || sb.bookingId === lb.id || sb.bookingId === lb.bookingId);
                   if (!exists) {
                     finalBookings.push(lb);
@@ -497,7 +561,7 @@ export function SettingsProvider({ children }: { children: React.ReactNode }) {
             }
           }
 
-          setSettings(finalSettings);
+          setSettings(proxifyImagesInObject(finalSettings));
           setBookings(finalBookings);
 
           // Save fresh server settings and bookings to localStorage for offline cache
@@ -552,7 +616,12 @@ export function SettingsProvider({ children }: { children: React.ReactNode }) {
             if (memRes.ok) {
               const memData = await memRes.json();
               if (memData.success && memData.members) {
-                let finalMembers = memData.members;
+                let localDeletedMemberIds: string[] = [];
+                try {
+                  localDeletedMemberIds = JSON.parse(localStorage.getItem("m5_deleted_member_ids") || "[]");
+                } catch (_) {}
+
+                let finalMembers = memData.members.filter((m: any) => !localDeletedMemberIds.includes(m.id));
                 const membersToSync: any[] = [];
 
                 if (localMembersStr) {
@@ -560,10 +629,18 @@ export function SettingsProvider({ children }: { children: React.ReactNode }) {
                     const localMembers = JSON.parse(localMembersStr);
                     if (Array.isArray(localMembers)) {
                       localMembers.forEach((lm: any) => {
-                        const exists = finalMembers.some((sm: any) => sm.id === lm.id || sm.email === lm.email);
-                        if (!exists) {
+                        if (localDeletedMemberIds.includes(lm.id)) return;
+                        const idx = finalMembers.findIndex((sm: any) => sm.id === lm.id || sm.email === lm.email);
+                        if (idx === -1) {
                           finalMembers.push(lm);
                           membersToSync.push(lm);
+                        } else {
+                          // Merge and keep whichever has a password or newer fields
+                          finalMembers[idx] = {
+                            ...lm,
+                            ...finalMembers[idx],
+                            password: lm.password || finalMembers[idx].password || "password123"
+                          };
                         }
                       });
                     }
@@ -624,7 +701,7 @@ export function SettingsProvider({ children }: { children: React.ReactNode }) {
           });
           const mergedRooms = Array.from(uniqueRoomsMap.values());
 
-          setSettings({
+          setSettings(proxifyImagesInObject({
             ...parsed,
             general: { ...defaultGeneral, ...parsed.general },
             rooms: mergedRooms,
@@ -637,7 +714,7 @@ export function SettingsProvider({ children }: { children: React.ReactNode }) {
             googlePlaceId: parsed.googlePlaceId !== undefined ? parsed.googlePlaceId : "ChIJXWlJMC-e4jARLqX9OidpWjY",
             googleReviewsEnabled: parsed.googleReviewsEnabled !== undefined ? parsed.googleReviewsEnabled : true,
             impactEvents: parsed.impactEvents || []
-          });
+          }));
         } catch (_) {}
       }
       const cachedBk = localStorage.getItem("m5_bookings");
@@ -675,7 +752,7 @@ export function SettingsProvider({ children }: { children: React.ReactNode }) {
     try {
       // Save local backup immediately
       localStorage.setItem("m5_web_settings", JSON.stringify(newSettings));
-      setSettings(newSettings);
+      setSettings(proxifyImagesInObject(newSettings));
 
       const res = await fetch("/api/settings", {
         method: "POST",
@@ -780,6 +857,14 @@ export function SettingsProvider({ children }: { children: React.ReactNode }) {
   };
 
   const deleteBooking = async (id: string): Promise<boolean> => {
+    try {
+      const deletedList = JSON.parse(localStorage.getItem("m5_deleted_booking_ids") || "[]");
+      if (!deletedList.includes(id)) {
+        deletedList.push(id);
+        localStorage.setItem("m5_deleted_booking_ids", JSON.stringify(deletedList));
+      }
+    } catch (_) {}
+
     const updated = bookings.filter(b => b.id !== id);
     setBookings(updated);
     localStorage.setItem("m5_bookings", JSON.stringify(updated));
@@ -894,6 +979,14 @@ export function SettingsProvider({ children }: { children: React.ReactNode }) {
   };
 
   const deleteMemberOnServer = async (id: string): Promise<boolean> => {
+    try {
+      const deletedList = JSON.parse(localStorage.getItem("m5_deleted_member_ids") || "[]");
+      if (!deletedList.includes(id)) {
+        deletedList.push(id);
+        localStorage.setItem("m5_deleted_member_ids", JSON.stringify(deletedList));
+      }
+    } catch (_) {}
+
     const updated = members.filter(m => m.id !== id);
     setMembers(updated);
     localStorage.setItem("m5_members", JSON.stringify(updated));

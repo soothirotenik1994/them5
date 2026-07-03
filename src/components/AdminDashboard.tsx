@@ -203,6 +203,7 @@ export default function AdminDashboard({ isOpen, onClose, isFullPage = false }: 
   const [newRoomImageUrl, setNewRoomImageUrl] = useState("");
   const [newRoomAmenities, setNewRoomAmenities] = useState("Wi-Fi ความเร็วสูง, เครื่องปรับอากาศ, สมาร์ททีวี, ตู้เย็นมินิบาร์, เครื่องทำน้ำอุ่น");
   const [newRoomMatterportUrl, setNewRoomMatterportUrl] = useState("");
+  const [newRoomActive, setNewRoomActive] = useState(true);
 
   // Helper to handle new room creation
   const handleAddNewRoomType = (e: React.FormEvent) => {
@@ -235,7 +236,8 @@ export default function AdminDashboard({ isOpen, onClose, isFullPage = false }: 
       longDescription: newRoomLongDesc.trim(),
       imageUrl: newRoomImageUrl.trim(),
       amenities: newRoomAmenities.split(",").map(a => a.trim()).filter(Boolean),
-      matterportUrl: newRoomMatterportUrl.trim() || undefined
+      matterportUrl: newRoomMatterportUrl.trim() || undefined,
+      active: newRoomActive
     };
 
     setRoomsEdit([...roomsEdit, newRoomObj]);
@@ -252,6 +254,7 @@ export default function AdminDashboard({ isOpen, onClose, isFullPage = false }: 
     setNewRoomLongDesc("");
     setNewRoomImageUrl("");
     setNewRoomMatterportUrl("");
+    setNewRoomActive(true);
     setShowAddRoom(false);
 
     alert("เพิ่มชื่อร่างประเภทห้องพักสำเร็จ! กรุณากดปุ่ม 'บันทึกข้อมูลห้องพักทั้งหมด' ที่อยู่ด้านล่าง เพื่อยืนยันการเซฟเข้าระบบฐานข้อมูล");
@@ -1406,7 +1409,7 @@ export default function AdminDashboard({ isOpen, onClose, isFullPage = false }: 
                       <div className="flex justify-between items-center pb-2 border-b border-neutral-800">
                         <div className="flex items-center space-x-2 text-brick">
                           <Plus className="h-4 w-4" />
-                          <h4 className="text-sm font-bold font-mono uppercase tracking-wider">ADDNEW_ROOM_SPEC // สร้างประเภทห้องพักใหม่</h4>
+                          <h4 className="text-sm font-bold font-mono uppercase tracking-wider">สร้างประเภทห้องพักใหม่</h4>
                         </div>
                         <span className="text-[10px] text-neutral-500 font-mono">DRAFT_MODE</span>
                       </div>
@@ -1579,6 +1582,18 @@ export default function AdminDashboard({ isOpen, onClose, isFullPage = false }: 
                         </p>
                       </div>
 
+                      <div className="space-y-1">
+                        <label className="text-xs text-neutral-400 font-mono block">สถานะเปิดให้บริการเริ่มต้น (Initial Status)</label>
+                        <select
+                          value={newRoomActive ? "true" : "false"}
+                          onChange={(e) => setNewRoomActive(e.target.value === "true")}
+                          className="w-full px-3 py-2 bg-neutral-900 border border-neutral-800 rounded text-xs text-white focus:outline-none focus:border-brick cursor-pointer font-sans"
+                        >
+                          <option value="true">🟢 เปิดให้บริการทันที (Open/Active)</option>
+                          <option value="false">🟡 ปิดปรับปรุง / ไม่แสดงต่อลูกค้า (Closed/Inactive)</option>
+                        </select>
+                      </div>
+
                       <div className="flex justify-end pt-2">
                         <button
                           type="submit"
@@ -1595,11 +1610,41 @@ export default function AdminDashboard({ isOpen, onClose, isFullPage = false }: 
                       <div key={room.id} className="p-5 bg-neutral-950 border border-neutral-850 rounded-lg space-y-4">
                         <div className="flex flex-wrap gap-2 justify-between items-center border-b border-neutral-800 pb-3">
                           <div className="flex items-center space-x-2">
-                            <span className="text-xs font-mono text-brick font-bold uppercase">{room.id.toUpperCase()}_ROOM_SPEC</span>
+                            <span className="text-xs font-mono text-brick font-bold uppercase">{room.id.toUpperCase()}</span>
                             <h4 className="text-sm font-bold text-white font-sans">{room.name}</h4>
                           </div>
                           <div className="flex items-center space-x-3 text-xs">
                             <span className="text-xs text-neutral-500 font-mono">ดัชนีห้อง: #{idx + 1}</span>
+                            
+                            {/* Toggle active / inactive status */}
+                            <button
+                              type="button"
+                              onClick={async () => {
+                                const copy = [...roomsEdit];
+                                const nextState = copy[idx].active === false ? true : false;
+                                copy[idx].active = nextState;
+                                setRoomsEdit(copy);
+                                
+                                const success = await updateSettings({
+                                  ...settings,
+                                  rooms: copy
+                                });
+                                if (success) {
+                                  alert(`ปรับเปลี่ยนสถานะห้อง "${room.name}" เป็น ${nextState ? "เปิดให้บริการ" : "ปิดปรับปรุง"} เรียบร้อยแล้ว! ✨`);
+                                } else {
+                                  alert("เกิดข้อขัดข้องในการบันทึกสถานะห้องพักลงฐานข้อมูล");
+                                }
+                              }}
+                              className={`flex items-center space-x-1.5 px-3 py-1 rounded text-xs transition-all border font-semibold cursor-pointer ${
+                                room.active !== false
+                                  ? "bg-emerald-950/40 text-emerald-400 border-emerald-900/50 hover:bg-emerald-900/40 hover:border-emerald-500/50"
+                                  : "bg-amber-950/40 text-amber-400 border-amber-900/50 hover:bg-amber-900/40 hover:border-amber-500/50"
+                              }`}
+                            >
+                              <span className={`h-2 w-2 rounded-full ${room.active !== false ? "bg-emerald-400 animate-pulse" : "bg-amber-400"}`}></span>
+                              <span>{room.active !== false ? "เปิดให้บริการ (Open)" : "ปิดปรับปรุง (Closed)"}</span>
+                            </button>
+
                             <button
                               type="button"
                               onClick={() => {
@@ -1898,7 +1943,7 @@ export default function AdminDashboard({ isOpen, onClose, isFullPage = false }: 
                         </button>
 
                         <div className="flex justify-between items-center pb-2 border-b border-neutral-900">
-                          <div className="text-xs font-mono text-brick font-bold uppercase">{p.id.toUpperCase()}_PROMO_SPEC</div>
+                          <div className="text-xs font-mono text-brick font-bold uppercase">{p.id.toUpperCase()}</div>
                           <div className="flex items-center space-x-2 mr-8">
                             <span className="text-xs text-neutral-400 font-mono">สถานะ (Status):</span>
                             <button

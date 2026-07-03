@@ -724,11 +724,13 @@ export default function App() {
                     <select
                       value={quickRoom}
                       onChange={(e) => setQuickRoom(e.target.value)}
-                      className="w-full px-2 py-2 bg-neutral-900 border border-neutral-800 text-white text-[11px] rounded focus:outline-none focus:border-brick text-left cursor-pointer"
+                      className="w-full px-2 py-2 bg-neutral-900 border border-neutral-800 text-white text-[11px] rounded focus:outline-none focus:border-brick text-left cursor-pointer font-sans"
                     >
-                      <option value="superior">Superior Loft Suite</option>
-                      <option value="deluxe">Deluxe Balcony Loft</option>
-                      <option value="studio">Studio Loft</option>
+                      {rooms.filter((r: any) => r.active !== false).map((r: any) => (
+                        <option key={r.id} value={r.id}>
+                          {r.thaiName || r.name}
+                        </option>
+                      ))}
                     </select>
                   </div>
                   <div>
@@ -870,131 +872,135 @@ export default function App() {
 
             {/* Renders dynamic catalog directly from database */}
             <div className="space-y-5">
-              {rooms.length === 0 ? (
-                <div className="p-8 text-center bg-[#111111] border border-neutral-900 rounded-lg">
-                  <p className="text-xs text-neutral-500 font-sans">ขออภัย ขณะนี้ยังไม่มีข้อมูลห้องพักที่เปิดให้บริการ</p>
-                </div>
-              ) : (
-                rooms.map((room, idx) => {
-                const roomImg = room.imageUrl || resolvedImages[room.id] || deluxeImg;
-                const isExpanded = expandedRoomIdx === idx;
-
-                return (
-                  <div 
-                    key={room.id}
-                    className="p-4 bg-[#111111] border border-neutral-900 rounded-lg shadow-md group hover:border-neutral-800 transition-all duration-300"
-                  >
-                    {/* Thumbnail representation */}
-                    <div className="relative h-44 sm:h-48 w-full overflow-hidden rounded mb-3 bg-neutral-950">
-                      <img 
-                        src={roomImg} 
-                        alt={room.name} 
-                        className="h-full w-full object-cover group-hover:scale-105 transition-all duration-500 brightness-95" 
-                        referrerPolicy="no-referrer"
-                      />
-                      {/* Price Tag badge */}
-                      <div className="absolute bottom-3 right-3 bg-neutral-950/90 border border-neutral-850 px-3 py-1 rounded text-right backdrop-blur-sm">
-                        <span className="block text-[8px] font-mono text-brick uppercase leading-tight">STARTING_RATE</span>
-                        <span className="text-amber-500 font-mono font-bold text-sm leading-tight">
-                          ฿{room.price.toLocaleString()}
-                        </span>
-                        <span className="text-[9px] text-neutral-400 font-light block -mt-1">/ คืน (night)</span>
-                      </div>
-                      
-                      {/* 360 Virtual Tour badge */}
-                      {room.matterportUrl && (
-                        <button
-                          type="button"
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            setSelected360Room(room);
-                          }}
-                          className="absolute top-3 right-3 bg-brick hover:bg-brick-dark px-2.5 py-1 rounded text-[9px] font-mono text-white border border-brick-light/35 flex items-center space-x-1 shadow-lg backdrop-blur-xs transition-all duration-205 hover:scale-105"
-                          style={{ backgroundImage: "linear-gradient(to right, #d95a06 0%, #b84100 100%)" }}
-                        >
-                          <Compass className="h-3 w-3 animate-spin-slow" />
-                          <span className="font-sans font-bold">ชมห้องเสมือนจริง 360°</span>
-                        </button>
-                      )}
-                      
-                      {/* Corner specification details */}
-                      <div className="absolute top-3 left-3 bg-black/75 px-2 py-0.5 rounded text-[8px] font-mono text-neutral-300 border border-neutral-800/80">
-                        {room.id.toUpperCase()}_SPEC
-                      </div>
+              {(() => {
+                const activeRooms = rooms.filter((r: any) => r.active !== false);
+                if (activeRooms.length === 0) {
+                  return (
+                    <div className="p-8 text-center bg-[#111111] border border-neutral-900 rounded-lg">
+                      <p className="text-xs text-neutral-500 font-sans">ขออภัย ขณะนี้ยังไม่มีข้อมูลห้องพักที่เปิดให้บริการ</p>
                     </div>
+                  );
+                }
+                return activeRooms.map((room, idx) => {
+                  const roomImg = room.imageUrl || resolvedImages[room.id] || deluxeImg;
+                  const isExpanded = expandedRoomIdx === idx;
 
-                    {/* Room content */}
-                    <div className="space-y-1">
-                      <div className="flex justify-between items-start gap-2">
-                        <h3 className="font-mono text-xs text-neutral-300 font-bold uppercase tracking-wider">
-                          {room.name}
-                        </h3>
-                        <span className="text-[10px] text-neutral-500 font-light shrink-0 font-sans">
-                          {room.size} ตร.ม. / {room.capacity} ท่าน
-                        </span>
-                      </div>
-                      <h4 className="text-sm font-sans font-bold text-white leading-snug">
-                        {room.thaiName}
-                      </h4>
-                      <p className="text-xs text-neutral-400 font-light leading-relaxed">
-                        {room.description}
-                      </p>
-
-                      {/* Matterport Inline CTA */}
-                      {room.matterportUrl && (
-                        <div className="pt-2">
+                  return (
+                    <div 
+                      key={room.id}
+                      className="p-4 bg-[#111111] border border-neutral-900 rounded-lg shadow-md group hover:border-neutral-800 transition-all duration-300"
+                    >
+                      {/* Thumbnail representation */}
+                      <div className="relative h-44 sm:h-48 w-full overflow-hidden rounded mb-3 bg-neutral-950">
+                        <img 
+                          src={roomImg} 
+                          alt={room.name} 
+                          className="h-full w-full object-cover group-hover:scale-105 transition-all duration-500 brightness-95" 
+                          referrerPolicy="no-referrer"
+                        />
+                        {/* Price Tag badge */}
+                        <div className="absolute bottom-3 right-3 bg-neutral-950/90 border border-neutral-850 px-3 py-1 rounded text-right backdrop-blur-sm">
+                          <span className="block text-[8px] font-mono text-brick uppercase leading-tight">STARTING_RATE</span>
+                          <span className="text-amber-500 font-mono font-bold text-sm leading-tight">
+                            ฿{room.price.toLocaleString()}
+                          </span>
+                          <span className="text-[9px] text-neutral-400 font-light block -mt-1">/ คืน (night)</span>
+                        </div>
+                        
+                        {/* 360 Virtual Tour badge */}
+                        {room.matterportUrl && (
                           <button
                             type="button"
-                            onClick={() => setSelected360Room(room)}
-                            className="w-full py-2 bg-neutral-950 hover:bg-[#151515] border border-neutral-850 hover:border-brick/50 text-neutral-300 hover:text-white rounded transition-all text-xs flex items-center justify-center space-x-2 font-sans font-semibold"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              setSelected360Room(room);
+                            }}
+                            className="absolute top-3 right-3 bg-brick hover:bg-brick-dark px-2.5 py-1 rounded text-[9px] font-mono text-white border border-brick-light/35 flex items-center space-x-1 shadow-lg backdrop-blur-xs transition-all duration-205 hover:scale-105"
+                            style={{ backgroundImage: "linear-gradient(to right, #d95a06 0%, #b84100 100%)" }}
                           >
-                            <Compass className="h-4 w-4 text-brick animate-pulse" />
-                            <span>ทัวร์ห้องเสมือนจริง 360° (Matterport 3D Tour)</span>
+                            <Compass className="h-3 w-3 animate-spin-slow" />
+                            <span className="font-sans font-bold">ชมห้องเสมือนจริง 360°</span>
                           </button>
-                        </div>
-                      )}
-                    </div>
-
-                    {/* Additional collapsible specifications list */}
-                    {isExpanded && (
-                      <div className="mt-3 pt-3 border-t border-neutral-900/80 text-xs font-light text-neutral-450 space-y-2 animate-fadeIn">
-                        <p className="text-neutral-350 leading-relaxed font-sans">{room.longDescription || room.description}</p>
-                        <div className="bg-neutral-950 p-2 border border-neutral-900 rounded space-y-1">
-                          <span className="text-[9px] font-mono text-brick uppercase font-semibold">// AMENITIES FOR THIS LOFT:</span>
-                          <div className="flex flex-wrap gap-1.5 pt-1">
-                            {room.amenities.map((item, id) => (
-                              <span key={id} className="text-[10px] px-2 py-0.5 bg-[#141414] border border-neutral-900 text-neutral-300 rounded font-sans">
-                                ✓ {item}
-                              </span>
-                            ))}
-                          </div>
+                        )}
+                        
+                        {/* Corner specification details */}
+                        <div className="absolute top-3 left-3 bg-black/75 px-2 py-0.5 rounded text-[8px] font-mono text-neutral-300 border border-neutral-800/80">
+                          {room.id.toUpperCase()}
                         </div>
                       </div>
-                    )}
 
-                    {/* Button Controls exact layout copy */}
-                    <div className="grid grid-cols-2 gap-2 mt-4 pt-1 border-t border-neutral-900/60 font-sans font-medium text-xs">
-                      <button 
-                        onClick={() => handleSelectRoom(room.id)}
-                        className="py-2.5 px-3 bg-brick hover:bg-brick-dark text-white rounded text-center transition-colors shadow font-semibold"
-                        style={{ backgroundImage: "linear-gradient(to right, #d95a06 0%, #b84100 100%)" }}
-                      >
-                        จองห้อง
-                      </button>
-                      <button 
-                        type="button"
-                        onClick={() => setExpandedRoomIdx(isExpanded ? null : idx)}
-                        className="py-2.5 px-3 border border-neutral-850 hover:bg-neutral-900 text-neutral-300 hover:text-white rounded text-center transition-all flex items-center justify-center space-x-1"
-                      >
-                        <span>{isExpanded ? "ย่นข้อมูล" : "รายละเอียด"}</span>
-                        <ChevronDown className={`h-3 w-3 transition-transform duration-300 ${isExpanded ? "rotate-180" : ""}`} />
-                      </button>
+                      {/* Room content */}
+                      <div className="space-y-1">
+                        <div className="flex justify-between items-start gap-2">
+                          <h3 className="font-mono text-xs text-neutral-300 font-bold uppercase tracking-wider">
+                            {room.name}
+                          </h3>
+                          <span className="text-[10px] text-neutral-500 font-light shrink-0 font-sans">
+                            {room.size} ตร.ม. / {room.capacity} ท่าน
+                          </span>
+                        </div>
+                        <h4 className="text-sm font-sans font-bold text-white leading-snug">
+                          {room.thaiName}
+                        </h4>
+                        <p className="text-xs text-neutral-400 font-light leading-relaxed">
+                          {room.description}
+                        </p>
+
+                        {/* Matterport Inline CTA */}
+                        {room.matterportUrl && (
+                          <div className="pt-2">
+                            <button
+                              type="button"
+                              onClick={() => setSelected360Room(room)}
+                              className="w-full py-2 bg-neutral-950 hover:bg-[#151515] border border-neutral-850 hover:border-brick/50 text-neutral-300 hover:text-white rounded transition-all text-xs flex items-center justify-center space-x-2 font-sans font-semibold"
+                            >
+                              <Compass className="h-4 w-4 text-brick animate-pulse" />
+                              <span>ทัวร์ห้องเสมือนจริง 360° (Matterport 3D Tour)</span>
+                            </button>
+                          </div>
+                        )}
+                      </div>
+
+                      {/* Additional collapsible specifications list */}
+                      {isExpanded && (
+                        <div className="mt-3 pt-3 border-t border-neutral-900/80 text-xs font-light text-neutral-450 space-y-2 animate-fadeIn">
+                          <p className="text-neutral-350 leading-relaxed font-sans">{room.longDescription || room.description}</p>
+                          <div className="bg-neutral-950 p-2 border border-neutral-900 rounded space-y-1">
+                            <span className="text-[9px] font-mono text-brick uppercase font-semibold">// AMENITIES FOR THIS LOFT:</span>
+                            <div className="flex flex-wrap gap-1.5 pt-1">
+                              {room.amenities.map((item, id) => (
+                                <span key={id} className="text-[10px] px-2 py-0.5 bg-[#141414] border border-neutral-900 text-neutral-300 rounded font-sans">
+                                  ✓ {item}
+                                </span>
+                              ))}
+                            </div>
+                          </div>
+                        </div>
+                      )}
+
+                      {/* Button Controls exact layout copy */}
+                      <div className="grid grid-cols-2 gap-2 mt-4 pt-1 border-t border-neutral-900/60 font-sans font-medium text-xs">
+                        <button 
+                          onClick={() => handleSelectRoom(room.id)}
+                          className="py-2.5 px-3 bg-brick hover:bg-brick-dark text-white rounded text-center transition-colors shadow font-semibold"
+                          style={{ backgroundImage: "linear-gradient(to right, #d95a06 0%, #b84100 100%)" }}
+                        >
+                          จองห้อง
+                        </button>
+                        <button 
+                          type="button"
+                          onClick={() => setExpandedRoomIdx(isExpanded ? null : idx)}
+                          className="py-2.5 px-3 border border-neutral-850 hover:bg-neutral-900 text-neutral-300 hover:text-white rounded text-center transition-all flex items-center justify-center space-x-1"
+                        >
+                          <span>{isExpanded ? "ย่นข้อมูล" : "รายละเอียด"}</span>
+                          <ChevronDown className={`h-3 w-3 transition-transform duration-300 ${isExpanded ? "rotate-180" : ""}`} />
+                        </button>
+                      </div>
+
                     </div>
-
-                  </div>
-                );
-              })
-              )}
+                  );
+                });
+              })()}
             </div>
           </div>
 
