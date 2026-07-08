@@ -4,7 +4,7 @@ import {
   DollarSign, Plus, Trash2, Check, RefreshCw, Key, LogOut,
   Sparkles, ShieldCheck, Mail, Phone, MapPin, User, Edit2, AlertCircle, Clock,
   Coffee, HelpCircle, MessageSquare, Images, ShieldAlert, Tag, Ticket, Wallpaper,
-  Search, Home, Bell, Sun, Moon, Database
+  Search, Home, Bell, Sun, Moon, Database, Globe, ExternalLink
 } from "lucide-react";
 import { useSettings, BookingRecord, WebSettings, defaultGallery } from "../context/SettingsContext";
 import { RoomType } from "../types";
@@ -240,7 +240,8 @@ export default function AdminDashboard({ isOpen, onClose, isFullPage = false }: 
       active: newRoomActive
     };
 
-    setRoomsEdit([...roomsEdit, newRoomObj]);
+    const updatedRooms = [...roomsEdit, newRoomObj];
+    setRoomsEdit(updatedRooms);
     
     // Clear states
     setNewRoomId("");
@@ -257,7 +258,16 @@ export default function AdminDashboard({ isOpen, onClose, isFullPage = false }: 
     setNewRoomActive(true);
     setShowAddRoom(false);
 
-    alert("เพิ่มชื่อร่างประเภทห้องพักสำเร็จ! กรุณากดปุ่ม 'บันทึกข้อมูลห้องพักทั้งหมด' ที่อยู่ด้านล่าง เพื่อยืนยันการเซฟเข้าระบบฐานข้อมูล");
+    updateSettings({
+      ...settings,
+      rooms: updatedRooms
+    }).then(success => {
+      if (success) {
+        alert("เพิ่มประเภทห้องพักใหม่และบันทึกลงฐานข้อมูล Directus สำเร็จเรียบร้อยแล้ว! ✨🎨");
+      } else {
+        alert("เพิ่มประเภทห้องพักในรายการสำเร็จ แต่เกิดข้อขัดข้องในการบันทึกลงระบบฐานข้อมูล กรุณาลองกดปุ่ม 'บันทึกข้อมูลห้องพักทั้งหมด' อีกครั้ง");
+      }
+    });
   };
 
   // Refresh editing values on open or update
@@ -748,6 +758,19 @@ export default function AdminDashboard({ isOpen, onClose, isFullPage = false }: 
               <span>🔍 ขนาดหนังสือ: {textLarge ? "ตัวใหญ่ (A+)" : "ปกติ (A)"}</span>
             </button>
 
+            {/* Public Link Button to open public website */}
+            <a
+              href={window.location.origin}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="flex items-center space-x-1.5 px-3 py-1.5 text-xs rounded border border-emerald-800 bg-emerald-950/40 text-emerald-400 hover:text-white hover:bg-emerald-900/60 transition-all cursor-pointer font-semibold font-mono"
+              title="เปิดหน้าเว็บหลักเวอร์ชันสาธารณะสำหรับลูกค้าในแท็บใหม่ (Open Public Customer Website)"
+            >
+              <Globe className="h-3.5 w-3.5" />
+              <span>🌐 เปิดหน้าเว็บลูกค้า (Open Web)</span>
+              <ExternalLink className="h-3 w-3" />
+            </a>
+
             <button 
               onClick={onClose}
               className="flex items-center space-x-1.5 px-3 py-1.5 text-xs text-neutral-400 hover:text-brick border border-neutral-800 hover:border-brick/40 rounded bg-neutral-900/50 hover:bg-neutral-900 cursor-pointer transition-all font-mono"
@@ -856,6 +879,26 @@ export default function AdminDashboard({ isOpen, onClose, isFullPage = false }: 
                 </div>
               </div>
               
+              {/* Public Website External Test Link Section */}
+              <div className="hidden md:block p-4 border-b border-neutral-800/60">
+                <span className="text-[9px] text-neutral-500 font-bold tracking-widest uppercase block mb-1.5 font-mono">EXTERNAL ACCESS / TEST</span>
+                <a
+                  href={window.location.origin}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="flex items-center justify-between px-3 py-2 bg-neutral-900 hover:bg-neutral-850 border border-neutral-800 hover:border-emerald-850/50 rounded text-xs font-mono text-neutral-300 hover:text-emerald-400 cursor-pointer transition-all w-full"
+                >
+                  <div className="flex items-center space-x-2">
+                    <Globe className="h-3.5 w-3.5 text-emerald-500 animate-spin-slow" />
+                    <span>เปิดหน้าหลัก (Public)</span>
+                  </div>
+                  <ExternalLink className="h-3 w-3 shrink-0" />
+                </a>
+                <span className="text-[9px] text-neutral-500 font-light block leading-snug pt-1">
+                  * ใช้สำหรับเปิดทดสอบระบบหน้าบ้าน และดูป๊อปอัพกิจกรรมจากอุปกรณ์ภายนอก
+                </span>
+              </div>
+
               <nav className="flex flex-row md:flex-col p-2 md:space-y-1.5 flex-1 min-w-max md:min-w-0">
                 <button
                   onClick={() => setActiveTab("dashboard")}
@@ -1222,7 +1265,7 @@ export default function AdminDashboard({ isOpen, onClose, isFullPage = false }: 
                       />
                     </div>
 
-                    <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                       <div className="space-y-1">
                         <label className="text-xs text-neutral-400 font-mono">เบอร์โทรศัพท์ติดต่อ (Phone)</label>
                         <input 
@@ -1241,6 +1284,9 @@ export default function AdminDashboard({ isOpen, onClose, isFullPage = false }: 
                           className="w-full px-3 py-2 bg-neutral-900 border border-neutral-800 rounded text-sm text-white focus:outline-none focus:border-brick font-mono"
                         />
                       </div>
+                    </div>
+
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                       <div className="space-y-1">
                         <label className="text-xs text-neutral-400 font-mono">ช่องติดต่อ Line ID</label>
                         <input 
@@ -1248,6 +1294,38 @@ export default function AdminDashboard({ isOpen, onClose, isFullPage = false }: 
                           value={generalEdit.lineId}
                           onChange={(e) => setGeneralEdit({ ...generalEdit, lineId: e.target.value })}
                           className="w-full px-3 py-2 bg-neutral-900 border border-neutral-800 rounded text-sm text-white focus:outline-none focus:border-brick font-mono"
+                        />
+                      </div>
+                      <div className="space-y-1">
+                        <label className="text-xs text-neutral-400 font-mono">ลิงก์เพิ่มเพื่อน Line (Line Link URL)</label>
+                        <input 
+                          type="text"
+                          value={generalEdit.lineLink || ""}
+                          onChange={(e) => setGeneralEdit({ ...generalEdit, lineLink: e.target.value })}
+                          placeholder="เช่น https://line.me/R/ti/p/%40m5residence"
+                          className="w-full px-3 py-2 bg-neutral-900 border border-neutral-800 rounded text-sm text-white focus:outline-none focus:border-brick font-mono placeholder-neutral-600"
+                        />
+                      </div>
+                    </div>
+
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                      <div className="space-y-1">
+                        <label className="text-xs text-neutral-400 font-mono">ชื่อเพจ Facebook Fanpage</label>
+                        <input 
+                          type="text"
+                          value={generalEdit.facebook}
+                          onChange={(e) => setGeneralEdit({ ...generalEdit, facebook: e.target.value })}
+                          className="w-full px-3 py-2 bg-neutral-900 border border-neutral-800 rounded text-sm text-white focus:outline-none focus:border-brick"
+                        />
+                      </div>
+                      <div className="space-y-1">
+                        <label className="text-xs text-neutral-400 font-mono">ลิงก์เพจ Facebook Fanpage (Facebook URL)</label>
+                        <input 
+                          type="text"
+                          value={generalEdit.facebookUrl || ""}
+                          onChange={(e) => setGeneralEdit({ ...generalEdit, facebookUrl: e.target.value })}
+                          placeholder="เช่น https://www.facebook.com/them5residence"
+                          className="w-full px-3 py-2 bg-neutral-900 border border-neutral-800 rounded text-sm text-white focus:outline-none focus:border-brick font-mono placeholder-neutral-600"
                         />
                       </div>
                     </div>
@@ -1361,6 +1439,171 @@ export default function AdminDashboard({ isOpen, onClose, isFullPage = false }: 
                         />
                       </div>
                     )}
+
+                    {/* EVENT POPUP SETTINGS */}
+                    <div className="pt-6 border-t border-neutral-900 space-y-4">
+                      <div>
+                        <span className="text-xs font-mono font-bold text-brick block uppercase">// EVENT POPUP CONFIGURATION</span>
+                        <h4 className="text-sm font-semibold text-white mt-1">ระบบป๊อปอัพกิจกรรมหน้าเว็บ (Web Event Popup)</h4>
+                        <p className="text-[10px] text-neutral-400 font-light">ตั้งค่าแสดงกล่องข้อความป๊อปอัพข่าวสาร/กิจกรรมเด่นของสัปดาห์เมื่อเปิดหน้าแรก เพื่อเพิ่มยอดจองห้องพัก</p>
+                      </div>
+
+                      <div className="flex items-center justify-between bg-neutral-950 p-4 border border-neutral-900 rounded-lg">
+                        <div className="text-left">
+                          <span className="text-xs font-medium text-white block">เปิด/ปิด ป๊อปอัพข่าวสารกิจกรรม</span>
+                          <span className="text-[10px] text-neutral-500 block font-light">เมื่อผู้ใช้เข้าชมเว็บไซต์ จะแสดงป๊อปอัพข้อมูลกิจกรรมเด่นทันที</span>
+                        </div>
+                        <button
+                          type="button"
+                          onClick={() => setGeneralEdit({ 
+                            ...generalEdit, 
+                            eventPopupEnabled: !generalEdit.eventPopupEnabled 
+                          })}
+                          className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors cursor-pointer outline-none ${
+                            generalEdit.eventPopupEnabled ? "bg-brick" : "bg-neutral-800"
+                          }`}
+                        >
+                          <span
+                            className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${
+                              generalEdit.eventPopupEnabled ? "translate-x-6" : "translate-x-1"
+                            }`}
+                          />
+                        </button>
+                      </div>
+
+                      {generalEdit.eventPopupEnabled && (
+                        <div className="p-4 bg-neutral-950 border border-neutral-900 rounded-lg space-y-4">
+                          <div className="space-y-1 text-left">
+                            <label className="text-xs text-neutral-400 font-mono block">รูปแบบการเลือกเนื้อหาป๊อปอัพ (Content Mode)</label>
+                            <div className="grid grid-cols-1 sm:grid-cols-3 gap-2 pt-1">
+                              {[
+                                { id: "auto", label: "✨ ดึงอัตโนมัติ (กิจกรรมสัปดาห์นี้)", desc: "แสดงอีเวนต์ที่มีวันที่ใกล้ที่สุดใน 7 วันนี้" },
+                                { id: "custom", label: "🎯 เลือกจากกิจกรรมที่มี", desc: "เลือกเจาะจงรายชื่ออีเวนต์ที่คุณบันทึกไว้" },
+                                { id: "text", label: "✍️ กำหนดเนื้อหาเอง", desc: "กรอกข้อความ หัวข้อ และรูปภาพแยกเองอิสระ" }
+                              ].map((m) => (
+                                <button
+                                  key={m.id}
+                                  type="button"
+                                  onClick={() => setGeneralEdit({ ...generalEdit, eventPopupMode: m.id as any })}
+                                  className={`p-2 rounded text-left border transition-all duration-200 cursor-pointer ${
+                                    (generalEdit.eventPopupMode || "auto") === m.id
+                                      ? "bg-brick/10 border-brick text-brick-light"
+                                      : "bg-neutral-900 border-neutral-850 text-neutral-400 hover:border-neutral-700"
+                                  }`}
+                                >
+                                  <span className="text-xs font-bold block">{m.label}</span>
+                                  <span className="text-[9px] font-light text-neutral-500 block leading-tight mt-0.5">{m.desc}</span>
+                                </button>
+                              ))}
+                            </div>
+                          </div>
+
+                          {/* Mode: Custom Event Selection */}
+                          {generalEdit.eventPopupMode === "custom" && (
+                            <div className="space-y-1 text-left pt-1">
+                              <label className="text-xs text-neutral-400 font-mono">เลือกกิจกรรมที่ต้องการให้แสดง</label>
+                              {(() => {
+                                const activeEvents = (settings.impactEvents || []).filter((e: any) => e.active !== false);
+                                if (activeEvents.length === 0) {
+                                  return (
+                                    <p className="text-[10px] text-amber-500 bg-amber-950/10 border border-amber-900/30 p-2.5 rounded">
+                                      ⚠️ ไม่พบกิจกรรมที่เปิดใช้งานขณะนี้ กรุณาไปเพิ่มกิจกรรมในแท็บ <strong>"จัดการปฏิทินกิจกรรม"</strong> ก่อน
+                                    </p>
+                                  );
+                                }
+                                return (
+                                  <select
+                                    value={generalEdit.eventPopupSelectedId || ""}
+                                    onChange={(e) => setGeneralEdit({ ...generalEdit, eventPopupSelectedId: e.target.value })}
+                                    className="w-full px-3 py-2 bg-neutral-900 border border-neutral-800 rounded text-sm text-white focus:outline-none focus:border-brick"
+                                  >
+                                    <option value="">-- เลือกกิจกรรมเด่นประจำสัปดาห์ --</option>
+                                    {activeEvents.map((evt) => (
+                                      <option key={evt.id} value={evt.id}>
+                                        [{evt.category}] {evt.title} ({evt.date})
+                                      </option>
+                                    ))}
+                                  </select>
+                                );
+                              })()}
+                            </div>
+                          )}
+
+                          {/* Mode: Completely Custom Content */}
+                          {generalEdit.eventPopupMode === "text" && (
+                            <div className="space-y-3 pt-1 text-left">
+                              <div className="space-y-1">
+                                <label className="text-xs text-neutral-400 font-mono">หัวข้อป๊อปอัพ (Popup Title)</label>
+                                <input 
+                                  type="text"
+                                  placeholder="เช่น โปรโมชั่น Flash Sale ประจำสัปดาห์ หรือ กิจกรรมอิมแพ็คสัปดาห์นี้"
+                                  value={generalEdit.eventPopupCustomTitle || ""}
+                                  onChange={(e) => setGeneralEdit({ ...generalEdit, eventPopupCustomTitle: e.target.value })}
+                                  className="w-full px-3 py-2 bg-neutral-900 border border-neutral-800 rounded text-sm text-white focus:outline-none focus:border-brick"
+                                />
+                              </div>
+                              <div className="space-y-1">
+                                <label className="text-xs text-neutral-400 font-mono">รายละเอียดข่าวสาร (Popup Description)</label>
+                                <textarea 
+                                  rows={3}
+                                  placeholder="เขียนรายละเอียดโปรโมชั่น คำแนะนำ หรือข่าวสารที่ต้องการแจ้งเตือนด่วน..."
+                                  value={generalEdit.eventPopupCustomDesc || ""}
+                                  onChange={(e) => setGeneralEdit({ ...generalEdit, eventPopupCustomDesc: e.target.value })}
+                                  className="w-full px-3 py-2 bg-neutral-900 border border-neutral-800 rounded text-sm text-white focus:outline-none focus:border-brick"
+                                />
+                              </div>
+                              <div className="space-y-1">
+                                <label className="text-xs text-neutral-400 font-mono">ลิงก์รูปภาพประกอบ (Popup Image URL - ไม่ใส่ก็ได้)</label>
+                                <input 
+                                  type="text"
+                                  placeholder="วางลิงก์รูปภาพจาก Unsplash หรือภายนอก..."
+                                  value={generalEdit.eventPopupCustomImg || ""}
+                                  onChange={(e) => setGeneralEdit({ ...generalEdit, eventPopupCustomImg: e.target.value })}
+                                  className="w-full px-3 py-2 bg-neutral-900 border border-neutral-800 rounded text-sm text-white focus:outline-none focus:border-brick font-mono"
+                                />
+                              </div>
+                            </div>
+                          )}
+
+                          <div className="space-y-1 pt-2 border-t border-neutral-900 text-left">
+                            <label className="text-xs text-neutral-450 font-mono block">⏰ ตั้งเวลานับถอยหลังปิดป๊อปอัพอัตโนมัติ (วินาที)</label>
+                            <div className="flex flex-wrap items-center gap-3">
+                              <input 
+                                type="number"
+                                min={0}
+                                max={120}
+                                placeholder="แนะนำ 10"
+                                value={generalEdit.eventPopupTimeout !== undefined ? generalEdit.eventPopupTimeout : 10}
+                                onChange={(e) => {
+                                  const val = e.target.value === "" ? "" : Math.max(0, parseInt(e.target.value) || 0);
+                                  setGeneralEdit({ ...generalEdit, eventPopupTimeout: val as any });
+                                }}
+                                className="w-28 px-3 py-2 bg-neutral-900 border border-neutral-800 rounded text-sm text-white focus:outline-none focus:border-brick font-mono"
+                              />
+                              <div className="flex gap-1.5">
+                                {[5, 10, 15, 30, 0].map((sec) => (
+                                  <button
+                                    key={sec}
+                                    type="button"
+                                    onClick={() => setGeneralEdit({ ...generalEdit, eventPopupTimeout: sec })}
+                                    className={`px-2 py-1 text-[10px] font-mono rounded border transition-colors cursor-pointer ${
+                                      (generalEdit.eventPopupTimeout !== undefined ? Number(generalEdit.eventPopupTimeout) : 10) === sec
+                                        ? "bg-brick/10 border-brick text-brick-light"
+                                        : "bg-neutral-900 border-neutral-850 text-neutral-400 hover:border-neutral-700"
+                                    }`}
+                                  >
+                                    {sec === 0 ? "ไม่ปิดเอง" : `${sec} วิ`}
+                                  </button>
+                                ))}
+                              </div>
+                            </div>
+                            <span className="text-[10px] text-neutral-500 block leading-tight pt-1 font-light">
+                              * ระบบจะทำการปิดหน้าต่างป๊อปอัพข่าวสารโดยอัตโนมัติเมื่อครบเวลาที่กำหนดเพื่อไม่ให้รบกวนการใช้งานของลูกค้า (เลือก "ไม่ปิดเอง" เพื่อให้แสดงค้างไว้จนกว่าจะกดปิดเอง)
+                            </span>
+                          </div>
+                        </div>
+                      )}
+                    </div>
                   </div>
 
                   <div className="flex justify-end pt-2">
@@ -1411,7 +1654,6 @@ export default function AdminDashboard({ isOpen, onClose, isFullPage = false }: 
                           <Plus className="h-4 w-4" />
                           <h4 className="text-sm font-bold font-mono uppercase tracking-wider">สร้างประเภทห้องพักใหม่</h4>
                         </div>
-                        <span className="text-[10px] text-neutral-500 font-mono">DRAFT_MODE</span>
                       </div>
 
                       <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
@@ -1599,7 +1841,7 @@ export default function AdminDashboard({ isOpen, onClose, isFullPage = false }: 
                           type="submit"
                           className="px-5 py-2.5 bg-brick hover:bg-brick-dark text-white rounded text-xs font-bold uppercase font-mono tracking-wider cursor-pointer shadow-lg shadow-brick/20"
                         >
-                          + เพิ่มประเภทห้องพักใหม่ลงในร่างด้านล่าง
+                          + บันทึกและสร้างประเภทห้องพักใหม่
                         </button>
                       </div>
                     </form>
@@ -1832,15 +2074,18 @@ export default function AdminDashboard({ isOpen, onClose, isFullPage = false }: 
                             </div>
                             
                             <div className="h-16 w-24 bg-neutral-950 border border-neutral-800 rounded flex items-center justify-center overflow-hidden p-1 shrink-0 relative">
-                              <img 
-                                src={room.imageUrl || "https://images.unsplash.com/photo-1590490360182-c33d57733427?auto=format&fit=crop&w=400&q=80"} 
-                                alt={room.name} 
-                                className="h-full w-full object-cover rounded" 
-                                onError={(e) => {
-                                  e.currentTarget.style.border = '1px solid #d97706'; 
-                                  e.currentTarget.src = "https://images.unsplash.com/photo-1590490360182-c33d57733427?auto=format&fit=crop&w=400&q=80";
-                                }}
-                              />
+                              {room.imageUrl ? (
+                                <img 
+                                  src={room.imageUrl} 
+                                  alt={room.name} 
+                                  className="h-full w-full object-cover rounded" 
+                                  onError={(e) => {
+                                    e.currentTarget.style.border = '1px solid #ef4444'; 
+                                  }}
+                                />
+                              ) : (
+                                <span className="text-[10px] text-neutral-650 font-mono text-center leading-tight">ไม่มีรูปภาพ<br />(No Image)</span>
+                              )}
                             </div>
                           </div>
                         </div>
@@ -2800,7 +3045,7 @@ export default function AdminDashboard({ isOpen, onClose, isFullPage = false }: 
                             return {
                               url,
                               title: name,
-                              cat: "Superior Suite"
+                              cat: "ทั่วไป"
                             };
                           });
                           setGalleryEdit([...galleryEdit, ...newItems]);
@@ -2809,7 +3054,7 @@ export default function AdminDashboard({ isOpen, onClose, isFullPage = false }: 
                       <button
                         type="button"
                         onClick={() => {
-                          setGalleryEdit([...galleryEdit, { url: "", title: "คำภาพจำลอง", cat: "Superior Suite" }]);
+                          setGalleryEdit([...galleryEdit, { url: "", title: "ภาพแกลเลอรีใหม่", cat: "ทั่วไป" }]);
                         }}
                         className="px-3 py-1.5 bg-emerald-600 hover:bg-emerald-700 text-white rounded text-xs font-sans font-bold cursor-pointer flex items-center space-x-1"
                       >

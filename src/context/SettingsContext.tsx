@@ -11,6 +11,8 @@ export interface GeneralSettings {
   contactPhone: string;
   facebook: string;
   lineId: string;
+  lineLink?: string;
+  facebookUrl?: string;
   logoUrl?: string;
   coverImg1?: string;
   coverImg2?: string;
@@ -28,6 +30,13 @@ export interface GeneralSettings {
   googleReviewsSyncInterval?: "manual" | "daily" | "weekly" | "monthly";
   lastGoogleReviewsSyncTime?: string;
   googleReviewsApiKey?: string;
+  eventPopupEnabled?: boolean;
+  eventPopupMode?: "auto" | "custom" | "text";
+  eventPopupSelectedId?: string;
+  eventPopupCustomTitle?: string;
+  eventPopupCustomDesc?: string;
+  eventPopupCustomImg?: string;
+  eventPopupTimeout?: number;
 }
 
 export interface SmtpSettings {
@@ -154,14 +163,30 @@ interface SettingsContextType {
 
 export function proxifyImageUrl(url: string): string {
   if (typeof url !== "string") return url;
+  if (!url) return url;
   
-  // Match Directus assets URLs (e.g. https://data.them5residence.com/assets/e67fc6de-49d5-436c-9d44-64bc64164ac7)
+  // 1. Full URL match (e.g. https://data.them5residence.com/assets/e67fc6de-49d5-436c-9d44-64bc64164ac7)
   const match = url.match(/https?:\/\/[^\/]+\/assets\/([a-zA-Z0-9\-]+)(.*)/);
   if (match) {
     const fileId = match[1];
     const query = match[2] || "";
     return `/api/assets/${fileId}${query}`;
   }
+
+  // 2. Relative path match (e.g., /assets/UUID or assets/UUID)
+  const relMatch = url.match(/(?:^\/)?assets\/([a-zA-Z0-9\-]+)(.*)/);
+  if (relMatch) {
+    const fileId = relMatch[1];
+    const query = relMatch[2] || "";
+    return `/api/assets/${fileId}${query}`;
+  }
+
+  // 3. Just a UUID (36 chars)
+  const uuidRegex = /^[a-fA-F0-9]{8}-[a-fA-F0-9]{4}-[a-fA-F0-9]{4}-[a-fA-F0-9]{4}-[a-fA-F0-9]{12}$/;
+  if (uuidRegex.test(url)) {
+    return `/api/assets/${url}`;
+  }
+  
   return url;
 }
 
@@ -202,118 +227,26 @@ const defaultGeneral: GeneralSettings = {
   heroCardImg: "",
   heroBgImg: "",
   seoTitle: "The M5 Residence | ที่พักสไตล์ลอฟท์ ปากเกร็ด นนทบุรี ใกล้อิมแพ็ค อารีน่า",
-  seoDescription: "เดอะ เอ็มไฟว์ เรสซิเดนซ์ (The M5 Residence) นิยามใหม่ของการพักผ่อนสไตล์อินดัสเทรียลลอฟท์ ปากเกร็ด นนทบุรี เลียบคลองประปา ใกล้ป๊อปปูล่าคาร์ดอน และเมืองทองธานี ห้องพักหรูราคาประหยัด",
-  seoKeywords: "The M5 Residence, เดอะ เอ็มไฟว์ เรสซิเดนซ์, ที่พักปากเกร็ด, โรงแรมปากเกร็ด, ที่พักใกล้อิมแพ็ค, ที่พักใกล้เมืองทอง, โรงแรมสไตล์ลอฟท์, โรงแรมนนทบุรี, จองห้องพักนนทบุรี",
-  allowRegistration: true,
-  bookingEnabled: true,
-  bookingDisabledMessage: "ขออภัย ระบบจองห้องพักออนไลน์ของทางโรงแรมปิดทำการชั่วคราวเพื่อปรับปรุงระบบ หากมีข้อสงสัยหรือต้องการจองด่วน สามารถติดต่อผ่าน Line ID หรือเบอร์โทรศัพท์ได้โดยตรง"
+  eventPopupEnabled: false,
+  eventPopupMode: "auto",
+  eventPopupSelectedId: "",
+  eventPopupCustomTitle: "",
+  eventPopupCustomDesc: "",
+  eventPopupCustomImg: "",
+  eventPopupTimeout: 10
 };
 
-const defaultRooms: RoomType[] = [
-  {
-    id: "superior",
-    name: "Superior Loft Suite",
-    thaiName: "ซูพีเรียร์ ลอฟท์ สวีท",
-    price: 1800,
-    size: 35,
-    capacity: 3,
-    bedType: "King Size Bed (เตียงคิงไซส์ 6 ฟุต)",
-    description: "ห้องพักขนาดกว้างขวาง เหมาะสำหรับผู้เข้าพักที่ต้องการพื้นที่ใช้สอยพิเศษ ผนังปูนเปลือยดีไซน์สูงโปร่งอบอุ่น",
-    longDescription: "สุดยอดแห่งการดีไซน์ในสไตล์แวร์เฮาส์ลอฟต์แท้ๆ ห้องนี้โดดเด่นด้วยเพดานที่ได้รับการออกแบบให้สูงเป็นพิเศษถึง 3.2 เมตร ผนังด้านหลังกรุหน้าด้วยกระเบื้องอิฐมอญสีส้มธรรมชาติเข้ากับโครงเหล็กท่อสีดำด้าน ชุดเครื่องนอนเป็นด้ายคอตตอนเกรดพรีเมียมหนานุ่มพิเศษ มีพื้นที่เลานจ์สำหรับการนั่งเล่นอ่านหนังสือ พร้อมโซลูชันห้องน้ำกระจกเทมเปอร์ดาร์คสไตล์และระบบฝักบัว Rain Shower อุณหภูมิคงที่",
-    imageUrl: "", // fallback handled in components
-    amenities: ["Free High-speed Wi-Fi 1000Mbps", "Smart TV 55\" พร้อม Netflix", "มินิบาร์และสแน็คบาร์จัดเตรียมครบ", "โซฟาเบดเกรดพรีเมียมสำหรับพักผ่อน", "เครื่องเป่าผม และเสื้อคลุมอาบน้ำสไตล์ลอฟท์", "ตู้เซฟอิเล็กทรอนิกส์ส่วนตัว"],
-    matterportUrl: "https://my.matterport.com/show/?m=Pcjj9wmA98W"
-  },
-  {
-    id: "deluxe",
-    name: "Deluxe Balcony Loft",
-    thaiName: "ดีลักซ์ บัลโคนี ลอฟท์",
-    price: 1500,
-    size: 30,
-    capacity: 2,
-    bedType: "King Size Bed (เตียงคิงไซส์ 6 ฟุต)",
-    description: "สัมผัสอากาศบริสุทธิ์รอบปากเกร็ดกับระเบียงคอนกรีตขัดมันส่วนตัวสไตล์ธรรมชาติพร้อมพืชพรรณพริ้วไหว",
-    longDescription: "ห้องพักดีไซน์ทันสมัยที่ประยุกต์ความเป็น Loft เข้ากับความโปร่งโล่งสบายตาอย่างลงตัว จุดเด่นคือ ประตูกระจกบานใหญ่แบบเลื่อนไร้เสียงที่สามารถสไลด์เปิดสู่ระเบียงส่วนตัว คอนกรีตบล็อกดีไซน์โมเดิร์นรายล้อมด้วยพืชพรรณสีเขียวชอุ่ม ให้ความเป็นส่วนตัวสูดอากาศพัดสบาย ยามค่ำคืนสามารถดื่มด่ำกับบรรยากาศรื่นรมย์ของแสงไฟในย่านนนทบุรีรอบข้างได้เหมาะสม",
-    imageUrl: "",
-    amenities: ["ระเบียงส่วนตัวชมวิวเมืองภายนอก", "Free High-speed Wi-Fi 1000Mbps", "Smart TV 50\" สตรีมมิ่งไร้ขัดข้อง", "เครื่องชงกาแฟแคปซูลระดับพรีเมียม", "ฝักบัวอาบน้ำเพดานสูง Rain Shower", "โต๊ะทำงานไม้คลาสสิก"],
-    matterportUrl: "https://my.matterport.com/show/?m=u6Q8X6mK4cW"
-  },
-  {
-    id: "studio",
-    name: "Studio Loft",
-    thaiName: "สตูดิโอ ลอฟท์",
-    price: 1200,
-    size: 28,
-    capacity: 2,
-    bedType: "Queen Size Bed (เตียงควีนไซส์ 5 ฟุต)",
-    description: "ห้องสตูดิโอบรรยากาศอบอุ่นคลาสสิก พร้อมโต๊ะทำงานและเก้าอี้หนังสไตล์อินดัสเทรียลเพื่อเหล่านักเดินทางครีเอทีฟ",
-    longDescription: "ความเรียบหรูระดับดีไซน์ในพื้นที่กะทัดรัด ห้อง Studio Loft โชว์พื้นผิวคอนกรีตหล่อแบบผสมผสานแผ่นไม้ธรรมชาติคัดสรร เหมาะสำหรับนักธุรกิจ ศิลปิน ครีเอเตอร์ หรือคู่รักที่มองหาห้องพักอันอบอุ่น ตกแต่งคุ้มค่า มีโต๊ะทำงานขอบเหล็กเข้าสไตล์เก้าอี้หนังแบบย้อนยุครวมถึงโคมไฟกรงนกเหล็กดัด ให้แสงวอร์มไวท์นุ่มสบายสายตาเพื่อปลุกไอเดียสร้างสรรค์ใหม่ๆ",
-    imageUrl: "",
-    amenities: ["Free High-speed Wi-Fi 1000Mbps", "Smart TV 43\" ดีไซน์เรียบหรู", "โต๊ะทำงานทำงานสไตล์ดีไซน์ออฟฟิศ", "ชุดชงชากาแฟแฮนด์เมด", "ตู้เย็นขนาดกลางแยกช่องฟรีซ", "เครื่องเป่าผมและไดร์เป่าสไตล์"],
-    matterportUrl: "https://my.matterport.com/show/?m=SxZJMz3Sg6v"
-  }
-];
+const defaultRooms: RoomType[] = [];
 
-const defaultPromotions = [
-  {
-    id: "promo-concert",
-    badge: "CONCERT SPECIAL",
-    title: "Concert Goer Package 🎸",
-    desc: "สำหรับสายรักเสียงดนตรี! เข้าพักห้อง Deluxe Balcony เพียงคุณแสดงบัตรคอนเสิร์ตที่จะแสดง ณ อิมแพ็ค อารีน่า ในรอบสัปดาห์นั้น รับฟรีทันที คูปองเครื่องดื่ม Signature 2 แก้ว เลือกลองได้ที่คราฟต์คาเฟ่ Copper & Steam ของโรงแรม",
-    highlight: "ฟรีคูปองเครื่องดื่มคราฟต์ 2 แก้ว"
-  },
-  {
-    id: "promo-stay",
-    badge: "STAY & SAVE",
-    title: "พักยาว ประหยัดกว่า (Stay & Save) 📅",
-    desc: "จองห้องพักทุกสไตล์ตั้งแต่ 2 คืนขึ้นไปผ่านหน้าเว็บไซต์หลัก รับส่วนลดค่าห้องทันที 10% พร้อมสิทธิ์เลทเช็คเอาท์ (Late Check-out) ได้ถึงเวลา 14:00 น. เพื่อให้คุณได้พักผ่อนหลังจบคอนเสิร์ตยามดึกอย่างผ่อนคลายเต็มอิ่ม",
-    highlight: "ส่วนลด 10% + เลทเช็คเอาท์ 14.00 น."
-  }
-];
+const defaultPromotions: any[] = [];
 
-const defaultAmenities = [
-  {
-    iconName: "Wifi",
-    title: "ความเร็วสูงพิเศษ Free Wi-Fi",
-    desc: "ความเร็วระดับกิกะบิต (1000 Mbps) ครอบคลุมทั่วอาคาร ทำงานสปอร์ตไฟล์ไร้รอยต่อ เช็คตารางคอนเสิร์ตสะดวกทันใจ"
-  },
-  {
-    iconName: "Coffee",
-    title: "Copper & Steam Cafe / Bar",
-    desc: "คาเฟ่บรรยากาศดิบพรีเมียมที่จัดเสิร์ฟกาแฟจากเมล็ดพันธุ์ออร์แกนิคชั้นดี และคราฟต์เบียร์แบรนด์ไทย-เทศยามดีกรีช่วงเย็น"
-  },
-  {
-    iconName: "Dumbbell",
-    title: "Loft Fitness & Gym Hub",
-    desc: "ยิมออกกำลังกายสไตล์แวร์ّه้าส์ ดิบเท่สปอร์ต ผนังคอนกรีตฉลุลาย พร้อมอุปกรณ์ออกกำลังและฟรีเวทครบครันครบถ้วน"
-  },
-  {
-    iconName: "ShieldCheck",
-    title: "ความปลอดภัยระดับ 24 ชั่วโมง",
-    desc: "ที่จอดรถในร่มกว้างขวาง ดูแลความปลอดภัยด้วยกล้องโทรทัศน์วงจรปิด CCTV ทุกจุดร่วมกับเจ้าหน้าที่รปภ. มืออาชีพตลอดวัน"
-  }
-];
+const defaultAmenities: any[] = [];
 
-export const defaultFaqs = [
-  { q: "ห่างจาก อิมแพ็ค เมืองทองธานี กี่นาทีและไปยังไง?", a: "ห่างเพียง 5-10 นาทีเท่านั้น (ประมาณ 2.5 กิโลเมตร) เดินทางได้สะดวกสุดด่วนโดยรถยนต์, แท็กซี่ หรือมอเตอร์ไซค์รับจ้างที่มีปักหลักตลอดหน้าซอยปากเกร็ด" },
-  { q: "ทางโรงแรมมีที่จอดรถยนต์ส่วนตัวให้บริการหรือไม่?", a: "มีครับ เราจัดสรรบริการที่จอดรถยนต์ในร่มส่วนตัวรอบบริเวณอาคารที่พักฟรีสำหรับผู้จองห้องพักทุกท่าน ดูแลปลอดภัยสูงสุดด้วยกล้อง CCTV คู่บุคลากรรปภ. ตลอดเวลา" },
-  { q: "ถ้าคอนเสิร์ตจบดึก, สามารถเลทเช็คอินได้หรือไม่?", a: "สามารถเช็คอินตลอด 24 ชั่วโมงได้เลยครับ เนื่องจากเรามีเจ้าหน้าที่บริการที่เคาน์เตอร์ และระบบประตูล็อคอัจฉริยะคีย์การ์ด โดยรบกวนแจ้งความต้องการเช็คอินล่าช้าลงบนคำขอแบบฟอร์มจองห้อง" },
-  { q: "สามารถเลื่อนนัดวันเข้าพัก หรือยกเลิกการจองอย่างไร?", a: "คุณสามารถยกเลิกฟรีได้ภายใน 3 วันก่อนเข้าพักจริง หรือสามารถทักแชทสอบถามผู้ช่วยสั่งแก้ข้อมูล ผ่านระบบซัพพอร์ต AI Chatbot ในหน้านี้ หรือติดต่อ Line ID ของโรงแรมได้สะดวกสุด" }
-];
+export const defaultFaqs: any[] = [];
 
-export const defaultReviews = [
-  { name: "JK SARUTANON", role: "Local Guide 🌐 (Google Review)", review: "ข้อดีคือราคาคุ้มค่ามากเมื่อจองล่วงหน้า มีรถบริการรับส่งเข้าอิมแพ็คฯ (IMPACT) ช่วงเช้าก่อน 10:00 น. ในช่วงที่มีงานคอนเสิร์ตหรืออีเวนต์ สะดวกสบายมากๆ ครับ", rating: 5, date: "1 ปีที่แล้ว" },
-  { name: "Teerayut K.", role: "Verified Guest 🌐 (Google Review)", review: "ห้องพักสะอาดมาก ตกแต่งสไตล์ลอฟท์สวย ทันสมัย ใกล้อิมแพ็คเมืองทองธานี เดินทางสะดวก มีพนักงานดูแลและบริการดีมาก เตียงนอนหนานุ่มนอนสบาย แนะนำเลยสำหรับคนที่จะมาทำธุระหรือดูคอนเสิร์ต", rating: 5, date: "3 เดือนที่แล้ว" },
-  { name: "Pattarapon S.", role: "Guest Reviewer 🌐 (Google Review)", review: "ชอบที่พักมากครับ สะอาดและปลอดภัย มีรปภ.ดูแลตลอด 24 ชม. ที่จอดรถสะดวกสบาย และยังมีคาเฟ่บริการอยู่ชั้นล่าง กาแฟหอมอร่อย ห้องน้ำสะอาด น้ำไหลแรงดีมาก คุ้มค่าเงินที่สุด", rating: 4, date: "6 เดือนที่แล้ว" },
-  { name: "Nattida P.", role: "Concert Attendee 🌐 (Google Review)", review: "มาพักเพื่อไปดูคอนเสิร์ตที่อิมแพ็ค สะดวกสบายสุดๆ ค่ะ ห้องสะอาดสะอ้าน แอร์เย็นเจี๊ยบ เตียงนอนสบายมาก มีบริการรถตู้รับส่งของโรงแรมประทับใจสุดๆ รอบหน้าถ้ามีคอนเสิร์ตอีกมาพักที่นี่อีกแน่นอนค่ะ", rating: 5, date: "2 สัปดาห์ที่แล้ว" }
-];
+export const defaultReviews: any[] = [];
 
-export const defaultGallery = [
-  { url: "", title: "คอนกรีตลอฟท์ล็อบบี้ & คาเฟ่บาร์", cat: "Copper Cafe Bar" },
-  { url: "", title: "ดีไซน์ปูนเปลือย & แผ่นไม้มะค่าธรรมชาติ", cat: "Superior Suite" },
-  { url: "", title: "ระเบียงพืชพรรณสไลด์สูดอากาศภายนอก", cat: "Deluxe Balcony" },
-  { url: "", title: "สเปซส่วนตัวโฮมมี่พร้อมมุมครีเอทีฟทำงาน", cat: "Studio corner" }
-];
+export const defaultGallery: any[] = [];
 
 export const defaultSmtp = {
   host: "smtp.gmail.com",
@@ -326,11 +259,9 @@ export const defaultSmtp = {
   adminNotifyEmail: "admin@m5residence.com"
 };
 
-export const defaultSlides = [
-  { url: "", label: "LOBBY RECEPTION", desc: "โชว์เนื้อไม้สักป่าประกอบโครงเหล็กท่อดำสไตล์อินดัสเทรียลลอฟท์" },
-  { url: "", label: "SUPERIOR ROOM", desc: "ห้องนอนแต่งขอบปูนเปลือยขัดมันพร้อมเฟอร์นิเจอร์สั่งตัดพิเศษ" },
-  { url: "", label: "DELUXE ROOM", desc: "สเปซส่วนตัวกว้างขวางโอบรับแสงแดดยามเช้าผ่านกระจกบานใหญ่" }
-];
+export const defaultSlides: any[] = [];
+
+
 
 const SettingsContext = createContext<SettingsContextType | undefined>(undefined);
 
@@ -424,56 +355,27 @@ export function SettingsProvider({ children }: { children: React.ReactNode }) {
       if (res.ok) {
         const data = await res.json();
         if (data.success && data.settings) {
-          // Parse local room settings first as a backup
-          let localRooms: RoomType[] = [];
-          const localSettingsStr = localStorage.getItem("m5_web_settings");
-          if (localSettingsStr) {
-            try {
-              const localSettings = JSON.parse(localSettingsStr);
-              if (localSettings && Array.isArray(localSettings.rooms)) {
-                localRooms = localSettings.rooms;
-              }
-            } catch (_) {}
-          }
-
-          // Merge images loaded client side if backend does not return them and deduplicate rooms by ID
-          const uniqueRoomsMap = new Map();
-          
-          // Seed with local rooms to prevent losing custom rooms
-          localRooms.forEach((room: RoomType) => {
-            const defRoom = defaultRooms.find(r => r.id === room.id);
-            const merged = {
-              ...room,
-              imageUrl: room.imageUrl || defRoom?.imageUrl || "",
-              active: room.active !== undefined ? room.active : (defRoom?.active !== false)
-            };
-            uniqueRoomsMap.set(room.id, merged);
-          });
-
+          // If Directus fetch succeeds, treat it as the absolute source of truth.
+          // No mockup merging or local cache overwriting!
           const rawRooms = data.settings.rooms || [];
-          rawRooms.forEach((room: RoomType) => {
-            const defRoom = defaultRooms.find(r => r.id === room.id);
-            const localRoom = localRooms.find(r => r.id === room.id);
-            const merged = {
+          const mergedRooms = rawRooms.map((room: RoomType) => {
+            return {
               ...room,
-              imageUrl: room.imageUrl || localRoom?.imageUrl || defRoom?.imageUrl || "",
-              active: room.active !== undefined ? room.active : (localRoom?.active !== undefined ? localRoom.active : (defRoom?.active !== false))
+              imageUrl: room.imageUrl || "",
+              active: room.active !== undefined ? room.active : true
             };
-            uniqueRoomsMap.set(room.id, merged);
           });
-          const mergedRooms = Array.from(uniqueRoomsMap.values());
 
-          // Get local storage backups to intelligently restore data if server got reset
-          const localBookingsStr = localStorage.getItem("m5_bookings");
-          const localMembersStr = localStorage.getItem("m5_members");
-
+          // Strictly trust the database results. No default fallback if the field exists!
           let finalSettings = {
             ...data.settings,
             general: { ...defaultGeneral, ...data.settings.general },
-            rooms: mergedRooms,
-            faqs: data.settings.faqs || defaultFaqs,
-            reviews: data.settings.reviews || defaultReviews,
-            gallery: data.settings.gallery || defaultGallery,
+            rooms: data.settings.rooms !== undefined ? mergedRooms : defaultRooms,
+            promotions: data.settings.promotions !== undefined ? data.settings.promotions : defaultPromotions,
+            amenities: data.settings.amenities !== undefined ? data.settings.amenities : defaultAmenities,
+            faqs: data.settings.faqs !== undefined ? data.settings.faqs : defaultFaqs,
+            reviews: data.settings.reviews !== undefined ? data.settings.reviews : defaultReviews,
+            gallery: data.settings.gallery !== undefined ? data.settings.gallery : defaultGallery,
             blockedDates: data.settings.blockedDates || [],
             coupons: data.settings.coupons || [],
             smtp: data.settings.smtp || defaultSmtp,
@@ -483,83 +385,7 @@ export function SettingsProvider({ children }: { children: React.ReactNode }) {
             impactEvents: data.settings.impactEvents || []
           };
 
-          let needsSyncSettings = false;
-
-          if (localSettingsStr) {
-            try {
-              const localSettings = JSON.parse(localSettingsStr);
-              if (localSettings) {
-                const isServerDefault = data.settings?.general?.hotelName === defaultGeneral.hotelName && 
-                                        data.settings?.general?.contactPhone === defaultGeneral.contactPhone &&
-                                        data.settings?.general?.heroTitle === defaultGeneral.heroTitle;
-
-                // 1. Merge general settings
-                if (localSettings.general) {
-                  const localIsCustom = localSettings.general.hotelName !== defaultGeneral.hotelName || 
-                                        localSettings.general.contactPhone !== defaultGeneral.contactPhone ||
-                                        localSettings.general.heroTitle !== defaultGeneral.heroTitle;
-
-                  if (isServerDefault && localIsCustom) {
-                    finalSettings.general = { ...localSettings.general };
-                    needsSyncSettings = true;
-                  } else {
-                    const mergedGeneral = { ...finalSettings.general, ...localSettings.general };
-                    if (JSON.stringify(mergedGeneral) !== JSON.stringify(finalSettings.general)) {
-                      finalSettings.general = mergedGeneral;
-                      needsSyncSettings = true;
-                    }
-                  }
-                }
-
-                // 2. Merge list settings ONLY if the server is in default state (database reset fallback)
-                if (isServerDefault) {
-                  const listsToMerge: (keyof typeof finalSettings)[] = [
-                    "rooms", "promotions", "amenities", "faqs", "reviews", "gallery", "blockedDates", "coupons", "slides", "impactEvents"
-                  ];
-
-                  listsToMerge.forEach((key) => {
-                    const serverList = finalSettings[key] || [];
-                    const localList = localSettings[key] || [];
-                    
-                    if (Array.isArray(localList) && localList.length > 0) {
-                      if (serverList.length === 0) {
-                        (finalSettings as any)[key] = localList;
-                        needsSyncSettings = true;
-                      }
-                    }
-                  });
-                }
-              }
-            } catch (e) {
-              console.error("Failed to parse localSettings backup", e);
-            }
-          }
-
-          let localDeletedBookingIds: string[] = [];
-          try {
-            localDeletedBookingIds = JSON.parse(localStorage.getItem("m5_deleted_booking_ids") || "[]");
-          } catch (_) {}
-
-          let finalBookings = (data.bookings || []).filter((b: any) => !localDeletedBookingIds.includes(b.id) && !localDeletedBookingIds.includes(b.bookingId));
-          const bookingsToSync: any[] = [];
-
-          if (localBookingsStr) {
-            try {
-              const localBookings = JSON.parse(localBookingsStr);
-              if (Array.isArray(localBookings)) {
-                localBookings.forEach((lb: any) => {
-                  if (localDeletedBookingIds.includes(lb.id) || localDeletedBookingIds.includes(lb.bookingId)) return;
-                  const exists = finalBookings.some((sb: any) => sb.id === lb.id || sb.bookingId === lb.id || sb.bookingId === lb.bookingId);
-                  if (!exists) {
-                    finalBookings.push(lb);
-                    bookingsToSync.push(lb);
-                  }
-                });
-              }
-            } catch (e) {
-              console.error("Failed to parse local bookings backup", e);
-            }
-          }
+          let finalBookings = data.bookings || [];
 
           setSettings(proxifyImagesInObject(finalSettings));
           setBookings(finalBookings);
@@ -567,25 +393,6 @@ export function SettingsProvider({ children }: { children: React.ReactNode }) {
           // Save fresh server settings and bookings to localStorage for offline cache
           localStorage.setItem("m5_web_settings", JSON.stringify(finalSettings));
           localStorage.setItem("m5_bookings", JSON.stringify(finalBookings));
-
-          // Sync back to server if client has newer/restored data
-          if (needsSyncSettings) {
-            fetch("/api/settings", {
-              method: "POST",
-              headers: { "Content-Type": "application/json" },
-              body: JSON.stringify({ settings: finalSettings })
-            }).catch(err => console.error("Error syncing restored settings back to database:", err));
-          }
-
-          if (bookingsToSync.length > 0) {
-            bookingsToSync.forEach(b => {
-              fetch("/api/bookings", {
-                method: "POST",
-                headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({ booking: b })
-              }).catch(err => console.error("Error syncing restored booking back to database:", err));
-            });
-          }
 
           // Fetch database connection status
           try {
@@ -623,6 +430,7 @@ export function SettingsProvider({ children }: { children: React.ReactNode }) {
 
                 let finalMembers = memData.members.filter((m: any) => !localDeletedMemberIds.includes(m.id));
                 const membersToSync: any[] = [];
+                const localMembersStr = localStorage.getItem("m5_members");
 
                 if (localMembersStr) {
                   try {

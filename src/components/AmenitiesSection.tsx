@@ -1,46 +1,21 @@
-import { Coffee, Wifi, ShieldCheck, Dumbbell, Sparkles, MapPin, Ticket, Award } from "lucide-react";
+import React from "react";
+import * as LucideIcons from "lucide-react";
+import { Ticket, Award } from "lucide-react";
 import { motion } from "motion/react";
+import { useSettings } from "../context/SettingsContext";
+
+const getIconComponent = (name: string) => {
+  if (!name) return LucideIcons.Sparkles;
+  const cleanName = name.trim();
+  const pascalName = cleanName.charAt(0).toUpperCase() + cleanName.slice(1);
+  const IconComp = (LucideIcons as any)[pascalName] || (LucideIcons as any)[cleanName];
+  return IconComp || LucideIcons.Sparkles;
+};
 
 export default function AmenitiesAndPromos() {
-  const amenities = [
-    {
-      icon: Wifi,
-      title: "ความเร็วสูงพิเศษ Free Wi-Fi",
-      desc: "ความเร็วระดับกิกะบิต (1000 Mbps) ครอบคลุมทั่วอาคาร ทำงานสปอร์ตไฟล์ไร้รอยต่อ เช็คตารางคอนเสิร์ตสะดวกทันใจ",
-    },
-    {
-      icon: Coffee,
-      title: "Copper & Steam Cafe / Bar",
-      desc: "คาเฟ่บรรยากาศดิบพรีเมียมที่จัดเสิร์ฟกาแฟจากเมล็ดพันธุ์ออร์แกนิคชั้นดี และคราฟต์เบียร์แบรนด์ไทย-เทศยามดีกรีช่วงเย็น",
-    },
-    {
-      icon: Dumbbell,
-      title: "Loft Fitness & Gym Hub",
-      desc: "ยิมออกกำลังกายสไตล์แวร์เฮ้าส์ ดิบเท่สปอร์ต ผนังคอนกรีตฉลุลาย พร้อมอุปกรณ์ออกกำลังและฟรีเวทครบครันครบถ้วน",
-    },
-    {
-      icon: ShieldCheck,
-      title: "ความปลอดภัยระดับ 24 ชั่วโมง",
-      desc: "ที่จอดรถในร่มกว้างขวาง ดูแลความปลอดภัยด้วยกล้องโทรทัศน์วงจรปิด CCTV ทุกจุดร่วมกับเจ้าหน้าที่รปภ. มืออาชีพตลอดวัน",
-    },
-  ];
-
-  const promotions = [
-    {
-      id: "promo-concert",
-      badge: "CONCERT SPECIAL",
-      title: "Concert Goer Package 🎸",
-      desc: "สำหรับสายรักเสียงดนตรี! เข้าพักห้อง Deluxe Balcony เพียงคุณแสดงบัตรคอนเสิร์ตที่จะแสดง ณ อิมแพ็ค อารีน่า ในรอบสัปดาห์นั้น รับฟรีทันที คูปองเครื่องดื่ม Signature 2 แก้ว เลือกลองได้ที่คราฟต์คาเฟ่ Copper & Steam ของโรงแรม",
-      highlight: "ฟรีคูปองเครื่องดื่มคราฟต์ 2 แก้ว",
-    },
-    {
-      id: "promo-stay",
-      badge: "STAY & SAVE",
-      title: "พักยาว ประหยัดกว่า (Stay & Save) 📅",
-      desc: "จองห้องพักทุกสไตล์ตั้งแต่ 2 คืนขึ้นไปผ่านหน้าเว็บไซต์หลัก รับส่วนลดค่าห้องทันที 10% พร้อมสิทธิ์เลทเช็คเอาท์ (Late Check-out) ได้ถึงเวลา 14:00 น. เพื่อให้คุณได้พักผ่อนหลังจบคอนเสิร์ตยามดึกอย่างผ่อนคลายเต็มอิ่ม",
-      highlight: "ส่วนลด 10% + เลทเช็คเอาท์ 14.00 น.",
-    },
-  ];
+  const { settings } = useSettings();
+  const amenities = settings.amenities || [];
+  const promotions = settings.promotions || [];
 
   return (
     <div className="bg-charcoal-deep py-24 border-b border-charcoal-light">
@@ -62,7 +37,7 @@ export default function AmenitiesAndPromos() {
           <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
             {promotions.map((promo, idx) => (
               <motion.div
-                key={promo.id}
+                key={promo.id || idx}
                 whileHover={{ scale: 1.01 }}
                 className="bg-charcoal-medium border border-neutral-850 p-6 rounded-lg relative overflow-hidden flex flex-col justify-between shadow-xs hover:border-brick/30"
               >
@@ -109,27 +84,30 @@ export default function AmenitiesAndPromos() {
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
-            {amenities.map((amenity, idx) => (
-              <div
-                key={idx}
-                className="bg-charcoal-medium border border-neutral-850 p-6 rounded-lg text-center space-y-4 hover:border-brick/40 duration-300 relative rivet-effect group shadow-xs"
-              >
-                {/* Rivets */}
-                <div className="absolute top-2 left-2 w-1.5 h-1.5 rounded-full bg-neutral-800 border-t border-l border-neutral-700"></div>
-                <div className="absolute top-2 right-2 w-1.5 h-1.5 rounded-full bg-neutral-800 border-t border-r border-neutral-700"></div>
+            {amenities.map((amenity, idx) => {
+              const IconComponent = getIconComponent(amenity.iconName);
+              return (
+                <div
+                  key={idx}
+                  className="bg-charcoal-medium border border-neutral-850 p-6 rounded-lg text-center space-y-4 hover:border-brick/40 duration-300 relative rivet-effect group shadow-xs"
+                >
+                  {/* Rivets */}
+                  <div className="absolute top-2 left-2 w-1.5 h-1.5 rounded-full bg-neutral-800 border-t border-l border-neutral-700"></div>
+                  <div className="absolute top-2 right-2 w-1.5 h-1.5 rounded-full bg-neutral-800 border-t border-r border-neutral-700"></div>
 
-                <div className="mx-auto w-12 h-12 rounded-full bg-neutral-900 border border-neutral-800 flex items-center justify-center group-hover:border-brick duration-300 shadow-sm animate-none">
-                  <amenity.icon className="h-5 w-5 text-brick group-hover:scale-110 duration-250 transition-transform" />
+                  <div className="mx-auto w-12 h-12 rounded-full bg-neutral-900 border border-neutral-800 flex items-center justify-center group-hover:border-brick duration-300 shadow-sm animate-none">
+                    <IconComponent className="h-5 w-5 text-brick group-hover:scale-110 duration-250 transition-transform" />
+                  </div>
+                  
+                  <div className="space-y-2">
+                    <h3 className="text-base font-bold text-white">{amenity.title}</h3>
+                    <p className="text-xs text-neutral-350 font-light leading-relaxed">
+                      {amenity.desc}
+                    </p>
+                  </div>
                 </div>
-                
-                <div className="space-y-2">
-                  <h3 className="text-base font-bold text-white">{amenity.title}</h3>
-                  <p className="text-xs text-neutral-350 font-light leading-relaxed">
-                    {amenity.desc}
-                  </p>
-                </div>
-              </div>
-            ))}
+              );
+            })}
           </div>
         </section>
 

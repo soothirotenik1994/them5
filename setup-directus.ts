@@ -1,5 +1,4 @@
 import dotenv from "dotenv";
-import { fileURLToPath } from "url";
 import path from "path";
 import fs from "fs";
 
@@ -7,7 +6,7 @@ dotenv.config();
 
 // Load from local db.json if available
 let configUrl = process.env.DIRECTUS_INTERNAL_URL || process.env.DIRECTUS_URL || "https://data.them5residence.com";
-let configToken = process.env.DIRECTUS_TOKEN || "ibtpkr40rF1BkNCEA4plXirxaDfn07S5";
+let configToken = process.env.DIRECTUS_TOKEN || "lQQ9k-PdtLixFi2LUA-MSxF2n8ucQ96a";
 
 const DB_PATH = path.join(process.cwd(), "db.json");
 if (fs.existsSync(DB_PATH)) {
@@ -114,238 +113,40 @@ const initialGeneral = {
   contactPhone: "02-M5-LOFT",
   facebook: "The M5 Residence Loft",
   lineId: "@m5residence",
-  logoUrl: "",
-  coverImg1: "",
-  coverImg2: "",
-  coverImg3: "",
-  heroCardImg: "",
-  heroBgImg: "",
+  logoUrl: "https://images.unsplash.com/photo-1554118811-1e0d58224f24?auto=format&fit=crop&w=100&q=80",
+  coverImg1: "https://images.unsplash.com/photo-1554118811-1e0d58224f24?auto=format&fit=crop&w=1200&q=80",
+  coverImg2: "https://images.unsplash.com/photo-1590490360182-c33d57733427?auto=format&fit=crop&w=1200&q=80",
+  coverImg3: "https://images.unsplash.com/photo-1582719508461-905c673771fd?auto=format&fit=crop&w=1200&q=80",
+  heroCardImg: "https://images.unsplash.com/photo-1554118811-1e0d58224f24?auto=format&fit=crop&w=1200&q=80",
+  heroBgImg: "https://images.unsplash.com/photo-1590490360182-c33d57733427?auto=format&fit=crop&w=1200&q=80",
   seoTitle: "The M5 Residence | ที่พักสไตล์ลอฟท์ ปากเกร็ด นนทบุรี ใกล้อิมแพ็ค อารีน่า",
   seoDescription: "เดอะ เอ็มไฟว์ เรสซิเดนซ์ (The M5 Residence) นิยามใหม่ของการพักผ่อนสไตล์อินดัสเทรียลลอฟท์ ปากเกร็ด นนทบุรี เลียบคลองประปา ใกล้ป๊อปปูล่าคาร์ดอน และเมืองทองธานี ห้องพักหรูราคาประหยัด",
   seoKeywords: "The M5 Residence, เดอะ เอ็มไฟว์ เรสซิเดนซ์, ที่พักปากเกร็ด, โรงแรมปากเกร็ด, ที่พักใกล้อิมแพ็ค, ที่พักใกล้เมืองทอง, โรงแรมสไตล์ลอฟท์, โรงแรมนนทบุรี, จองห้องพักนนทบุรี",
   allowRegistration: true,
   bookingEnabled: true,
-  bookingDisabledMessage: "ขออภัย ระบบจองห้องพักออนไลน์ของทางโรงแรมปิดทำการชั่วคราวเพื่อปรับปรุงระบบ หากมีข้อสงสัยหรือต้องการจองด่วน สามารถติดต่อผ่าน Line ID หรือเบอร์โทรศัพท์ได้โดยตรง"
+  bookingDisabledMessage: "ขออภัย ระบบจองห้องพักออนไลน์ของทางโรงแรมปิดทำการชั่วคราวเพื่อปรับปรุงระบบ",
+  eventPopupTimeout: 10
 };
 
 const initialSmtp = {
   host: "smtp.gmail.com",
   port: 587,
   secure: false,
-  user: "",
-  pass: "",
-  fromName: "The M5 Residence",
-  fromEmail: "",
-  adminNotifyEmail: "admin@m5residence.com"
+  user: "notification@them5residence.com",
+  pass: "m5residence2026",
+  fromName: "The M5 Residence Loft",
+  fromEmail: "no-reply@them5residence.com",
+  adminNotifyEmail: "booking@them5residence.com"
 };
 
-const initialRooms = [
-  {
-    roomId: "superior",
-    name: "Superior Loft Suite",
-    thaiName: "ซูพีเรียร์ ลอฟท์ สวีท",
-    price: 1800,
-    size: 35,
-    capacity: 3,
-    bedType: "King Size Bed (เตียงคิงไซส์ 6 ฟุต)",
-    description: "ห้องพักขนาดกว้างขวาง เหมาะสำหรับผู้เข้าพักที่ต้องการพื้นที่ใช้สอยพิเศษ ผนังปูนเปลือยดีไซน์สูงโปร่งอบอุ่น",
-    longDescription: "สุดยอดแห่งการดีไซน์ในสไตล์แวร์เฮาส์ลอฟต์แท้ๆ ห้องนี้โดดเด่นด้วยเพดานที่ได้รับการออกแบบให้สูงเป็นพิเศษถึง 3.2 เมตร ผนังด้านหลังกรุหน้าด้วยกระเบื้องอิฐมอญสีส้มธรรมชาติเข้ากับโครงเหล็กท่อสีดำด้าน ชุดเครื่องนอนเป็นด้ายคอตตอนเกรดพรีเมียมหนานุ่มพิเศษ มีพื้นที่เลานจ์สำหรับการนั่งเล่นอ่านหนังสือ พร้อมโซลูชันห้องน้ำกระจกเทมเปอร์ดาร์คสไตล์และระบบฝักบัว Rain Shower อุณหภูมิคงที่",
-    imageUrl: "",
-    amenities: JSON.stringify(["Free High-speed Wi-Fi 1000Mbps", "Smart TV 55\" พร้อม Netflix", "มินิบาร์และสแน็คบาร์จัดเตรียมครบ", "โซฟาเบดเกรดพรีเมียมสำหรับพักผ่อน", "เครื่องเป่าผม และเสื้อคลุมอาบน้ำสไตล์ลอฟท์", "ตู้เซฟอิเล็กทรอนิกส์ส่วนตัว"]),
-    matterportUrl: "https://my.matterport.com/show/?m=Pcjj9wmA98W"
-  },
-  {
-    roomId: "deluxe",
-    name: "Deluxe Balcony Loft",
-    thaiName: "ดีลักซ์ บัลโคนี ลอฟท์",
-    price: 1500,
-    size: 30,
-    capacity: 2,
-    bedType: "King Size Bed (เตียงคิงไซส์ 6 ฟุต)",
-    description: "สัมผัสอากาศบริสุทธิ์รอบปากเกร็ดกับระเบียงคอนกรีตขัดมันส่วนตัวสไตล์ธรรมชาติพร้อมพืชพรรณพริ้วไหว",
-    longDescription: "ห้องพักดีไซน์ทันสมัยที่ประยุกต์ความเป็น Loft เข้ากับความโปร่งโล่งสบายตาอย่างลงตัว จุดเด่นคือ ประตูกระจกบานใหญ่แบบเลื่อนไร้เสียงที่สามารถสไลด์เปิดสู่ระเบียงส่วนตัว คอนกรีตบล็อกดีไซน์โมเดิร์นรายล้อมด้วยพืชพรรณสีเขียวชอุ่ม ให้ความเป็นส่วนตัวสูดอากาศพัดสบาย ยามค่ำคืนสามารถดื่มด่ำกับบรรยากาศรื่นรมย์ของแสงไฟในย่านนนทบุรีรอบข้างได้เหมาะสม",
-    imageUrl: "",
-    amenities: JSON.stringify(["ระเบียงส่วนตัวชมวิวเมืองภายนอก", "Free High-speed Wi-Fi 1000Mbps", "Smart TV 50\" สตรีมมิ่งไร้ขัดข้อง", "เครื่องชงกาแฟแคปซูลระดับพรีเมียม", "ฝักบัวอาบน้ำเพดานสูง Rain Shower", "โต๊ะทำงานไม้คลาสสิก"]),
-    matterportUrl: "https://my.matterport.com/show/?m=u6Q8X6mK4cW"
-  },
-  {
-    roomId: "studio",
-    name: "Studio Loft",
-    thaiName: "สตูดิโอ ลอฟท์",
-    price: 1200,
-    size: 28,
-    capacity: 2,
-    bedType: "Queen Size Bed (เตียงควีนไซส์ 5 ฟุต)",
-    description: "ห้องสตูดิโอบรรยากาศอบอุ่นคลาสสิก พร้อมโต๊ะทำงานและเก้าอี้หนังสไตล์อินดัสเทรียลเพื่อเหล่านักเดินทางครีเอทีฟ",
-    longDescription: "ความเรียบหรูระดับดีไซน์ในพื้นที่กะทัดรัด ห้อง Studio Loft โชว์พื้นผิวคอนกรีตหล่อแบบผสมผสานแผ่นไม้ธรรมชาติคัดสรร เหมาะสำหรับนักธุรกิจ ศิลปิน ครีเอเตอร์ หรือคู่รักที่มองหาห้องพักอันอบอุ่น ตกแต่งคุ้มค่า มีโต๊ะทำงานขอบเหล็กเข้าสไตล์เก้าอี้หนังแบบย้อนยุครวมถึงโคมไฟกรงนกเหล็กดัด ให้แสงวอร์มไวท์นุ่มสบายสายตาเพื่อปลุกไอเดียสร้างสรรค์ใหม่ๆ",
-    imageUrl: "",
-    amenities: JSON.stringify(["Free High-speed Wi-Fi 1000Mbps", "Smart TV 43\" ดีไซน์เรียบหรู", "โต๊ะทำงานทำงานสไตล์ดีไซน์ออฟฟิศ", "ชุดชงชากาแฟแฮนด์เมด", "ตู้เย็นขนาดกลางแยกช่องฟรีซ", "เครื่องเป่าผมและไดร์เป่าสไตล์"]),
-    matterportUrl: "https://my.matterport.com/show/?m=SxZJMz3Sg6v"
-  }
-];
-
-const initialPromotions = [
-  {
-    promoId: "promo-concert",
-    badge: "CONCERT SPECIAL",
-    title: "Concert Goer Package 🎸",
-    desc: "สำหรับสายรักเสียงดนตรี! เข้าพักห้อง Deluxe Balcony เพียงคุณแสดงบัตรคอนเสิร์ตที่จะแสดง ณ อิมแพ็ค อารีน่า ในรอบสัปดาห์นั้น รับฟรีทันที คูปองเครื่องดื่ม Signature 2 แก้ว เลือกลองได้ที่คราฟต์คาเฟ่ Copper & Steam ของโรงแรม",
-    highlight: "ฟรีคูปองเครื่องดื่มคราฟต์ 2 แก้ว"
-  },
-  {
-    promoId: "promo-stay",
-    badge: "STAY & SAVE",
-    title: "พักยาว ประหยัดกว่า (Stay & Save) 📅",
-    desc: "จองห้องพักทุกสไตล์ตั้งแต่ 2 คืนขึ้นไปผ่านหน้าเว็บไซต์หลัก รับส่วนลดค่าห้องทันที 10% พร้อมสิทธิ์เลทเช็คเอาท์ (Late Check-out) ได้ถึงเวลา 14:00 น. เพื่อให้คุณได้พักผ่อนหลังจบคอนเสิร์ตยามดึกอย่างผ่อนคลายเต็มอิ่ม",
-    highlight: "ส่วนลด 10% + เลทเช็คเอาท์ 14.00 น."
-  }
-];
-
-const initialAmenities = [
-  {
-    iconName: "Wifi",
-    title: "ความเร็วสูงพิเศษ Free Wi-Fi",
-    desc: "ความเร็วระดับกิกะบิต (1000 Mbps) ครอบคลุมทั่วอาคาร ทำงานสปอร์ตไฟล์ไร้รอยต่อ เช็คตารางคอนเสิร์ตสะดวกทันใจ"
-  },
-  {
-    iconName: "Coffee",
-    title: "Copper & Steam Cafe / Bar",
-    desc: "คาเฟ่บรรยากาศดิบพรีเมียมที่จัดเสิร์ฟกาแฟจากเมล็ดพันธุ์ออร์แกนิคชั้นดี และคราฟต์เบียร์แบรนด์ไทย-เทศยามดีกรีช่วงเย็น"
-  },
-  {
-    iconName: "Dumbbell",
-    title: "Loft Fitness & Gym Hub",
-    desc: "ยิมออกกำลังกายสไตล์แวร์เฮ้าส์ ดิบเท่สปอร์ต ผนังคอนกรีตฉลุลาย พร้อมอุปกรณ์ออกกำลังและฟรีเวทครบครันครบถ้วน"
-  },
-  {
-    iconName: "ShieldCheck",
-    title: "ความปลอดภัยระดับ 24 ชั่วโมง",
-    desc: "ที่จอดรถในร่มกว้างขวาง ดูแลความปลอดภัยด้วยกล้องโทรทัศน์วงจรปิด CCTV ทุกจุดร่วมกับเจ้าหน้าที่รปภ. มืออาชีพตลอดวัน"
-  }
-];
-
-const initialFaqs = [
-  { q: "ห่างจาก อิมแพ็ค เมืองทองธานี กี่นาทีและไปยังไง?", a: "ห่างเพียง 5-10 นาทีเท่านั้น (ประมาณ 2.5 กิโลเมตร) เดินทางได้สะดวกสุดด่วนโดยรถยนต์, แท็กซี่ หรือมอเตอร์ไซค์รับจ้างที่มีปักหลักตลอดหน้าซอยปากเกร็ด" },
-  { q: "ทางโรงแรมมีที่จอดรถยนต์ส่วนตัวให้บริการหรือไม่?", a: "มีครับ เราจัดสรรบริการที่จอดรถยนต์ในร่มส่วนตัวรอบบริเวณอาคารที่พักฟรีสำหรับผู้จองห้องพักทุกท่าน ดูแลปลอดภัยสูงสุดด้วยกล้อง CCTV คู่บุคลากรรปภ. ตลอดเวลา" },
-  { q: "ถ้าคอนเสิร์ตจบดึก, สามารถเลทเช็คอินได้หรือไม่?", a: "สามารถเช็คอินตลอด 24 ชั่วโมงได้เลยครับ เนื่องจากเรามีเจ้าหน้าที่บริการที่เคาน์เตอร์ และระบบประตูล็อคอัจฉริยะคีย์การ์ด โดยรบกวนแจ้งความต้องการเช็คอินล่าช้าลงบนคำขอแบบฟอร์มจองห้อง" },
-  { q: "สามารถเลื่อนนัดวันเข้าพัก หรือยกเลิกการจองอย่างไร?", a: "คุณสามารถยกเลิกฟรีได้ภายใน 3 วันก่อนเข้าพักจริง หรือสามารถทักแชทสอบถามผู้ช่วยสั่งแก้ข้อมูล ผ่านระบบซัพพอร์ต AI Chatbot ในหน้านี้ หรือติดต่อ Line ID ของโรงแรมได้สะดวกสุด" }
-];
-
-const initialReviews = [
-  { name: "คุณณภัทร สรวิศิษฐ์", role: "Concert Attendee 🎸", review: "มาดูคอนเสิร์ตที่อิมแพ็ค สะดวกมากๆ นั่งวินไป 5 นาทีถึง ล็อบบี้ตกแต่งสวย ปูนเปลือยขัดมันเท่และสะอาดสะอ้าน แนะนำเลยค่ะ", rating: 5, date: "มิถุนายน 2026" },
-  { name: "คุณลลินา ชัชวัสส์", role: "Staycation Lover ☕", review: "ชอบคราฟต์คาเฟ่ด้านล่างมากค่ะ กาแฟหอมเข้ม เตียงในห้อง Deluxe Balcony หนาหนุ่มนอนแอร์พัดผ่อนฟินๆ พนักงานบริการเอาใจใส่ดีมาก", rating: 5, date: "พฤษภาคม 2026" },
-  { name: "Mr. David Miller", role: "Digital Nomad 💻", review: "Wonderful gigabit connection and modern industrial vibes. Safe parking spaces, secure guard check. I'll definitely come back next time.", rating: 5, date: "พฤษภาคม 2026" }
-];
-
-const initialGallery = [
-  { url: "", title: "คอนกรีตลอฟท์ล็อบบี้ & คาเฟ่บาร์", cat: "Copper Cafe Bar" },
-  { url: "", title: "ดีไซน์ปูนเปลือย & แผ่นไม้มะค่าธรรมชาติ", cat: "Superior Suite" },
-  { url: "", title: "ระเบียงพืชพรรณสไลด์สูดอากาศภายนอก", cat: "Deluxe Balcony" },
-  { url: "", title: "สเปซส่วนตัวโฮมมี่พร้อมมุมครีเอทีฟทำงาน", cat: "Studio corner" }
-];
-
-const initialCoupons = [
-  {
-    code: "WELCOME10",
-    type: "percent",
-    value: 10,
-    minNights: 1,
-    active: true,
-    description: "ส่วนลดพิเศษ 10% สำหรับผู้ใช้หน้าเว็บใหม่"
-  },
-  {
-    code: "LOFT100",
-    type: "fixed",
-    value: 100,
-    minNights: 1,
-    active: true,
-    description: "ส่วนลดเงินสด 100 บาท ต้อนรับฤดูกาลคอนเสิร์ต"
-  }
-];
-
-const initialBookings = [
-  {
-    bookingId: "B-1001",
-    roomType: "deluxe",
-    roomName: "Deluxe Balcony Loft",
-    checkIn: "2026-06-25",
-    checkOut: "2026-06-27",
-    guests: 2,
-    guestName: "สมศักดิ์ รักดี",
-    guestEmail: "somsak@gmail.com",
-    guestPhone: "081-222-3344",
-    totalPrice: 3000,
-    status: "Confirmed",
-    specialRequest: "ขอเตียงเสริมและต้องการที่จอดรถใกล้ทางเข้า",
-    createdAt: "2026-06-23T01:50:00.000Z"
-  },
-  {
-    bookingId: "B-1002",
-    roomType: "superior",
-    roomName: "Superior Loft Suite",
-    checkIn: "2026-07-02",
-    checkOut: "2026-07-03",
-    guests: 3,
-    guestName: "Jane Doe",
-    guestEmail: "jane@example.com",
-    guestPhone: "+1 555-0199",
-    totalPrice: 1800,
-    status: "Paid",
-    specialRequest: "ต้องการเช็คอินช่วงเวลา 21:00 น. เนื่องจากติดคอนเสิร์ต",
-    createdAt: "2026-06-22T14:30:00.000Z"
-  }
-];
-
-const initialBlockedDates = [
-  {
-    blockedId: "bd-1",
-    date: "2026-06-30",
-    roomId: "all",
-    note: "ปิดบำรุงรักษาระบบไฟฟ้าส่วนกลาง"
-  },
-  {
-    blockedId: "bd-2",
-    date: "2026-07-05",
-    roomId: "superior",
-    note: "ห้อง Superior ปิดพ่นสีและเคลือบเงาเฟอร์นิเจอร์ไม้"
-  }
-];
-
-const initialMembers = [
-  {
-    memberId: "M5-MEM-1001",
-    name: "สมชาย รักสงบ",
-    email: "somchai@m5.com",
-    phone: "089-111-2222",
-    password: "password123",
-    tier: "Elite",
-    points: 250,
-    joinedBookingsCount: 3,
-    createdAt: new Date().toISOString()
-  },
-  {
-    memberId: "M5-MEM-1002",
-    name: "วิภาดา งามวิไล",
-    email: "wipada@gmail.com",
-    phone: "085-555-6666",
-    password: "password123",
-    tier: "Gold",
-    points: 120,
-    joinedBookingsCount: 1,
-    createdAt: new Date().toISOString()
-  },
-  {
-    memberId: "M5-MEM-1003",
-    name: "เกียรติศักดิ์ ยอดดนตรี",
-    email: "kiatisak@m5.com",
-    phone: "082-999-8888",
-    password: "password123",
-    tier: "Silver",
-    points: 40,
-    joinedBookingsCount: 0,
-    createdAt: new Date().toISOString()
-  }
-];
+const initialRooms: any[] = [];
+const initialPromotions: any[] = [];
+const initialAmenities: any[] = [];
+const initialFaqs: any[] = [];
+const initialReviews: any[] = [];
+const initialGallery: any[] = [];
+const initialCoupons: any[] = [];
+const initialImpactEvents: any[] = [];
 
 // Helper functions for API calls
 async function createCollection(collectionName: string, isSingleton = false) {
@@ -459,7 +260,16 @@ async function main() {
         { name: "seoKeywords", type: "text", interface: "textarea" },
         { name: "allowRegistration", type: "boolean", interface: "boolean" },
         { name: "bookingEnabled", type: "boolean", interface: "boolean" },
-        { name: "bookingDisabledMessage", type: "text", interface: "textarea" }
+        { name: "bookingDisabledMessage", type: "text", interface: "textarea" },
+        { name: "eventPopupEnabled", type: "boolean", interface: "boolean" },
+        { name: "eventPopupMode", type: "string", interface: "input" },
+        { name: "eventPopupSelectedId", type: "string", interface: "input" },
+        { name: "eventPopupCustomTitle", type: "string", interface: "input" },
+        { name: "eventPopupCustomDesc", type: "text", interface: "textarea" },
+        { name: "eventPopupCustomImg", type: "string", interface: "input" },
+        { name: "eventPopupTimeout", type: "integer", interface: "input" },
+        { name: "lineLink", type: "string", interface: "input" },
+        { name: "facebookUrl", type: "string", interface: "input" }
       ],
       seed: [initialGeneral]
     },
@@ -581,7 +391,7 @@ async function main() {
         { name: "specialRequest", type: "text", interface: "textarea" },
         { name: "createdAt", type: "string", interface: "input" }
       ],
-      seed: initialBookings
+      seed: [] // real database starts with empty bookings, or we can use empty array to conform to "no mock transactions"
     },
     {
       name: "m5_blocked_dates",
@@ -592,7 +402,7 @@ async function main() {
         { name: "roomId", type: "string", interface: "input" },
         { name: "note", type: "string", interface: "input" }
       ],
-      seed: initialBlockedDates
+      seed: [] // keep empty for real-world usage
     },
     {
       name: "m5_members",
@@ -608,7 +418,7 @@ async function main() {
         { name: "joinedBookingsCount", type: "integer", interface: "input" },
         { name: "createdAt", type: "string", interface: "input" }
       ],
-      seed: initialMembers
+      seed: [] // empty for real usage
     },
     {
       name: "m5_admins",
@@ -624,18 +434,27 @@ async function main() {
         {
           adminId: "admin-1",
           username: "admin",
-          password: "password123",
+          password: "asd024865", // matching user admin password in db.json
           name: "System Chief Manager",
           role: "Super Admin"
-        },
-        {
-          adminId: "admin-2",
-          username: "m5loft",
-          password: "password123",
-          name: "M5 Loft Manager",
-          role: "Loft Admin"
         }
       ]
+    },
+    {
+      name: "m5_impact_events",
+      singleton: false,
+      fields: [
+        { name: "eventId", type: "string", interface: "input" },
+        { name: "title", type: "string", interface: "input" },
+        { name: "date", type: "string", interface: "input" },
+        { name: "time", type: "string", interface: "input" },
+        { name: "venue", type: "string", interface: "input" },
+        { name: "description", type: "text", interface: "textarea" },
+        { name: "imageUrl", type: "string", interface: "input" },
+        { name: "category", type: "string", interface: "input" },
+        { name: "active", type: "boolean", interface: "boolean" }
+      ],
+      seed: initialImpactEvents
     }
   ];
 

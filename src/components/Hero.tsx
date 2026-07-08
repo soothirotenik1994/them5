@@ -4,8 +4,7 @@ import { motion } from "motion/react";
 import { CheckAvailabilityRequest } from "../types";
 import { useSettings } from "../context/SettingsContext";
 
-// @ts-ignore
-import lobbyImg from "../assets/images/lobby_loft_m5_1782203250164.jpg";
+const defaultLobbyImg = "https://images.unsplash.com/photo-1554118811-1e0d58224f24?auto=format&fit=crop&w=1200&q=80";
 
 interface HeroProps {
   onCheckAvailability: (form: CheckAvailabilityRequest) => void;
@@ -217,7 +216,7 @@ export default function Hero({ onCheckAvailability, onExploreRooms }: HeroProps)
             >
               {/* Real images generated and imported */}
               <img
-                src={gen.heroCardImg || lobbyImg}
+                src={gen.heroCardImg || defaultLobbyImg}
                 alt="The M5 Residence Lobby"
                 className="absolute inset-0 w-full h-full object-cover opacity-90 hover:scale-105 transition-transform duration-700 ease-out"
                 referrerPolicy="no-referrer"

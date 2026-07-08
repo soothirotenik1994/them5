@@ -4,23 +4,17 @@ import { motion } from "motion/react";
 import { RoomType } from "../types";
 import { useSettings } from "../context/SettingsContext";
 
-// Import custom generated images
-// @ts-ignore
-import superiorImg from "../assets/images/bedroom_superior_m5_1782203272229.jpg";
-// @ts-ignore
-import studioImg from "../assets/images/bedroom_studio_m5_1782203293730.jpg";
-// @ts-ignore
-import deluxeImg from "../assets/images/bedroom_deluxe_m5_1782203318372.jpg";
+const imageMap: Record<string, string> = {
+  superior: "https://images.unsplash.com/photo-1590490360182-c33d57733427?auto=format&fit=crop&w=800&q=80",
+  deluxe: "https://images.unsplash.com/photo-1582719508461-905c673771fd?auto=format&fit=crop&w=800&q=80",
+  studio: "https://images.unsplash.com/photo-1566665797739-1674de7a421a?auto=format&fit=crop&w=800&q=80"
+};
+
+const defaultRoomImg = "https://images.unsplash.com/photo-1582719508461-905c673771fd?auto=format&fit=crop&w=800&q=80";
 
 interface RoomsSectionProps {
   onSelectRoom: (roomId: string) => void;
 }
-
-const imageMap: Record<string, string> = {
-  superior: superiorImg,
-  deluxe: deluxeImg,
-  studio: studioImg
-};
 
 export default function RoomsSection({ onSelectRoom }: RoomsSectionProps) {
   const [selectedDetail, setSelectedDetail] = useState<RoomType | null>(null);
@@ -51,7 +45,7 @@ export default function RoomsSection({ onSelectRoom }: RoomsSectionProps) {
         {/* Rooms Grid */}
         <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
           {rooms.map((room) => {
-            const displayImg = room.imageUrl || imageMap[room.id] || deluxeImg;
+            const displayImg = room.imageUrl || imageMap[room.id] || defaultRoomImg;
             return (
               <motion.div
                 key={room.id}
@@ -67,7 +61,7 @@ export default function RoomsSection({ onSelectRoom }: RoomsSectionProps) {
                     className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500 ease-out"
                     referrerPolicy="no-referrer"
                     onError={(e) => {
-                      e.currentTarget.src = imageMap[room.id] || deluxeImg;
+                      e.currentTarget.src = imageMap[room.id] || defaultRoomImg;
                     }}
                   />
                   <div className="absolute inset-0 bg-gradient-to-t from-black/85 via-black/10 to-transparent"></div>
@@ -165,12 +159,12 @@ export default function RoomsSection({ onSelectRoom }: RoomsSectionProps) {
 
                 <div className="h-60 rounded-md overflow-hidden bg-center bg-cover border border-neutral-800">
                   <img
-                    src={selectedDetail.imageUrl || imageMap[selectedDetail.id] || deluxeImg}
+                    src={selectedDetail.imageUrl || imageMap[selectedDetail.id] || defaultRoomImg}
                     alt={selectedDetail.name}
                     className="w-full h-full object-cover"
                     referrerPolicy="no-referrer"
                     onError={(e) => {
-                      e.currentTarget.src = imageMap[selectedDetail.id] || deluxeImg;
+                      e.currentTarget.src = imageMap[selectedDetail.id] || defaultRoomImg;
                     }}
                   />
                 </div>

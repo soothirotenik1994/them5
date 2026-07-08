@@ -10,17 +10,14 @@ import {
 import { useSettings, defaultFaqs, defaultReviews, defaultGallery } from "./context/SettingsContext";
 import BookingModal from "./components/BookingModal";
 import AIChatbot from "./components/AIChatbot";
+import EventPopup from "./components/EventPopup";
 import AdminDashboard from "./components/AdminDashboard";
 import { CheckAvailabilityRequest } from "./types";
 
-// @ts-ignore
-import lobbyImg from "./assets/images/lobby_loft_m5_1782203250164.jpg";
-// @ts-ignore
-import superiorImg from "./assets/images/bedroom_superior_m5_1782203272229.jpg";
-// @ts-ignore
-import studioImg from "./assets/images/bedroom_studio_m5_1782203293730.jpg";
-// @ts-ignore
-import deluxeImg from "./assets/images/bedroom_deluxe_m5_1782203318372.jpg";
+const lobbyImg = "https://images.unsplash.com/photo-1554118811-1e0d58224f24?auto=format&fit=crop&w=1200&q=80";
+const superiorImg = "https://images.unsplash.com/photo-1590490360182-c33d57733427?auto=format&fit=crop&w=1200&q=80";
+const studioImg = "https://images.unsplash.com/photo-1566665797739-1674de7a421a?auto=format&fit=crop&w=1200&q=80";
+const deluxeImg = "https://images.unsplash.com/photo-1582719508461-905c673771fd?auto=format&fit=crop&w=1200&q=80";
 
 export default function App() {
   const [isBookingOpen, setIsBookingOpen] = useState(false);
@@ -136,10 +133,10 @@ export default function App() {
     ? settings.slides.map((slide, idx) => {
         let finalUrl = slide.url;
         if (!finalUrl) {
-          if (idx === 0) finalUrl = gen.coverImg1 || lobbyImg;
-          else if (idx === 1) finalUrl = gen.coverImg2 || superiorImg;
-          else if (idx === 2) finalUrl = gen.coverImg3 || deluxeImg;
-          else finalUrl = lobbyImg;
+          if (idx === 0) finalUrl = gen.coverImg1 || "";
+          else if (idx === 1) finalUrl = gen.coverImg2 || "";
+          else if (idx === 2) finalUrl = gen.coverImg3 || "";
+          else finalUrl = "";
         }
         return {
           url: finalUrl,
@@ -148,9 +145,9 @@ export default function App() {
         };
       })
     : [
-        { url: gen.coverImg1 || lobbyImg, label: "LOBBY RECEPTION", desc: "โชว์เนื้อไม้สักป่าประกอบโครงเหล็กท่อดำสไตล์อินดัสเทรียลลอฟท์" },
-        { url: gen.coverImg2 || superiorImg, label: "SUPERIOR ROOM", desc: "ห้องนอนแต่งขอบปูนเปลือยขัดมันพร้อมเฟอร์นิเจอร์สั่งตัดพิเศษ" },
-        { url: gen.coverImg3 || deluxeImg, label: "DELUXE ROOM", desc: "สเปซส่วนตัวกว้างขวางโอบรับแสงแดดยามเช้าผ่านกระจกบานใหญ่" }
+        { url: gen.coverImg1 || "", label: "SLIDE 1", desc: "ยังไม่มีภาพสไลด์แบนเนอร์หลัก" },
+        { url: gen.coverImg2 || "", label: "SLIDE 2", desc: "ยังไม่มีภาพสไลด์แบนเนอร์หลัก" },
+        { url: gen.coverImg3 || "", label: "SLIDE 3", desc: "ยังไม่มีภาพสไลด์แบนเนอร์หลัก" }
       ];
 
   // Auto-play interval for cinematic cover images
@@ -568,12 +565,19 @@ export default function App() {
         <div className="w-full lg:w-[62%] xl:w-[65%] lg:h-[calc(100vh-80px)] lg:fixed lg:top-20 lg:left-0 z-10 flex flex-col justify-between p-6 sm:p-10 lg:p-12 xl:p-16 relative overflow-hidden border-b lg:border-b-0 lg:border-r border-neutral-900">
           
           {/* Active Background Fade-in effect */}
-          <div className="absolute inset-0 z-0 bg-[#070707] transition-all duration-700">
-            <img 
-              src={coverImages[activeCoverImgIdx].url} 
-              alt={coverImages[activeCoverImgIdx].label}
-              className="w-full h-full object-cover opacity-60 scale-100 hover:scale-105 transition-all duration-[8000ms] ease-out brightness-90"
-            />
+          <div className="absolute inset-0 z-0 bg-[#070707] transition-all duration-700 flex items-center justify-center">
+            {coverImages[activeCoverImgIdx]?.url ? (
+              <img 
+                src={coverImages[activeCoverImgIdx].url} 
+                alt={coverImages[activeCoverImgIdx].label}
+                className="w-full h-full object-cover opacity-60 scale-100 hover:scale-105 transition-all duration-[8000ms] ease-out brightness-90"
+              />
+            ) : (
+              <div className="absolute inset-0 bg-neutral-900 flex flex-col items-center justify-center border border-neutral-800">
+                <Images className="h-12 w-12 text-neutral-700 mb-2 animate-pulse" />
+                <span className="text-xs font-mono text-neutral-500 uppercase tracking-widest">// NO IMAGE UPLOADED (ยังไม่มีภาพสไลด์)</span>
+              </div>
+            )}
             {/* Cinematic Overlay: matching vignette depth of mockup */}
             <div className="absolute inset-0 bg-gradient-to-t from-[#050505] via-black/30 to-black/60"></div>
             <div className="absolute inset-0 bg-gradient-to-r from-black/50 via-transparent to-black/10"></div>
@@ -641,8 +645,14 @@ export default function App() {
                       : "opacity-60 hover:opacity-100 border border-neutral-800"
                   }`}
                 >
-                  <div className="h-10 w-16 overflow-hidden rounded relative">
-                    <img src={img.url} className="h-full w-full object-cover" />
+                  <div className="h-10 w-16 overflow-hidden rounded relative bg-neutral-950 flex items-center justify-center">
+                    {img.url ? (
+                      <img src={img.url} className="h-full w-full object-cover" />
+                    ) : (
+                      <div className="h-full w-full bg-neutral-850 flex items-center justify-center text-neutral-600">
+                        <Images className="h-4 w-4" />
+                      </div>
+                    )}
                     <div className="absolute inset-0 bg-black/20 group-hover:bg-transparent duration-200"></div>
                   </div>
                 </button>
@@ -882,7 +892,7 @@ export default function App() {
                   );
                 }
                 return activeRooms.map((room, idx) => {
-                  const roomImg = room.imageUrl || resolvedImages[room.id] || deluxeImg;
+                  const roomImg = room.imageUrl || "";
                   const isExpanded = expandedRoomIdx === idx;
 
                   return (
@@ -891,13 +901,20 @@ export default function App() {
                       className="p-4 bg-[#111111] border border-neutral-900 rounded-lg shadow-md group hover:border-neutral-800 transition-all duration-300"
                     >
                       {/* Thumbnail representation */}
-                      <div className="relative h-44 sm:h-48 w-full overflow-hidden rounded mb-3 bg-neutral-950">
-                        <img 
-                          src={roomImg} 
-                          alt={room.name} 
-                          className="h-full w-full object-cover group-hover:scale-105 transition-all duration-500 brightness-95" 
-                          referrerPolicy="no-referrer"
-                        />
+                      <div className="relative h-44 sm:h-48 w-full overflow-hidden rounded mb-3 bg-neutral-950 flex items-center justify-center">
+                        {roomImg ? (
+                          <img 
+                            src={roomImg} 
+                            alt={room.name} 
+                            className="h-full w-full object-cover group-hover:scale-105 transition-all duration-500 brightness-95" 
+                            referrerPolicy="no-referrer"
+                          />
+                        ) : (
+                          <div className="absolute inset-0 bg-neutral-850 flex flex-col items-center justify-center border border-neutral-800">
+                            <Images className="h-10 w-10 text-neutral-600 mb-2 animate-pulse" />
+                            <span className="text-[10px] font-mono text-neutral-500 uppercase tracking-widest">// NO ROOM IMAGE (ยังไม่มีภาพห้องพัก)</span>
+                          </div>
+                        )}
                         {/* Price Tag badge */}
                         <div className="absolute bottom-3 right-3 bg-neutral-950/90 border border-neutral-850 px-3 py-1 rounded text-right backdrop-blur-sm">
                           <span className="block text-[8px] font-mono text-brick uppercase leading-tight">STARTING_RATE</span>
@@ -1007,10 +1024,9 @@ export default function App() {
           {/* INTERACTIVE LIFESTYLE GALLERY (คลังภาพความสวยเด่นสไตล์ลอฟท์) */}
           {(() => {
             const rawGalleryItems = (settings.gallery !== undefined && settings.gallery !== null) ? settings.gallery : defaultGallery;
-            const fallbackGalleryImages = [lobbyImg, superiorImg, deluxeImg, studioImg];
-            const galleryItems = rawGalleryItems.map((item, idx) => ({
+            const galleryItems = rawGalleryItems.map((item) => ({
               ...item,
-              resolvedUrl: item.url || fallbackGalleryImages[idx % fallbackGalleryImages.length]
+              resolvedUrl: item.url || ""
             }));
 
             const galleryCategories = ["ทั้งหมด", ...Array.from(new Set(galleryItems.map(item => item.cat || "ทั่วไป")))];
@@ -1082,10 +1098,17 @@ export default function App() {
                           setLightboxItems(filteredGalleryItems);
                           setLightboxIndex(idx);
                         }}
-                        className="relative group h-28 sm:h-32 rounded overflow-hidden border border-neutral-900 cursor-pointer bg-neutral-950 hover:border-brick/50 transition-all duration-350 shadow-md hover:shadow-lg"
+                        className="relative group h-28 sm:h-32 rounded overflow-hidden border border-neutral-900 cursor-pointer bg-neutral-950 hover:border-brick/50 transition-all duration-350 shadow-md hover:shadow-lg flex items-center justify-center"
                       >
-                        <img src={item.resolvedUrl} referrerPolicy="no-referrer" className="w-full h-full object-cover brightness-90 group-hover:scale-105 duration-500" />
-                        <div className="absolute inset-0 bg-gradient-to-t from-black/85 via-black/10 to-transparent flex flex-col justify-end p-2.5">
+                        {item.resolvedUrl ? (
+                          <img src={item.resolvedUrl} referrerPolicy="no-referrer" className="w-full h-full object-cover brightness-90 group-hover:scale-105 duration-500" />
+                        ) : (
+                          <div className="absolute inset-0 bg-neutral-850 flex flex-col items-center justify-center border border-neutral-800">
+                            <Images className="h-6 w-6 text-neutral-600 mb-1" />
+                            <span className="text-[9px] font-mono text-neutral-500 tracking-wider">NO IMAGE</span>
+                          </div>
+                        )}
+                        <div className="absolute inset-0 bg-gradient-to-t from-black/85 via-black/10 to-transparent flex flex-col justify-end p-2.5 z-10">
                           <span className="text-[7.5px] font-mono text-brick font-bold tracking-wider">{item.cat?.toUpperCase() || "ทั่วไป"}</span>
                           <span className="text-[10px] text-white font-medium font-sans leading-tight block truncate mt-0.5 group-hover:text-brick-light duration-200">
                             {item.title}
@@ -1270,14 +1293,21 @@ export default function App() {
                   {filtered.map((evt: any) => (
                     <div key={evt.id} className="p-4 bg-[#111111] border border-neutral-900 rounded-lg hover:border-brick/30 duration-300 flex flex-col sm:flex-row gap-4 relative overflow-hidden group">
                       {/* Left thumbnail image */}
-                      <div className="w-full sm:w-28 h-24 rounded overflow-hidden shrink-0 bg-neutral-950 border border-neutral-900 relative">
-                        <img 
-                          src={evt.imageUrl || "https://images.unsplash.com/photo-1540575467063-178a50c2df87?auto=format&fit=crop&w=800&q=80"} 
-                          alt={evt.title}
-                          referrerPolicy="no-referrer"
-                          className="w-full h-full object-cover group-hover:scale-105 duration-500"
-                        />
-                        <span className={`absolute top-1.5 left-1.5 px-1.5 py-0.5 rounded text-[8px] font-mono font-bold tracking-wider uppercase text-white ${
+                      <div className="w-full sm:w-28 h-24 rounded overflow-hidden shrink-0 bg-neutral-950 border border-neutral-900 relative flex items-center justify-center">
+                        {evt.imageUrl ? (
+                          <img 
+                            src={evt.imageUrl} 
+                            alt={evt.title}
+                            referrerPolicy="no-referrer"
+                            className="w-full h-full object-cover group-hover:scale-105 duration-500"
+                          />
+                        ) : (
+                          <div className="absolute inset-0 bg-neutral-850 flex flex-col items-center justify-center border border-neutral-800">
+                            <CalendarDays className="h-6 w-6 text-neutral-650 mb-1" />
+                            <span className="text-[9px] font-mono text-neutral-500">NO IMAGE</span>
+                          </div>
+                        )}
+                        <span className={`absolute top-1.5 left-1.5 px-1.5 py-0.5 rounded text-[8px] font-mono font-bold tracking-wider uppercase text-white z-10 ${
                           evt.category === "Concert" ? "bg-purple-600" : evt.category === "Exhibition" ? "bg-blue-600" : "bg-neutral-600"
                         }`}>
                           {evt.category}
@@ -1599,6 +1629,9 @@ export default function App() {
 
       {/* Floating Concierge AI Support Chatbot */}
       <AIChatbot />
+
+      {/* Floating Event Weekly Highlight Popup */}
+      <EventPopup />
 
       {/* Booking Checkout Modal */}
       <BookingModal 

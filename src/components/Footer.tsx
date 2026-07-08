@@ -94,11 +94,23 @@ export default function Footer({ onAdminClick }: FooterProps) {
             {/* Social handles */}
             <div className="pt-2 flex items-center space-x-3">
               <span className="text-[10px] font-mono text-neutral-500 block uppercase">SOCIAL_CHANNELS_M5:</span>
-              <a href="https://facebook.com" className="p-1 px-2 border border-neutral-800 rounded bg-neutral-900/40 text-neutral-400 hover:text-white hover:border-neutral-700 duration-200">
-                <Facebook className="h-3.5 w-3.5 inline" />
+              <a 
+                href={gen.facebookUrl || "https://www.facebook.com/them5residence"} 
+                target="_blank"
+                rel="noreferrer"
+                className="p-1 px-2 border border-neutral-800 rounded bg-neutral-900/40 text-neutral-400 hover:text-white hover:border-neutral-700 duration-200 inline-flex items-center"
+                id="footer-facebook-btn"
+              >
+                <Facebook className="h-3.5 w-3.5" />
               </a>
-              <a href="https://line.me" className="p-1 px-2 border border-neutral-800 rounded bg-neutral-900/40 text-neutral-400 hover:text-white hover:border-neutral-700 duration-200">
-                <span className="text-[9px] font-bold font-mono">LINE</span>
+              <a 
+                href={gen.lineLink || `https://line.me/R/ti/p/%40${(gen.lineId || "@m5residence").replace("@", "")}`} 
+                target="_blank"
+                rel="noreferrer"
+                className="p-1 px-2 border border-neutral-800 rounded bg-neutral-900/40 text-neutral-400 hover:text-white hover:border-neutral-700 duration-200 inline-flex items-center"
+                id="footer-line-btn"
+              >
+                <span className="text-[9px] font-bold font-mono leading-none">LINE</span>
               </a>
             </div>
           </div>

@@ -235,24 +235,55 @@ async function sendBookingEmail(booking: any, smtp: any) {
   }
 }
 
+let isInternalUrlHealthy = true;
+
 function getDirectusConfig() {
   const localDb = getLocalDb() as any;
   const directus = localDb.directus || {};
   const url = directus.url || process.env.DIRECTUS_URL || "https://data.them5residence.com";
-  const internalUrl = directus.internalUrl || process.env.DIRECTUS_INTERNAL_URL || url;
+  const internalUrl = isInternalUrlHealthy ? (directus.internalUrl || process.env.DIRECTUS_INTERNAL_URL || url) : url;
   const token = directus.token || process.env.DIRECTUS_TOKEN || "ibtpkr40rF1BkNCEA4plXirxaDfn07S5";
   return { url, internalUrl, token };
 }
 
 async function directusFetch(path: string, options: any = {}) {
-  const { internalUrl, token } = getDirectusConfig();
-  const url = `${internalUrl}${path}`;
+  const { url: publicUrl, internalUrl, token } = getDirectusConfig();
   const headers = {
     "Authorization": `Bearer ${token}`,
     "Content-Type": "application/json",
     ...options.headers
   };
-  const res = await fetch(url, {
+
+  // 1. Try internal URL first if different from public URL and healthy
+  if (isInternalUrlHealthy && internalUrl && internalUrl !== publicUrl) {
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), 1500); // 1.5 seconds timeout
+    try {
+      const targetUrl = `${internalUrl}${path}`;
+      const res = await fetch(targetUrl, {
+        ...options,
+        headers,
+        signal: controller.signal
+      });
+      clearTimeout(timeoutId);
+
+      if (!res.ok) {
+        const text = await res.text();
+        throw new Error(`Directus error on ${path}: ${res.status} ${res.statusText}. Response: ${text}`);
+      }
+      if (res.status === 204) return null;
+      const json = await res.json();
+      return json.data;
+    } catch (err: any) {
+      clearTimeout(timeoutId);
+      isInternalUrlHealthy = false;
+      console.warn(`[Directus] Fetch via internalUrl failed (${err.name === 'AbortError' ? 'timeout 1500ms' : err.message || err}), disabling internalUrl and retrying via publicUrl: ${publicUrl}`);
+    }
+  }
+
+  // 2. Try public URL as fallback
+  const targetUrl = `${publicUrl}${path}`;
+  const res = await fetch(targetUrl, {
     ...options,
     headers
   });
@@ -382,100 +413,23 @@ async function getSettingsFromDirectus() {
     const localDb = getLocalDb() as any;
     const firstTimeInit = !localDb.initialized;
 
-    // 1. Merge general & smtp safely
-    localDb.general = safeMerge(localDb.general || {}, result.general);
-    localDb.smtp = safeMerge(localDb.smtp || {}, result.smtp);
+    // Strictly trust Directus as the single source of truth when connected. 
+    // This allows the admin dashboard to perform deletes/updates/inserts and have them respected, with no mock overrides.
+    localDb.general = result.general || {};
+    localDb.smtp = result.smtp || {};
+    localDb.rooms = result.rooms || [];
+    localDb.promotions = result.promotions || [];
+    localDb.amenities = result.amenities || [];
+    localDb.faqs = result.faqs || [];
+    localDb.reviews = result.reviews || [];
+    localDb.gallery = result.gallery || [];
+    localDb.blockedDates = result.blockedDates || [];
+    localDb.coupons = result.coupons || [];
+    localDb.impactEvents = result.impactEvents || [];
 
-    // 2. Merge rooms (by ID) safely. Trust Directus as source of truth, but do not lose local-only custom rooms.
-    if (result.rooms && result.rooms.length > 0) {
-      const mergedRoomsMap = new Map();
-      (localDb.rooms || []).forEach((r: any) => {
-        if (r && r.id) mergedRoomsMap.set(r.id, r);
-      });
-      result.rooms.forEach((r: any) => {
-        if (r && r.id) {
-          mergedRoomsMap.set(r.id, {
-            ...(mergedRoomsMap.get(r.id) || {}),
-            ...r
-          });
-        }
-      });
-      localDb.rooms = Array.from(mergedRoomsMap.values());
-    } else if (!localDb.rooms) {
-      localDb.rooms = [];
-    }
-
-    // 3. Merge promotions (by ID) safely. Trust Directus as source of truth, but do not lose local-only custom promotions.
-    if (result.promotions && result.promotions.length > 0) {
-      const mergedPromotionsMap = new Map();
-      (localDb.promotions || []).forEach((p: any) => {
-        if (p && p.id) mergedPromotionsMap.set(p.id, p);
-      });
-      result.promotions.forEach((p: any) => {
-        if (p && p.id) {
-          mergedPromotionsMap.set(p.id, {
-            ...(mergedPromotionsMap.get(p.id) || {}),
-            ...p
-          });
-        }
-      });
-      localDb.promotions = Array.from(mergedPromotionsMap.values());
-    } else if (!localDb.promotions) {
-      localDb.promotions = [];
-    }
-
-    // 4. Merge amenities (by title or ID) safely. Trust Directus as source of truth if it has items.
-    if (result.amenities && result.amenities.length > 0) {
-      localDb.amenities = result.amenities;
-    } else if (!localDb.amenities) {
-      localDb.amenities = [];
-    }
-
-    // 5. Merge faqs (by q or ID) safely. Trust Directus as source of truth if it has items.
-    if (result.faqs && result.faqs.length > 0) {
-      localDb.faqs = result.faqs;
-    } else if (!localDb.faqs) {
-      localDb.faqs = [];
-    }
-
-    // 6. Merge reviews (by name & review text) safely. Trust Directus as source of truth if it has items.
-    if (result.reviews && result.reviews.length > 0) {
-      localDb.reviews = result.reviews;
-    } else if (!localDb.reviews) {
-      localDb.reviews = [];
-    }
-
-    // 7. Merge gallery (by url) safely. Trust Directus as source of truth if it has items.
-    if (result.gallery && result.gallery.length > 0) {
-      localDb.gallery = result.gallery;
-    } else if (!localDb.gallery) {
-      localDb.gallery = [];
-    }
-
-    // 8. Merge blockedDates (by date & roomId key) safely. Trust Directus as source of truth if it has items.
-    if (result.blockedDates && result.blockedDates.length > 0) {
-      localDb.blockedDates = result.blockedDates;
-    } else if (!localDb.blockedDates) {
-      localDb.blockedDates = [];
-    }
-
-    // 9. Merge coupons (by code) safely. Trust Directus as source of truth if it has items.
-    if (result.coupons && result.coupons.length > 0) {
-      localDb.coupons = result.coupons;
-    } else if (!localDb.coupons) {
-      localDb.coupons = [];
-    }
-
-    // 10. Merge slides safely (only local)
+    // Keep slides as local only
     if (!localDb.slides) {
       localDb.slides = [];
-    }
-
-    // 11. Merge impactEvents (by ID or Title) safely. Trust Directus as source of truth if it has items.
-    if (result.impactEvents && result.impactEvents.length > 0) {
-      localDb.impactEvents = result.impactEvents;
-    } else if (!localDb.impactEvents) {
-      localDb.impactEvents = [];
     }
 
     if (localDb.googlePlaceId === undefined) {
@@ -691,6 +645,7 @@ async function deleteBookingFromDirectus(bookingId: string) {
 
 async function getMembersFromDirectus() {
   try {
+    await ensureMembersCollectionExist();
     const members = await directusFetch("/items/m5_members");
     const localDb = getLocalDb();
     const result = (members || []).map((m: any) => {
@@ -749,6 +704,7 @@ async function registerMemberInDirectus(member: any) {
   };
 
   try {
+    await ensureMembersCollectionExist();
     const found = await directusFetch(`/items/m5_members?filter[email][_eq]=${member.email}`);
     if (found && found.length > 0) {
       throw new Error("อีเมลนี้ได้รับการลงทะเบียนสมาชิกเรียบร้อยแล้ว");
@@ -817,6 +773,7 @@ async function loginMemberInDirectus(email: string) {
   const localMember = (localDb.members || []).find((m: any) => String(m.email).toLowerCase().trim() === String(email).toLowerCase().trim());
 
   try {
+    await ensureMembersCollectionExist();
     const found = await directusFetch(`/items/m5_members?filter[email][_eq]=${email}`);
     if (found && found.length > 0) {
       const saved = found[0];
@@ -961,6 +918,7 @@ async function findAdminInDirectus(adminId: string, oldUsername?: string): Promi
 
 async function findMemberInDirectus(memberId: string, email?: string): Promise<any> {
   try {
+    await ensureMembersCollectionExist();
     const list = await directusFetch(`/items/m5_members?filter[memberId][_eq]=${memberId}`);
     if (list && list.length > 0) return list[0];
   } catch (e) {}
@@ -1269,6 +1227,103 @@ async function syncCollection(collection: string, items: any[], mapItemFn: (item
     } catch (postErr: any) {
       console.error(`[Sync] Failed to post item in ${collection}:`, postErr.message || postErr);
     }
+  }
+}
+
+async function ensureGeneralFieldsExist() {
+  try {
+    const fields = [
+      { name: "allowRegistration", type: "boolean", interface: "boolean" },
+      { name: "bookingEnabled", type: "boolean", interface: "boolean" },
+      { name: "bookingDisabledMessage", type: "text", interface: "textarea" },
+      { name: "eventPopupEnabled", type: "boolean", interface: "boolean" },
+      { name: "eventPopupMode", type: "string", interface: "input" },
+      { name: "eventPopupSelectedId", type: "string", interface: "input" },
+      { name: "eventPopupCustomTitle", type: "string", interface: "input" },
+      { name: "eventPopupCustomDesc", type: "text", interface: "textarea" },
+      { name: "eventPopupCustomImg", type: "string", interface: "input" },
+      { name: "eventPopupTimeout", type: "integer", interface: "input" },
+      { name: "lineLink", type: "string", interface: "input" },
+      { name: "facebookUrl", type: "string", interface: "input" }
+    ];
+
+    for (const field of fields) {
+      try {
+        await directusFetch("/fields/m5_general", {
+          method: "POST",
+          body: JSON.stringify({
+            field: field.name,
+            type: field.type,
+            meta: {
+              interface: field.interface,
+              width: "full"
+            }
+          })
+        });
+        console.log(`[Directus] Created field ${field.name} in m5_general`);
+      } catch (fErr: any) {
+        // Already exists or can't be created, ignore
+      }
+    }
+  } catch (err: any) {
+    console.log("[Directus] ensure m5_general fields exist note:", err.message);
+  }
+}
+
+async function ensureMembersCollectionExist() {
+  try {
+    try {
+      await directusFetch("/collections/m5_members");
+      return; // Already exists!
+    } catch (err: any) {
+      // 404 or forbidden error means we should attempt to create it
+    }
+
+    console.log("[Directus] Attempting to create m5_members collection...");
+    await directusFetch("/collections", {
+      method: "POST",
+      body: JSON.stringify({
+        collection: "m5_members",
+        schema: {},
+        meta: {
+          singleton: false,
+          note: "Collection for registered members/users"
+        }
+      })
+    });
+
+    const fields = [
+      { name: "memberId", type: "string", interface: "input" },
+      { name: "name", type: "string", interface: "input" },
+      { name: "email", type: "string", interface: "input" },
+      { name: "phone", type: "string", interface: "input" },
+      { name: "password", type: "string", interface: "input" },
+      { name: "tier", type: "string", interface: "input" },
+      { name: "points", type: "integer", interface: "input" },
+      { name: "joinedBookingsCount", type: "integer", interface: "input" },
+      { name: "createdAt", type: "string", interface: "input" }
+    ];
+
+    for (const field of fields) {
+      try {
+        await directusFetch("/fields/m5_members", {
+          method: "POST",
+          body: JSON.stringify({
+            field: field.name,
+            type: field.type,
+            meta: {
+              interface: field.interface,
+              width: "full"
+            }
+          })
+        });
+        console.log(`[Directus] Created field ${field.name} in m5_members`);
+      } catch (fErr: any) {
+        console.log(`[Directus] Note on field ${field.name}:`, fErr.message);
+      }
+    }
+  } catch (err: any) {
+    console.log("[Directus] ensure m5_members collection note:", err.message);
   }
 }
 
@@ -2043,13 +2098,9 @@ Generate a short personalized friendly recommendation in Thai for visitors or co
   app.get("/api/impact-events", async (req, res) => {
     try {
       const localDb = getLocalDb();
-      if (!localDb.impactEvents || localDb.impactEvents.length === 0) {
-        localDb.impactEvents = getDynamicImpactEvents();
-        saveLocalDb(localDb);
-      }
       return res.json({
         success: true,
-        events: localDb.impactEvents
+        events: localDb.impactEvents || []
       });
     } catch (err: any) {
       console.error("Error getting impact events:", err);
@@ -2076,9 +2127,9 @@ Generate a short personalized friendly recommendation in Thai for visitors or co
           }
         });
       } else {
-        // Fallback: Populate with fresh relative events if completely empty
+        // Fallback: Ensure it is initialized to an array if completely empty
         if (mergedEvents.length === 0) {
-          mergedEvents = getDynamicImpactEvents();
+          mergedEvents = [];
         }
       }
 
@@ -2497,6 +2548,7 @@ Generate a short personalized friendly recommendation in Thai for visitors or co
         token: token || ""
       };
       saveLocalDb(localDb);
+      isInternalUrlHealthy = true; // Reset health check flag on new configuration
       return res.json({ success: true, message: "บันทึกข้อมูลการตั้งค่า Directus เรียบร้อยแล้ว!" });
     } catch (err: any) {
       return res.status(500).json({ success: false, error: err.message });
@@ -2633,6 +2685,7 @@ Generate a short personalized friendly recommendation in Thai for visitors or co
             googleReviewsApiKey, 
             ...directusGeneral 
           } = settings.general;
+          await ensureGeneralFieldsExist();
           await updateSingleton("m5_general", directusGeneral);
         }
         if (settings.smtp) {
@@ -3083,8 +3136,32 @@ Generate a short personalized friendly recommendation in Thai for visitors or co
       });
       
       if (!response.ok) {
-        console.warn(`[Proxy Asset] Directus returned ${response.status} for ${id}`);
-        return res.status(response.status).send("Asset not found or unauthorized on Directus");
+        console.warn(`[Proxy Asset] Directus returned ${response.status} for ${id}. Serving a stable local fallback image.`);
+        
+        // Use beautiful local images bundled in the codebase as seamless fallbacks
+        const localImages = [
+          "lobby_loft_m5_1782203250164.jpg",
+          "bedroom_superior_m5_1782203272229.jpg",
+          "bedroom_deluxe_m5_1782203318372.jpg",
+          "bedroom_studio_m5_1782203293730.jpg"
+        ];
+        
+        // Create a simple stable hash of the ID to consistently pick the same fallback for the same asset ID
+        let hash = 0;
+        for (let i = 0; i < id.length; i++) {
+          hash = id.charCodeAt(i) + ((hash << 5) - hash);
+        }
+        const index = Math.abs(hash) % localImages.length;
+        const selectedFallback = localImages[index];
+        const fallbackPath = path.join(process.cwd(), "src", "assets", "images", selectedFallback);
+        
+        if (fs.existsSync(fallbackPath)) {
+          res.setHeader("Content-Type", "image/jpeg");
+          res.setHeader("Cache-Control", "public, max-age=86400"); // Cache for 24 hours
+          return res.sendFile(fallbackPath);
+        } else {
+          return res.status(response.status).send("Asset not found or unauthorized on Directus");
+        }
       }
       
       const contentType = response.headers.get("content-type");

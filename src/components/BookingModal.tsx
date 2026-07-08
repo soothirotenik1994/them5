@@ -3,24 +3,19 @@ import { X, Calendar, DollarSign, ArrowRight, CheckCircle2, QrCode, CreditCard, 
 import { BookingDetails } from "../types";
 import { useSettings } from "../context/SettingsContext";
 
-// @ts-ignore
-import superiorImg from "../assets/images/bedroom_superior_m5_1782203272229.jpg";
-// @ts-ignore
-import studioImg from "../assets/images/bedroom_studio_m5_1782203293730.jpg";
-// @ts-ignore
-import deluxeImg from "../assets/images/bedroom_deluxe_m5_1782203318372.jpg";
+const imageMap: Record<string, string> = {
+  superior: "https://images.unsplash.com/photo-1590490360182-c33d57733427?auto=format&fit=crop&w=800&q=80",
+  deluxe: "https://images.unsplash.com/photo-1582719508461-905c673771fd?auto=format&fit=crop&w=800&q=80",
+  studio: "https://images.unsplash.com/photo-1566665797739-1674de7a421a?auto=format&fit=crop&w=800&q=80"
+};
+
+const defaultRoomImg = "https://images.unsplash.com/photo-1582719508461-905c673771fd?auto=format&fit=crop&w=800&q=80";
 
 interface BookingModalProps {
   initialRoomId?: string;
   isOpen: boolean;
   onClose: () => void;
 }
-
-const imageMap: Record<string, string> = {
-  superior: superiorImg,
-  deluxe: deluxeImg,
-  studio: studioImg
-};
 
 export default function BookingModal({ initialRoomId = "deluxe", isOpen, onClose }: BookingModalProps) {
   const [step, setStep] = useState(1);
@@ -97,11 +92,11 @@ export default function BookingModal({ initialRoomId = "deluxe", isOpen, onClose
     id: room.id,
     name: room.name,
     price: room.price,
-    img: room.imageUrl || imageMap[room.id] || deluxeImg
+    img: room.imageUrl || ""
   }));
 
   // Helper calculation logic
-  const selectedRoom = roomOptions.find((r) => r.id === roomType) || roomOptions[0] || { id: "deluxe", name: "Deluxe Balcony Loft", price: 1500, img: deluxeImg };
+  const selectedRoom = roomOptions.find((r) => r.id === roomType) || roomOptions[0] || { id: "deluxe", name: "Deluxe Balcony Loft", price: 1500, img: "" };
   
   const calculateNights = () => {
     if (!checkIn || !checkOut) return 1;
@@ -363,9 +358,14 @@ export default function BookingModal({ initialRoomId = "deluxe", isOpen, onClose
                         onChange={(e) => setGuests(parseInt(e.target.value))}
                         className="w-full px-3 py-2.5 bg-neutral-900 border border-neutral-800 text-white text-xs rounded focus:outline-none focus:border-brick select-arrow"
                       >
-                        <option value="1" className="bg-neutral-900 text-white">1 ท่าน</option>
-                        <option value="2" className="bg-neutral-900 text-white">2 ท่าน</option>
-                        <option value="3" className="bg-neutral-900 text-white">3 ท่าน (เฉพาะ Superior)</option>
+                        {Array.from(
+                          { length: (rooms.find(r => r.id === roomType)?.capacity || 2) },
+                          (_, idx) => (
+                            <option key={idx + 1} value={idx + 1} className="bg-neutral-900 text-white">
+                              {idx + 1} ท่าน
+                            </option>
+                          )
+                        )}
                       </select>
                     </div>
      
@@ -648,16 +648,19 @@ export default function BookingModal({ initialRoomId = "deluxe", isOpen, onClose
               {/* Order total overview card */}
               <div className="p-4 bg-neutral-950 border border-neutral-850 rounded-lg flex items-center justify-between">
                 <div className="flex items-center space-x-3 text-left">
-                  <div className="w-14 h-14 rounded overflow-hidden hidden sm:block bg-neutral-900">
-                    <img 
-                      src={selectedRoom.img} 
-                      alt={selectedRoom.name} 
-                      className="w-full h-full object-cover" 
-                      referrerPolicy="no-referrer" 
-                      onError={(e) => {
-                        e.currentTarget.src = imageMap[selectedRoom.id] || deluxeImg;
-                      }}
-                    />
+                  <div className="w-14 h-14 rounded overflow-hidden hidden sm:flex items-center justify-center bg-neutral-900 border border-neutral-850">
+                    {selectedRoom.img ? (
+                      <img 
+                        src={selectedRoom.img} 
+                        alt={selectedRoom.name} 
+                        className="w-full h-full object-cover" 
+                        referrerPolicy="no-referrer" 
+                      />
+                    ) : (
+                      <div className="w-full h-full bg-neutral-800 flex items-center justify-center text-[10px] text-neutral-500 font-sans font-bold text-center">
+                        ไม่มีรูป
+                      </div>
+                    )}
                   </div>
                   <div>
                     <h4 className="text-xs font-bold font-mono text-brick">STAY DETAILS</h4>
