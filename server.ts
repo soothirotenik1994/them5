@@ -1425,6 +1425,25 @@ async function startServer() {
   if (!fs.existsSync(uploadsDir)) {
     fs.mkdirSync(uploadsDir, { recursive: true });
   }
+
+  // Auto-copy fallback images from src/assets/images to uploads/ folder during startup for robust production serving
+  const srcImagesDir = path.join(process.cwd(), "src", "assets", "images");
+  if (fs.existsSync(srcImagesDir)) {
+    try {
+      const files = fs.readdirSync(srcImagesDir);
+      for (const file of files) {
+        const srcPath = path.join(srcImagesDir, file);
+        const destPath = path.join(uploadsDir, file);
+        if (!fs.existsSync(destPath)) {
+          fs.copyFileSync(srcPath, destPath);
+          console.log(`[Startup] Copied fallback image to uploads: ${file}`);
+        }
+      }
+    } catch (err: any) {
+      console.warn("[Startup] Failed to copy fallback images to uploads:", err.message);
+    }
+  }
+
   app.use("/uploads", express.static(uploadsDir));
 
   // Initialize Gemini client lazily/safely
@@ -3124,7 +3143,11 @@ Generate a short personalized friendly recommendation in Thai for visitors or co
       const internalUrlClean = dConfig.internalUrl.endsWith("/") ? dConfig.internalUrl.slice(0, -1) : dConfig.internalUrl;
       
       // Forward any Directus transform query parameters (width, height, quality, fit, etc.)
-      const queryParams = new URLSearchParams(req.query as any).toString();
+      const params = new URLSearchParams(req.query as any);
+      if (dConfig.token) {
+        params.set("access_token", dConfig.token);
+      }
+      const queryParams = params.toString();
       const url = `${internalUrlClean}/assets/${id}${queryParams ? `?${queryParams}` : ""}`;
       
       console.log(`[Proxy Asset] Fetching from Directus: ${url}`);
@@ -3153,7 +3176,13 @@ Generate a short personalized friendly recommendation in Thai for visitors or co
         }
         const index = Math.abs(hash) % localImages.length;
         const selectedFallback = localImages[index];
-        const fallbackPath = path.join(process.cwd(), "src", "assets", "images", selectedFallback);
+        
+        // Check local uploads folder first (copied fallbacks are stored here, guaranteed to exist in production)
+        let fallbackPath = path.join(process.cwd(), "uploads", selectedFallback);
+        if (!fs.existsSync(fallbackPath)) {
+          // Check src folder as backup
+          fallbackPath = path.join(process.cwd(), "src", "assets", "images", selectedFallback);
+        }
         
         if (fs.existsSync(fallbackPath)) {
           res.setHeader("Content-Type", "image/jpeg");
