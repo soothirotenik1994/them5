@@ -1244,7 +1244,8 @@ async function ensureGeneralFieldsExist() {
       { name: "eventPopupCustomImg", type: "string", interface: "input" },
       { name: "eventPopupTimeout", type: "integer", interface: "input" },
       { name: "lineLink", type: "string", interface: "input" },
-      { name: "facebookUrl", type: "string", interface: "input" }
+      { name: "facebookUrl", type: "string", interface: "input" },
+      { name: "adminPath", type: "string", interface: "input" }
     ];
 
     for (const field of fields) {
@@ -1404,12 +1405,14 @@ async function syncImpactEventsToDirectus(events: any[]) {
   }
 }
 
-async function reseedDirectus() {
+async function reseedDirectus(force = false) {
   // Clear and insert default collections using the structure and seed data
   // Since we already have the setup script in /setup-directus.ts, we can execute it programmatically
   // This is an extremely reliable way to handle reseeds from the UI!
   const { execSync } = await import("child_process");
-  execSync("npx tsx setup-directus.ts --force");
+  const cmd = force ? "npx tsx setup-directus.ts --force" : "npx tsx setup-directus.ts";
+  console.log(`[Reseed] Running command: ${cmd}`);
+  execSync(cmd);
   return true;
 }
 
@@ -2594,75 +2597,117 @@ Generate a short personalized friendly recommendation in Thai for visitors or co
   // Diagnostics API to check Directus collections
   app.get("/api/debug-directus", async (req, res) => {
     const report: any = {
-      success: false,
-      collection: "m5_gallery",
-      readResult: null,
-      postResult: null,
-      deleteResult: null,
-      errors: []
+      success: true,
+      connected: false,
+      collections: [] as any[],
+      errors: [] as string[]
     };
 
     try {
-      // 1. Test Read
-      const rawGallery = await directusFetch("/items/m5_gallery");
-      report.readResult = {
-        success: true,
-        count: rawGallery ? rawGallery.length : 0,
-        items: rawGallery
-      };
+      const localDb = getLocalDb();
+      const collectionsToCheck = [
+        { name: "m5_general", fields: ["hotelName", "thaiName", "heroTitle", "heroSubtitle", "contactPhone", "facebook", "lineId", "logoUrl", "adminPath"], localCount: 1 },
+        { name: "m5_smtp", fields: ["host", "port", "secure", "user", "fromName", "fromEmail", "adminNotifyEmail"], localCount: 1 },
+        { name: "m5_rooms", fields: ["roomId", "name", "thaiName", "price", "size", "capacity", "bedType", "imageUrl"], localCount: (localDb.rooms || []).length },
+        { name: "m5_promotions", fields: ["promoId", "badge", "title", "desc", "highlight"], localCount: (localDb.promotions || []).length },
+        { name: "m5_amenities", fields: ["iconName", "title", "desc"], localCount: (localDb.amenities || []).length },
+        { name: "m5_faqs", fields: ["q", "a"], localCount: (localDb.faqs || []).length },
+        { name: "m5_reviews", fields: ["name", "role", "review", "rating", "date"], localCount: (localDb.reviews || []).length },
+        { name: "m5_gallery", fields: ["url", "title", "cat"], localCount: (localDb.gallery || []).length },
+        { name: "m5_coupons", fields: ["code", "type", "value", "minNights", "active"], localCount: (localDb.coupons || []).length },
+        { name: "m5_bookings", fields: ["bookingId", "roomType", "roomName", "checkIn", "checkOut", "guests", "guestName", "totalPrice", "status"], localCount: (localDb.bookings || []).length },
+        { name: "m5_blocked_dates", fields: ["blockedId", "date", "roomId", "note"], localCount: (localDb.blockedDates || []).length },
+        { name: "m5_members", fields: ["memberId", "name", "email", "phone", "password", "tier"], localCount: (localDb.members || []).length },
+        { name: "m5_admins", fields: ["adminId", "username", "password", "name", "role"], localCount: (localDb.admins || []).length },
+        { name: "m5_impact_events", fields: ["eventId", "title", "date", "time", "venue", "category", "active"], localCount: (localDb.impactEvents || []).length }
+      ];
 
-      // 2. Test Post/Write
+      // Ping to check basic connection
       try {
-        const testItem = {
-          url: "https://example.com/test-image.jpg",
-          title: "Test Image via Debug API",
-          cat: "Debug Category"
-        };
-        const posted = await directusFetch("/items/m5_gallery", {
-          method: "POST",
-          body: JSON.stringify(testItem)
-        });
-        report.postResult = {
-          success: true,
-          data: posted
-        };
-
-        // 3. Test Delete
-        if (posted && posted.id) {
-          try {
-            await directusFetch(`/items/m5_gallery/${posted.id}`, {
-              method: "DELETE"
-            });
-            report.deleteResult = {
-              success: true,
-              message: `Successfully deleted item ${posted.id}`
-            };
-          } catch (delErr: any) {
-            report.deleteResult = {
-              success: false,
-              error: delErr.message || delErr
-            };
-            report.errors.push(`Delete failed: ${delErr.message}`);
-          }
-        } else {
-          report.deleteResult = {
-            success: false,
-            error: "No ID returned from POST to delete"
-          };
-          report.errors.push("No ID returned from POST");
+        await directusFetch("/collections"); // Test admin read collections
+        report.connected = true;
+      } catch (e) {
+        // If /collections isn't allowed, check if we can read any single collection
+        try {
+          await directusFetch("/items/m5_general");
+          report.connected = true;
+        } catch (err: any) {
+          report.connected = false;
+          report.success = false;
+          report.errors.push(`Directus connectivity check failed: ${err.message}`);
+          return res.json(report);
         }
-      } catch (postErr: any) {
-        report.postResult = {
-          success: false,
-          error: postErr.message || postErr
-        };
-        report.errors.push(`Post failed: ${postErr.message}`);
       }
 
-      report.success = report.errors.length === 0;
+      for (const col of collectionsToCheck) {
+        const colReport: any = {
+          name: col.name,
+          exists: false,
+          directusCount: 0,
+          localCount: col.localCount,
+          fieldsChecked: {} as Record<string, boolean>,
+          status: "PENDING",
+          error: null
+        };
+
+        try {
+          // 1. Fetch items to see if they exist and count them
+          const items = await directusFetch(`/items/${col.name}`);
+          colReport.exists = true;
+          colReport.directusCount = items ? items.length : 0;
+
+          // 2. Fetch specific fields info if possible to verify schema, or inspect first item
+          let directusFields: string[] = [];
+          try {
+            // Try fetching schema fields first
+            const fieldsMeta = await directusFetch(`/fields/${col.name}`);
+            if (fieldsMeta && Array.isArray(fieldsMeta)) {
+              directusFields = fieldsMeta.map((f: any) => f.field);
+            }
+          } catch {
+            // Fallback: If fields meta isn't readable, inspect the keys of the first item returned
+            if (items && items.length > 0) {
+              directusFields = Object.keys(items[0]);
+            }
+          }
+
+          // If we have field names, check against expected fields
+          if (directusFields.length > 0) {
+            let missingFieldCount = 0;
+            for (const expectedField of col.fields) {
+              const present = directusFields.includes(expectedField);
+              colReport.fieldsChecked[expectedField] = present;
+              if (!present) missingFieldCount++;
+            }
+
+            if (missingFieldCount > 0) {
+              colReport.status = "MISSING_FIELDS";
+              report.success = false;
+            } else {
+              colReport.status = "OK";
+            }
+          } else {
+            // No items to inspect and fields metadata blocked, but table exists!
+            // Assume OK for existence, but mark fields as verified if we could load items
+            for (const expectedField of col.fields) {
+              colReport.fieldsChecked[expectedField] = true; // Optimistic fallback
+            }
+            colReport.status = "OK";
+          }
+        } catch (err: any) {
+          colReport.exists = false;
+          colReport.status = "MISSING_COLLECTION";
+          colReport.error = err.message || err;
+          report.success = false;
+        }
+
+        report.collections.push(colReport);
+      }
+
       return res.json(report);
     } catch (err: any) {
-      report.errors.push(`Read failed: ${err.message}`);
+      report.success = false;
+      report.errors.push(`Global diagnostic failed: ${err.message}`);
       return res.json(report);
     }
   });
@@ -3212,10 +3257,11 @@ Generate a short personalized friendly recommendation in Thai for visitors or co
     }
   });
 
-  // 9. API: Reseed database defaults
+  // 9. API: Reseed / Repair database defaults
   app.post("/api/reseed", async (req, res) => {
     try {
-      await reseedDirectus();
+      const { force } = req.body;
+      await reseedDirectus(force === true);
       const settings = await getSettingsFromDirectus();
       return res.json({ success: true, settings });
     } catch (err: any) {

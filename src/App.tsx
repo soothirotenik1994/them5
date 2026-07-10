@@ -269,8 +269,12 @@ export default function App() {
     setIsBookingOpen(true);
   };
 
-  // If visiting /admin, render the admin dashboard as a full page
-  if (path === "/admin") {
+  // If visiting /admin or the custom admin path, render the admin dashboard as a full page
+  const customAdminPath = settings.general?.adminPath || "/admin";
+  const normalizedCustomPath = customAdminPath.startsWith("/") ? customAdminPath : "/" + customAdminPath;
+  const isAdmin = path === "/admin" || path === normalizedCustomPath;
+
+  if (isAdmin) {
     return (
       <AdminDashboard 
         isOpen={true}
@@ -1606,14 +1610,7 @@ export default function App() {
                 </a>
               </div>
 
-              {/* Admin Dashboard Entry button */}
-              <button 
-                onClick={() => navigateTo("/admin")}
-                className="flex items-center space-x-1.5 px-3 py-1.5 bg-[#131313] hover:bg-neutral-900 border border-neutral-850 hover:border-brick/40 hover:text-white text-[11px] font-medium rounded transition-all text-neutral-400 hover:scale-[1.02] cursor-pointer"
-              >
-                <ShieldAlert className="h-3.5 w-3.5 text-brick-light shrink-0" />
-                <span>เข้าสู่ระบบผู้ดูแลระบบ (Admin)</span>
-              </button>
+              {/* Admin Dashboard Entry button hidden/removed per user request */}
             </div>
 
             <div className="pt-4 border-t border-neutral-950/80 text-[10px] text-neutral-600 font-mono text-center flex justify-between items-center">

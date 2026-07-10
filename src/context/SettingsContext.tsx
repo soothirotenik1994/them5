@@ -37,6 +37,7 @@ export interface GeneralSettings {
   eventPopupCustomDesc?: string;
   eventPopupCustomImg?: string;
   eventPopupTimeout?: number;
+  adminPath?: string;
 }
 
 export interface SmtpSettings {
@@ -233,7 +234,8 @@ const defaultGeneral: GeneralSettings = {
   eventPopupCustomTitle: "",
   eventPopupCustomDesc: "",
   eventPopupCustomImg: "",
-  eventPopupTimeout: 10
+  eventPopupTimeout: 10,
+  adminPath: "/admin"
 };
 
 const defaultRooms: RoomType[] = [];

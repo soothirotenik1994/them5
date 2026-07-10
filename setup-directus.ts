@@ -125,7 +125,8 @@ const initialGeneral = {
   allowRegistration: true,
   bookingEnabled: true,
   bookingDisabledMessage: "ขออภัย ระบบจองห้องพักออนไลน์ของทางโรงแรมปิดทำการชั่วคราวเพื่อปรับปรุงระบบ",
-  eventPopupTimeout: 10
+  eventPopupTimeout: 10,
+  adminPath: "/admin"
 };
 
 const initialSmtp = {
@@ -291,7 +292,8 @@ async function main() {
         { name: "eventPopupCustomImg", type: "string", interface: "input" },
         { name: "eventPopupTimeout", type: "integer", interface: "input" },
         { name: "lineLink", type: "string", interface: "input" },
-        { name: "facebookUrl", type: "string", interface: "input" }
+        { name: "facebookUrl", type: "string", interface: "input" },
+        { name: "adminPath", type: "string", interface: "input" }
       ],
       seed: [initialGeneral]
     },

@@ -820,6 +820,19 @@ export default function AdminDashboard({ isOpen, onClose, isFullPage = false }: 
                   />
                 </div>
 
+                {/* Database Connection Status Block on Login Screen */}
+                <div className="p-3 bg-neutral-900/60 border border-neutral-850 rounded mt-4">
+                  <div className="flex items-center justify-between">
+                    <span className="text-[9px] text-neutral-500 font-bold tracking-widest uppercase font-mono">DATABASE STATUS</span>
+                    <span className="flex items-center space-x-1.5">
+                      <span className={`w-2 h-2 rounded-full inline-block ${dbStatus?.connected ? "bg-emerald-500 animate-pulse" : "bg-amber-500 animate-pulse"}`}></span>
+                      <span className={`text-[10px] font-mono font-bold uppercase ${dbStatus?.connected ? "text-emerald-400" : "text-amber-500"}`}>
+                        {dbStatus?.connected ? "ONLINE" : "OFFLINE"}
+                      </span>
+                    </span>
+                  </div>
+                </div>
+
 
               </div>
 
@@ -1051,13 +1064,6 @@ export default function AdminDashboard({ isOpen, onClose, isFullPage = false }: 
 
               <div className="p-3 border-t border-neutral-850 space-y-2 mt-auto">
                 <button
-                  onClick={handleReseed}
-                  className="w-full py-2 bg-neutral-950 hover:bg-neutral-900 border border-neutral-800 text-[10px] uppercase font-mono text-neutral-400 hover:text-brick rounded transition-all cursor-pointer flex items-center justify-center space-x-1.5"
-                >
-                  <RefreshCw className="h-3 w-3" />
-                  <span>Reseed Defaults</span>
-                </button>
-                <button
                   onClick={handleLogout}
                   className="w-full py-2 bg-neutral-950 hover:bg-neutral-900 border border-neutral-850 text-[10px] uppercase font-mono text-neutral-400 hover:text-red-400 rounded transition-all cursor-pointer flex items-center justify-center space-x-1.5"
                 >
@@ -1210,6 +1216,22 @@ export default function AdminDashboard({ isOpen, onClose, isFullPage = false }: 
                           className="w-full px-3 py-2 bg-neutral-900 border border-neutral-800 rounded text-sm text-white focus:outline-none focus:border-brick"
                         />
                       </div>
+                    </div>
+
+                    <div className="space-y-1 pt-2 border-t border-neutral-900/60">
+                      <label className="text-xs text-neutral-400 font-mono">
+                        ที่อยู่ลิงก์สำหรับเข้าสู่ระบบแอดมิน (Custom Admin URL Path)
+                      </label>
+                      <input 
+                        type="text"
+                        value={generalEdit.adminPath || "/admin"}
+                        onChange={(e) => setGeneralEdit({ ...generalEdit, adminPath: e.target.value })}
+                        placeholder="ระบุชื่อพาธ เช่น /my-secret-admin"
+                        className="w-full px-3 py-2 bg-neutral-900 border border-neutral-800 rounded text-sm text-white focus:outline-none focus:border-brick font-mono placeholder-neutral-600"
+                      />
+                      <span className="text-[10px] text-neutral-500 block leading-relaxed font-sans">
+                        * กำหนดที่อยู่สำหรับเข้าหลังบ้าน แทนที่หรือควบคู่กับ /admin เช่น หากระบุ <span className="text-neutral-300 font-bold">/m5loft</span> ท่านจะสามารถเปิดหน้าจัดการระบบหลังบ้านได้ผ่านพาธนี้โดยตรง (ระบบจะคงสิทธิ์ /admin เป็นพาธสำรองไว้เสมอเพื่อความปลอดภัยและป้องกันการถูกล็อกเอาท์ออกจากระบบ)
+                      </span>
                     </div>
 
                     <div className="space-y-1">
