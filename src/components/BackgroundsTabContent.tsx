@@ -83,12 +83,9 @@ export default function BackgroundsTabContent({ settings, updateSettings }: Back
 
   const handleRemoveSlide = (index: number) => {
     if (slides.length <= 1) {
-      alert("คุณต้องมีสไลด์อย่างน้อย 1 สไลด์ในระบบ");
       return;
     }
-    if (window.confirm("คุณต้องการลบสไลด์นี้ใช่หรือไม่?")) {
-      setSlides(prev => prev.filter((_, idx) => idx !== index));
-    }
+    setSlides(prev => prev.filter((_, idx) => idx !== index));
   };
 
   const handleSlideChange = (index: number, key: "url" | "label" | "desc", value: string) => {
@@ -140,17 +137,15 @@ export default function BackgroundsTabContent({ settings, updateSettings }: Back
   };
 
   const handleReset = () => {
-    if (window.confirm("คุณต้องการรีเซ็ตค่าพื้นหลังกลับไปเป็นค่าเริ่มต้นจากระบบใช่หรือไม่?")) {
-      setBgForm({
-        heroCardImg: "",
-        heroBgImg: "",
-      });
-      setSlides([
-        { url: "", label: "LOBBY RECEPTION", desc: "โชว์เนื้อไม้สักป่าประกอบโครงเหล็กท่อดำสไตล์อินดัสเทรียลลอฟท์" },
-        { url: "", label: "SUPERIOR ROOM", desc: "ห้องนอนแต่งขอบปูนเปลือยขัดมันพร้อมเฟอร์นิเจอร์สั่งตัดพิเศษ" },
-        { url: "", label: "DELUXE ROOM", desc: "สเปซส่วนตัวกว้างขวางโอบรับแสงแดดยามเช้าผ่านกระจกบานใหญ่" }
-      ]);
-    }
+    setBgForm({
+      heroCardImg: "",
+      heroBgImg: "",
+    });
+    setSlides([
+      { url: "", label: "LOBBY RECEPTION", desc: "โชว์เนื้อไม้สักป่าประกอบโครงเหล็กท่อดำสไตล์อินดัสเทรียลลอฟท์" },
+      { url: "", label: "SUPERIOR ROOM", desc: "ห้องนอนแต่งขอบปูนเปลือยขัดมันพร้อมเฟอร์นิเจอร์สั่งตัดพิเศษ" },
+      { url: "", label: "DELUXE ROOM", desc: "สเปซส่วนตัวกว้างขวางโอบรับแสงแดดยามเช้าผ่านกระจกบานใหญ่" }
+    ]);
   };
 
   const applyPreset = (field: "heroCardImg" | "heroBgImg", url: string) => {

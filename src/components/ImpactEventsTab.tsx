@@ -107,8 +107,6 @@ export default function ImpactEventsTab() {
 
   // 3. Delete event
   const handleDelete = async (id: string) => {
-    if (!confirm("คุณแน่ใจหรือไม่ว่าต้องการลบกิจกรรมนี้ออกจากระบบ?")) return;
-
     try {
       const res = await fetch(`/api/impact-events/${id}`, { method: "DELETE" });
       if (res.ok) {

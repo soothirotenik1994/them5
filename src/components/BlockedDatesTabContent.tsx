@@ -77,10 +77,6 @@ export default function BlockedDatesTabContent({ settings, updateSettings }: Blo
   };
 
   const handleDeleteBlockedDate = async (id: string) => {
-    if (!window.confirm("คุณต้องการเปิดรับการจองสำหรับวันนี้อีกครั้งใช่หรือไม่?")) {
-      return;
-    }
-
     setActionLoading(true);
     setStatus("idle");
 

@@ -3189,9 +3189,6 @@ Generate a short personalized friendly recommendation in Thai for visitors or co
       
       // Forward any Directus transform query parameters (width, height, quality, fit, etc.)
       const params = new URLSearchParams(req.query as any);
-      if (dConfig.token) {
-        params.set("access_token", dConfig.token);
-      }
       const queryParams = params.toString();
       const url = `${internalUrlClean}/assets/${id}${queryParams ? `?${queryParams}` : ""}`;
       

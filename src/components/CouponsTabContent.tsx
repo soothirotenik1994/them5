@@ -122,10 +122,6 @@ export default function CouponsTabContent({ settings, updateSettings }: CouponsT
   };
 
   const handleDeleteCoupon = async (code: string) => {
-    if (!window.confirm(`คุณแน่ใจว่าต้องการลบรหัสส่วนลด ${code} นี้อย่างถาวรใช่ไหม?`)) {
-      return;
-    }
-
     setActionLoading(true);
     setStatus("idle");
 
