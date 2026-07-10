@@ -10,7 +10,7 @@
     "contactPhone": "02-M5-LOFT",
     "facebook": "The M5 Residence Loft",
     "lineId": "@m5residence",
-    "logoUrl": "/api/assets/0e2a4bdf-6ab9-42d8-b4ec-ce0ed0d0dd27",
+    "logoUrl": "https://images.unsplash.com/photo-1554118811-1e0d58224f24?auto=format&fit=crop&w=100&q=80",
     "coverImg1": "https://images.unsplash.com/photo-1554118811-1e0d58224f24?auto=format&fit=crop&w=1200&q=80",
     "coverImg2": "https://images.unsplash.com/photo-1590490360182-c33d57733427?auto=format&fit=crop&w=1200&q=80",
     "coverImg3": "https://images.unsplash.com/photo-1582719508461-905c673771fd?auto=format&fit=crop&w=1200&q=80",
@@ -22,12 +22,12 @@
     "allowRegistration": true,
     "bookingEnabled": true,
     "bookingDisabledMessage": "ขออภัย ระบบจองห้องพักออนไลน์ของทางโรงแรมปิดทำการชั่วคราวเพื่อปรับปรุงระบบ",
-    "eventPopupEnabled": true,
-    "eventPopupMode": "auto",
-    "eventPopupSelectedId": "",
-    "eventPopupCustomTitle": "",
-    "eventPopupCustomDesc": "",
-    "eventPopupCustomImg": "",
+    "eventPopupEnabled": null,
+    "eventPopupMode": null,
+    "eventPopupSelectedId": null,
+    "eventPopupCustomTitle": null,
+    "eventPopupCustomDesc": null,
+    "eventPopupCustomImg": null,
     "eventPopupTimeout": 10,
     "lineLink": null,
     "facebookUrl": null
@@ -54,282 +54,43 @@
     {
       "id": "admin-1",
       "adminId": "admin-1",
-      "username": "admin",
-      "password": "asd024865",
+      "username": "soothirotenik",
+      "password": "Asd024865!",
       "name": "System Chief Manager",
       "role": "Super Admin"
     }
   ],
-  "impactEvents": [
-    {
-      "id": "scraped-agx5jnl",
-      "title": "อิมแพ็ค สปีด เฟส ครั้งที่ 2",
-      "date": "17-19 กรกฎาคม 2569",
-      "time": "",
-      "venue": "อิมแพ็ค ชาเลนเจอร์",
-      "description": "กิจกรรมและงานแสดงระดับแนวหน้า ณ อิมแพ็ค ชาเลนเจอร์ แนะนำผู้เข้าร่วมงานจองห้องพักล่วงหน้าเพื่อหลีกเลี่ยงการจราจรหนาแน่นและเข้าพักผ่อนใกล้สถานที่จัดงานอย่างสะดวกสบาย",
-      "imageUrl": "https://www.impact.co.th/media/com_eventbooking/images/thumbs/0527-speed-fest-2026.webp",
-      "category": "Exhibition",
-      "active": true
-    },
-    {
-      "id": "scraped-pelpqci",
-      "title": "2026 JAY B tape: roots bangkok",
-      "date": "11-12 กรกฎาคม 2569",
-      "time": "",
-      "venue": "อิมแพ็ค อารีน่า",
-      "description": "กิจกรรมและงานแสดงระดับแนวหน้า ณ อิมแพ็ค อารีน่า แนะนำผู้เข้าร่วมงานจองห้องพักล่วงหน้าเพื่อหลีกเลี่ยงการจราจรหนาแน่นและเข้าพักผ่อนใกล้สถานที่จัดงานอย่างสะดวกสบาย",
-      "imageUrl": "https://www.impact.co.th/media/com_eventbooking/images/thumbs/0622-2026-jay-b.webp",
-      "category": "Concert",
-      "active": true
-    },
-    {
-      "id": "scraped-cevy8md",
-      "title": "มหกรรมวิทยาศาสตร์และเทคโนโลยีแห่งชาติ ประจำปี 2569",
-      "date": "15-23 สิงหาคม 2569",
-      "time": "",
-      "venue": "ศูนย์แสดงสินค้า อิมแพ็ค เมืองทองธานี",
-      "description": "กิจกรรมและงานแสดงระดับแนวหน้า ณ ศูนย์แสดงสินค้า อิมแพ็ค เมืองทองธานี แนะนำผู้เข้าร่วมงานจองห้องพักล่วงหน้าเพื่อหลีกเลี่ยงการจราจรหนาแน่นและเข้าพักผ่อนใกล้สถานที่จัดงานอย่างสะดวกสบาย",
-      "imageUrl": "https://www.impact.co.th/media/com_eventbooking/images/thumbs/0706 nst.webp",
-      "category": "Exhibition",
-      "active": true
-    },
-    {
-      "id": "scraped-bnovwjj",
-      "title": "การประชุมสหพันธ์สมาคมเภสัชกรรมแห่งเอเชีย ครั้งที่ 31",
-      "date": "03-07 พฤศจิกายน 2569",
-      "time": "",
-      "venue": "อิมแพ็ค ฟอรั่ม",
-      "description": "กิจกรรมและงานแสดงระดับแนวหน้า ณ อิมแพ็ค ฟอรั่ม แนะนำผู้เข้าร่วมงานจองห้องพักล่วงหน้าเพื่อหลีกเลี่ยงการจราจรหนาแน่นและเข้าพักผ่อนใกล้สถานที่จัดงานอย่างสะดวกสบาย",
-      "imageUrl": "https://www.impact.co.th/media/com_eventbooking/images/thumbs/0216-fapa2026.webp",
-      "category": "Other",
-      "active": true
-    },
-    {
-      "id": "scraped-nnjiy9g",
-      "title": "ดิจิเทค อาเซียน ไทยแลนด์ 2026",
-      "date": "25-27 พฤศจิกายน 2569",
-      "time": "",
-      "venue": "ศูนย์แสดงสินค้า อิมแพ็ค เมืองทองธานี",
-      "description": "กิจกรรมและงานแสดงระดับแนวหน้า ณ ศูนย์แสดงสินค้า อิมแพ็ค เมืองทองธานี แนะนำผู้เข้าร่วมงานจองห้องพักล่วงหน้าเพื่อหลีกเลี่ยงการจราจรหนาแน่นและเข้าพักผ่อนใกล้สถานที่จัดงานอย่างสะดวกสบาย",
-      "imageUrl": "https://www.impact.co.th/media/com_eventbooking/images/thumbs/0518-digitech-2026.webp",
-      "category": "Exhibition",
-      "active": true
-    },
-    {
-      "id": "scraped-lkqu3h6",
-      "title": "2026 NCT JNJM FANMEETING TOUR [DUALITY] # BANGKOK",
-      "date": "07-09 สิงหาคม 2569",
-      "time": "",
-      "venue": "อิมแพ็ค อารีน่า",
-      "description": "กิจกรรมและงานแสดงระดับแนวหน้า ณ อิมแพ็ค อารีน่า แนะนำผู้เข้าร่วมงานจองห้องพักล่วงหน้าเพื่อหลีกเลี่ยงการจราจรหนาแน่นและเข้าพักผ่อนใกล้สถานที่จัดงานอย่างสะดวกสบาย",
-      "imageUrl": "https://www.impact.co.th/media/com_eventbooking/images/thumbs/0701 nct.webp",
-      "category": "Concert",
-      "active": true
-    },
-    {
-      "id": "scraped-s070154",
-      "title": "บางกอกแพ็ค แอนด์ ลาเบล เอ็กซ์โป 2026",
-      "date": "05-08 พฤศจิกายน 2569",
-      "time": "",
-      "venue": "ศูนย์แสดงสินค้า อิมแพ็ค เมืองทองธานี",
-      "description": "กิจกรรมและงานแสดงระดับแนวหน้า ณ ศูนย์แสดงสินค้า อิมแพ็ค เมืองทองธานี แนะนำผู้เข้าร่วมงานจองห้องพักล่วงหน้าเพื่อหลีกเลี่ยงการจราจรหนาแน่นและเข้าพักผ่อนใกล้สถานที่จัดงานอย่างสะดวกสบาย",
-      "imageUrl": "https://www.impact.co.th/media/com_eventbooking/images/thumbs/0527-bangkok-pack--label-expo-2026.webp",
-      "category": "Exhibition",
-      "active": true
-    },
-    {
-      "id": "scraped-e6y9m7x",
-      "title": "Thailand Billiards Expo (TBE 2026)",
-      "date": "29-31 ตุลาคม 2569",
-      "time": "",
-      "venue": "ศูนย์แสดงสินค้า อิมแพ็ค เมืองทองธานี",
-      "description": "กิจกรรมและงานแสดงระดับแนวหน้า ณ ศูนย์แสดงสินค้า อิมแพ็ค เมืองทองธานี แนะนำผู้เข้าร่วมงานจองห้องพักล่วงหน้าเพื่อหลีกเลี่ยงการจราจรหนาแน่นและเข้าพักผ่อนใกล้สถานที่จัดงานอย่างสะดวกสบาย",
-      "imageUrl": "https://www.impact.co.th/media/com_eventbooking/images/thumbs/0428-tbe-2026.webp",
-      "category": "Exhibition",
-      "active": true
-    },
-    {
-      "id": "scraped-atiazwp",
-      "title": "บางกอกดิจิทัล เท็กซ์ไทล์ พริ้นท์ เอ็กซ์โป 2026",
-      "date": "05-08 พฤศจิกายน 2569",
-      "time": "",
-      "venue": "ศูนย์แสดงสินค้า อิมแพ็ค เมืองทองธานี",
-      "description": "กิจกรรมและงานแสดงระดับแนวหน้า ณ ศูนย์แสดงสินค้า อิมแพ็ค เมืองทองธานี แนะนำผู้เข้าร่วมงานจองห้องพักล่วงหน้าเพื่อหลีกเลี่ยงการจราจรหนาแน่นและเข้าพักผ่อนใกล้สถานที่จัดงานอย่างสะดวกสบาย",
-      "imageUrl": "https://www.impact.co.th/media/com_eventbooking/images/thumbs/0527-bangkok-digital-textile-print-expo-2026.webp",
-      "category": "Exhibition",
-      "active": true
-    },
-    {
-      "id": "scraped-t5r3cuy",
-      "title": "แฟรนไชส์ เอ็กซ์โป ไทยแลนด์ บาย สมาร์ท เอสเอ็มอี เอ็กซ์โป",
-      "date": "06-09 สิงหาคม 2569",
-      "time": "",
-      "venue": "ศูนย์แสดงสินค้า อิมแพ็ค เมืองทองธานี",
-      "description": "กิจกรรมและงานแสดงระดับแนวหน้า ณ ศูนย์แสดงสินค้า อิมแพ็ค เมืองทองธานี แนะนำผู้เข้าร่วมงานจองห้องพักล่วงหน้าเพื่อหลีกเลี่ยงการจราจรหนาแน่นและเข้าพักผ่อนใกล้สถานที่จัดงานอย่างสะดวกสบาย",
-      "imageUrl": "https://www.impact.co.th/media/com_eventbooking/images/thumbs/0407-franchise-sme-expo-2026.webp",
-      "category": "Exhibition",
-      "active": true
-    },
-    {
-      "id": "scraped-2qijdv2",
-      "title": "งานแสดงสินค้าเครื่องเล่นสวนสนุก และแหล่งท่องเที่ยว ประเทศไทยประจำปี 2569",
-      "date": "29-31 ตุลาคม 2569",
-      "time": "",
-      "venue": "ศูนย์แสดงสินค้า อิมแพ็ค เมืองทองธานี",
-      "description": "กิจกรรมและงานแสดงระดับแนวหน้า ณ ศูนย์แสดงสินค้า อิมแพ็ค เมืองทองธานี แนะนำผู้เข้าร่วมงานจองห้องพักล่วงหน้าเพื่อหลีกเลี่ยงการจราจรหนาแน่นและเข้าพักผ่อนใกล้สถานที่จัดงานอย่างสะดวกสบาย",
-      "imageUrl": "https://www.impact.co.th/media/com_eventbooking/images/thumbs/0402-taape-2026.webp",
-      "category": "Exhibition",
-      "active": true
-    },
-    {
-      "id": "scraped-tgherhp",
-      "title": "F✦FOREVER 1st World Tour in Bangkok",
-      "date": "01-02 สิงหาคม 2569",
-      "time": "",
-      "venue": "อิมแพ็ค อารีน่า",
-      "description": "กิจกรรมและงานแสดงระดับแนวหน้า ณ อิมแพ็ค อารีน่า แนะนำผู้เข้าร่วมงานจองห้องพักล่วงหน้าเพื่อหลีกเลี่ยงการจราจรหนาแน่นและเข้าพักผ่อนใกล้สถานที่จัดงานอย่างสะดวกสบาย",
-      "imageUrl": "https://www.impact.co.th/media/com_eventbooking/images/thumbs/0626 f4.webp",
-      "category": "Concert",
-      "active": true
-    },
-    {
-      "id": "scraped-64cnx15",
-      "title": "บางกอก แอด แอนด์ ไซน์ เอ็กซ์โป 2026",
-      "date": "05-08 พฤศจิกายน 2569",
-      "time": "",
-      "venue": "ศูนย์แสดงสินค้า อิมแพ็ค เมืองทองธานี",
-      "description": "กิจกรรมและงานแสดงระดับแนวหน้า ณ ศูนย์แสดงสินค้า อิมแพ็ค เมืองทองธานี แนะนำผู้เข้าร่วมงานจองห้องพักล่วงหน้าเพื่อหลีกเลี่ยงการจราจรหนาแน่นและเข้าพักผ่อนใกล้สถานที่จัดงานอย่างสะดวกสบาย",
-      "imageUrl": "https://www.impact.co.th/media/com_eventbooking/images/thumbs/0527-bangkok-ad--sign-expo-2026.webp",
-      "category": "Exhibition",
-      "active": true
-    },
-    {
-      "id": "scraped-t5la7v2",
-      "title": "งานแสดงสินค้านานาชาติด้านแว่นตาระดับอาเซียน",
-      "date": "09-11 ตุลาคม 2569",
-      "time": "",
-      "venue": "ศูนย์แสดงสินค้า อิมแพ็ค เมืองทองธานี",
-      "description": "กิจกรรมและงานแสดงระดับแนวหน้า ณ ศูนย์แสดงสินค้า อิมแพ็ค เมืองทองธานี แนะนำผู้เข้าร่วมงานจองห้องพักล่วงหน้าเพื่อหลีกเลี่ยงการจราจรหนาแน่นและเข้าพักผ่อนใกล้สถานที่จัดงานอย่างสะดวกสบาย",
-      "imageUrl": "https://www.impact.co.th/media/com_eventbooking/images/thumbs/0630 optics expo.webp",
-      "category": "Exhibition",
-      "active": true
-    },
-    {
-      "id": "scraped-lsy9twf",
-      "title": "ไทยแลนด์ เบบี้ แอนด์ คิดส์ เบสท์ บาย",
-      "date": "30 กรกฎาคม - 02 สิงหาคม 2569",
-      "time": "",
-      "venue": "อิมแพ็ค ชาเลนเจอร์",
-      "description": "กิจกรรมและงานแสดงระดับแนวหน้า ณ อิมแพ็ค ชาเลนเจอร์ แนะนำผู้เข้าร่วมงานจองห้องพักล่วงหน้าเพื่อหลีกเลี่ยงการจราจรหนาแน่นและเข้าพักผ่อนใกล้สถานที่จัดงานอย่างสะดวกสบาย",
-      "imageUrl": "https://www.impact.co.th/media/com_eventbooking/images/thumbs/0618-BBB.webp",
-      "category": "Exhibition",
-      "active": true
-    },
-    {
-      "id": "scraped-7lz3c4b",
-      "title": "งานแสดงสินค้าและสัมมนาระดับนานาชาติด้านเครื่องจักร เทคโนโลยีงานไม้ และอุตสาหกรรมเฟอร์นิเจอร์ 2026",
-      "date": "16-18 กันยายน 2569",
-      "time": "",
-      "venue": "ศูนย์แสดงสินค้า อิมแพ็ค เมืองทองธานี",
-      "description": "กิจกรรมและงานแสดงระดับแนวหน้า ณ ศูนย์แสดงสินค้า อิมแพ็ค เมืองทองธานี แนะนำผู้เข้าร่วมงานจองห้องพักล่วงหน้าเพื่อหลีกเลี่ยงการจราจรหนาแน่นและเข้าพักผ่อนใกล้สถานที่จัดงานอย่างสะดวกสบาย",
-      "imageUrl": "https://www.impact.co.th/media/com_eventbooking/images/thumbs/0416-tiwf-2026.webp",
-      "category": "Exhibition",
-      "active": true
-    },
-    {
-      "id": "scraped-c2w1sa5",
-      "title": "BUS because of you i shine LIGHT AS ONE CONCERT Presented by Gangnam Clinic",
-      "date": "24-26 กรกฎาคม 2569",
-      "time": "",
-      "venue": "อิมแพ็ค อารีน่า",
-      "description": "กิจกรรมและงานแสดงระดับแนวหน้า ณ อิมแพ็ค อารีน่า แนะนำผู้เข้าร่วมงานจองห้องพักล่วงหน้าเพื่อหลีกเลี่ยงการจราจรหนาแน่นและเข้าพักผ่อนใกล้สถานที่จัดงานอย่างสะดวกสบาย",
-      "imageUrl": "https://www.impact.co.th/media/com_eventbooking/images/thumbs/0623 bus.webp",
-      "category": "Concert",
-      "active": true
-    },
-    {
-      "id": "scraped-ywm9otv",
-      "title": "งานแสดงสินค้าและเจรจาธุรกิจสำหรับอุตสาหกรรมอาคาร การก่อสร้าง และเหมืองแร่",
-      "date": "16-18 กันยายน 2569",
-      "time": "",
-      "venue": "ศูนย์แสดงสินค้า อิมแพ็ค เมืองทองธานี",
-      "description": "กิจกรรมและงานแสดงระดับแนวหน้า ณ ศูนย์แสดงสินค้า อิมแพ็ค เมืองทองธานี แนะนำผู้เข้าร่วมงานจองห้องพักล่วงหน้าเพื่อหลีกเลี่ยงการจราจรหนาแน่นและเข้าพักผ่อนใกล้สถานที่จัดงานอย่างสะดวกสบาย",
-      "imageUrl": "https://www.impact.co.th/media/com_eventbooking/images/thumbs/0622-bct-2026.webp",
-      "category": "Exhibition",
-      "active": true
-    },
-    {
-      "id": "scraped-ypsjl3r",
-      "title": "Thailand–China Cooperation Expo 2026",
-      "date": "22-25 กรกฎาคม 2569",
-      "time": "",
-      "venue": "อิมแพ็ค ชาเลนเจอร์",
-      "description": "กิจกรรมและงานแสดงระดับแนวหน้า ณ อิมแพ็ค ชาเลนเจอร์ แนะนำผู้เข้าร่วมงานจองห้องพักล่วงหน้าเพื่อหลีกเลี่ยงการจราจรหนาแน่นและเข้าพักผ่อนใกล้สถานที่จัดงานอย่างสะดวกสบาย",
-      "imageUrl": "https://www.impact.co.th/media/com_eventbooking/images/thumbs/0616-thailand-china-cooperation-expo-2026.webp",
-      "category": "Exhibition",
-      "active": true
-    },
-    {
-      "id": "scraped-id4hzld",
-      "title": "นิทรรศการเครื่องจักรกลอุปกรณ์และเทคโนโลยีอาเซียนนานาชาติ 2569",
-      "date": "02-04 กันยายน 2569",
-      "time": "",
-      "venue": "ศูนย์แสดงสินค้า อิมแพ็ค เมืองทองธานี",
-      "description": "กิจกรรมและงานแสดงระดับแนวหน้า ณ ศูนย์แสดงสินค้า อิมแพ็ค เมืองทองธานี แนะนำผู้เข้าร่วมงานจองห้องพักล่วงหน้าเพื่อหลีกเลี่ยงการจราจรหนาแน่นและเข้าพักผ่อนใกล้สถานที่จัดงานอย่างสะดวกสบาย",
-      "imageUrl": "https://www.impact.co.th/media/com_eventbooking/images/thumbs/0520-machinery-equipment--technology.webp",
-      "category": "Exhibition",
-      "active": true
-    },
-    {
-      "id": "scraped-uwdztv8",
-      "title": "INTELLIGENT MANUFACTURING EXPO SOUTHEAST ASIA 2026 (IME)",
-      "date": "22-24 กรกฎาคม 2569",
-      "time": "",
-      "venue": "ศูนย์แสดงสินค้า อิมแพ็ค เมืองทองธานี",
-      "description": "กิจกรรมและงานแสดงระดับแนวหน้า ณ ศูนย์แสดงสินค้า อิมแพ็ค เมืองทองธานี แนะนำผู้เข้าร่วมงานจองห้องพักล่วงหน้าเพื่อหลีกเลี่ยงการจราจรหนาแน่นและเข้าพักผ่อนใกล้สถานที่จัดงานอย่างสะดวกสบาย",
-      "imageUrl": "https://www.impact.co.th/media/com_eventbooking/images/thumbs/0702-intelligent-manufacturing-expo.webp",
-      "category": "Exhibition",
-      "active": true
-    },
-    {
-      "id": "scraped-8wr8ms5",
-      "title": "เดอะ ฟู้ดดิซึ่ม ไทยแลนด์ X ไทยแลนด์ เฮลท์ แอนด์ เวลเนส 2026",
-      "date": "27-29 สิงหาคม 2569",
-      "time": "",
-      "venue": "ศูนย์แสดงสินค้า อิมแพ็ค เมืองทองธานี",
-      "description": "กิจกรรมและงานแสดงระดับแนวหน้า ณ ศูนย์แสดงสินค้า อิมแพ็ค เมืองทองธานี แนะนำผู้เข้าร่วมงานจองห้องพักล่วงหน้าเพื่อหลีกเลี่ยงการจราจรหนาแน่นและเข้าพักผ่อนใกล้สถานที่จัดงานอย่างสะดวกสบาย",
-      "imageUrl": "https://www.impact.co.th/media/com_eventbooking/images/thumbs/0526-foodism.webp",
-      "category": "Exhibition",
-      "active": true
-    },
-    {
-      "id": "scraped-j9y5uwm",
-      "title": "XG WORLD TOUR: THE CORE IN BANGKOK",
-      "date": "19 กรกฎาคม 2569",
-      "time": "",
-      "venue": "อิมแพ็ค อารีน่า",
-      "description": "กิจกรรมและงานแสดงระดับแนวหน้า ณ อิมแพ็ค อารีน่า แนะนำผู้เข้าร่วมงานจองห้องพักล่วงหน้าเพื่อหลีกเลี่ยงการจราจรหนาแน่นและเข้าพักผ่อนใกล้สถานที่จัดงานอย่างสะดวกสบาย",
-      "imageUrl": "https://www.impact.co.th/media/com_eventbooking/images/thumbs/0507-xg-world-tour.webp",
-      "category": "Concert",
-      "active": true
-    },
-    {
-      "id": "scraped-q1z9kcw",
-      "title": "FLURE Life",
-      "date": "22 สิงหาคม 2569",
-      "time": "",
-      "venue": "ธันเดอร์โดม",
-      "description": "กิจกรรมและงานแสดงระดับแนวหน้า ณ ธันเดอร์โดม แนะนำผู้เข้าร่วมงานจองห้องพักล่วงหน้าเพื่อหลีกเลี่ยงการจราจรหนาแน่นและเข้าพักผ่อนใกล้สถานที่จัดงานอย่างสะดวกสบาย",
-      "imageUrl": "https://www.impact.co.th/media/com_eventbooking/images/thumbs/0325-flure-life-2026.webp",
-      "category": "Concert",
-      "active": true
-    }
-  ],
+  "impactEvents": [],
   "faqs": [],
   "reviews": [],
   "gallery": [],
-  "slides": [],
+  "slides": [
+    {
+      "url": "/api/assets/d26d90e2-6dc4-46de-a436-cc36c61565df",
+      "label": "โรงแรม them5residence",
+      "desc": ""
+    },
+    {
+      "url": "/api/assets/ae27bd38-32ad-4077-ab6b-02f1cdcd5597",
+      "label": "โรงแรม them5residence",
+      "desc": ""
+    },
+    {
+      "url": "/api/assets/870cc365-9ddb-4dc8-839c-ed1faab0df86",
+      "label": "โรงแรม them5residence",
+      "desc": ""
+    },
+    {
+      "url": "/api/assets/aa20ee65-1fb3-45e4-931b-a1894d83028e",
+      "label": "โรงแรม them5residence",
+      "desc": "คำอธิบายรายละเอียดสำหรับสไลด์ใหม่สไตล์ลอฟท์"
+    },
+    {
+      "url": "/api/assets/321ff4c2-c044-4cd1-a1a4-9bb52469b6fb",
+      "label": "โรงแรม them5residence",
+      "desc": ""
+    }
+  ],
   "googlePlaceId": "ChIJXWlJMC-e4jARLqX9OidpWjY",
   "googleReviewsEnabled": true,
   "initialized": true,

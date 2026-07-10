@@ -1409,7 +1409,7 @@ async function reseedDirectus() {
   // Since we already have the setup script in /setup-directus.ts, we can execute it programmatically
   // This is an extremely reliable way to handle reseeds from the UI!
   const { execSync } = await import("child_process");
-  execSync("npx tsx setup-directus.ts");
+  execSync("npx tsx setup-directus.ts --force");
   return true;
 }
 

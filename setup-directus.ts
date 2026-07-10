@@ -149,6 +149,28 @@ const initialCoupons: any[] = [];
 const initialImpactEvents: any[] = [];
 
 // Helper functions for API calls
+async function collectionExists(colName: string) {
+  try {
+    const res = await fetch(`${url}/collections/${colName}`, {
+      headers: { Authorization: `Bearer ${token}` }
+    });
+    return res.ok;
+  } catch {
+    return false;
+  }
+}
+
+async function fieldExists(colName: string, fieldName: string) {
+  try {
+    const res = await fetch(`${url}/fields/${colName}/${fieldName}`, {
+      headers: { Authorization: `Bearer ${token}` }
+    });
+    return res.ok;
+  } catch {
+    return false;
+  }
+}
+
 async function createCollection(collectionName: string, isSingleton = false) {
   console.log(`Creating collection [${collectionName}] (singleton: ${isSingleton})...`);
   const res = await fetch(`${url}/collections`, {
@@ -461,30 +483,51 @@ async function main() {
   // 0. Bootstrap static API token for admin user
   await bootstrapAdminToken(url, ADMIN_EMAIL, ADMIN_PASSWORD, token);
 
-  // 1. Delete and create each collection, then add fields, then seed
+  // 1. Check and build each collection non-destructively
+  const forceReset = process.argv.includes("--force");
+  
   for (const col of collections) {
-    // Delete if existing first to ensure fresh clean state
-    await deleteCollection(col.name);
-    
-    // Create collection
-    const created = await createCollection(col.name, col.singleton);
-    if (!created) continue;
-
-    // Create fields
-    console.log(`Creating fields for [${col.name}]...`);
-    for (const field of col.fields) {
-      const fieldOk = await createField(col.name, field.name, field.type, field.interface);
-      if (fieldOk) {
-        console.log(`  - Created field: ${field.name} (${field.type})`);
-      }
+    const exists = await collectionExists(col.name);
+    if (exists && forceReset) {
+      console.log(`Force reset enabled. Deleting collection [${col.name}]...`);
+      await deleteCollection(col.name);
     }
 
-    // Seed data
-    console.log(`Seeding data for [${col.name}]...`);
-    for (const item of col.seed) {
-      const res = await insertItem(col.name, item);
-      if (res) {
-        console.log(`  - Inserted seed item`);
+    const currentExists = exists && !forceReset;
+
+    if (!currentExists) {
+      // Create collection
+      const created = await createCollection(col.name, col.singleton);
+      if (!created) continue;
+
+      // Create fields
+      console.log(`Creating fields for [${col.name}]...`);
+      for (const field of col.fields) {
+        const fieldOk = await createField(col.name, field.name, field.type, field.interface);
+        if (fieldOk) {
+          console.log(`  - Created field: ${field.name} (${field.type})`);
+        }
+      }
+
+      // Seed data
+      console.log(`Seeding data for [${col.name}]...`);
+      for (const item of col.seed) {
+        const res = await insertItem(col.name, item);
+        if (res) {
+          console.log(`  - Inserted seed item`);
+        }
+      }
+    } else {
+      console.log(`Collection [${col.name}] already exists. Verifying fields are present...`);
+      // Collection exists, let's make sure all fields are present (non-destructive migration)
+      for (const field of col.fields) {
+        const fExists = await fieldExists(col.name, field.name);
+        if (!fExists) {
+          const fieldOk = await createField(col.name, field.name, field.type, field.interface);
+          if (fieldOk) {
+            console.log(`  - Added missing field: ${field.name} (${field.type}) to [${col.name}]`);
+          }
+        }
       }
     }
     console.log(`Finished [${col.name}]\n`);
