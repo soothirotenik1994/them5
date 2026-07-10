@@ -3201,38 +3201,13 @@ Generate a short personalized friendly recommendation in Thai for visitors or co
       });
       
       if (!response.ok) {
-        console.warn(`[Proxy Asset] Directus returned ${response.status} for ${id}. Serving a stable local fallback image.`);
+        console.warn(`[Proxy Asset] Directus returned ${response.status} for ${id}. Serving transparent pixel as fallback.`);
         
-        // Use beautiful local images bundled in the codebase as seamless fallbacks
-        const localImages = [
-          "lobby_loft_m5_1782203250164.jpg",
-          "bedroom_superior_m5_1782203272229.jpg",
-          "bedroom_deluxe_m5_1782203318372.jpg",
-          "bedroom_studio_m5_1782203293730.jpg"
-        ];
-        
-        // Create a simple stable hash of the ID to consistently pick the same fallback for the same asset ID
-        let hash = 0;
-        for (let i = 0; i < id.length; i++) {
-          hash = id.charCodeAt(i) + ((hash << 5) - hash);
-        }
-        const index = Math.abs(hash) % localImages.length;
-        const selectedFallback = localImages[index];
-        
-        // Check local uploads folder first (copied fallbacks are stored here, guaranteed to exist in production)
-        let fallbackPath = path.join(process.cwd(), "uploads", selectedFallback);
-        if (!fs.existsSync(fallbackPath)) {
-          // Check src folder as backup
-          fallbackPath = path.join(process.cwd(), "src", "assets", "images", selectedFallback);
-        }
-        
-        if (fs.existsSync(fallbackPath)) {
-          res.setHeader("Content-Type", "image/jpeg");
-          res.setHeader("Cache-Control", "public, max-age=86400"); // Cache for 24 hours
-          return res.sendFile(fallbackPath);
-        } else {
-          return res.status(response.status).send("Asset not found or unauthorized on Directus");
-        }
+        // Serve a 1x1 transparent pixel instead of a 403 text response so the image tag just appears empty instead of broken
+        const transparentPixel = Buffer.from("iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mNkYAAAAAYAAjCB0C8AAAAASUVORK5CYII=", "base64");
+        res.setHeader("Content-Type", "image/png");
+        res.setHeader("Cache-Control", "public, max-age=86400");
+        return res.status(200).send(transparentPixel);
       }
       
       const contentType = response.headers.get("content-type");

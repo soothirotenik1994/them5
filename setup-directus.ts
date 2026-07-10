@@ -327,7 +327,8 @@ async function main() {
         { name: "longDescription", type: "text", interface: "textarea" },
         { name: "imageUrl", type: "string", interface: "input" },
         { name: "amenities", type: "text", interface: "textarea" }, // stringified array
-        { name: "matterportUrl", type: "string", interface: "input" }
+        { name: "matterportUrl", type: "string", interface: "input" },
+        { name: "active", type: "boolean", interface: "boolean" }
       ],
       seed: initialRooms
     },
