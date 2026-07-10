@@ -586,13 +586,36 @@ export default function ImpactEventsTab() {
 
               <div className="space-y-1">
                 <label className="text-[10px] font-mono text-neutral-400 uppercase">URL รูปภาพหน้าปกกิจกรรม (ภาพประกอบ)</label>
-                <input
-                  type="text"
-                  placeholder="เช่น https://images.unsplash.com/..."
-                  value={imageUrl}
-                  onChange={(e) => setImageUrl(e.target.value)}
-                  className="w-full bg-neutral-950 border border-neutral-850 rounded px-3 py-2 text-xs text-white placeholder-neutral-600 focus:outline-none focus:border-brick"
-                />
+                <div className="flex gap-4">
+                  <div className="flex-1">
+                    <input
+                      type="text"
+                      placeholder="เช่น https://images.unsplash.com/..."
+                      value={imageUrl}
+                      onChange={(e) => setImageUrl(e.target.value)}
+                      className="w-full bg-neutral-950 border border-neutral-850 rounded px-3 py-2 text-xs text-white placeholder-neutral-600 focus:outline-none focus:border-brick"
+                    />
+                  </div>
+                  {imageUrl && (
+                    <div className="h-16 w-24 rounded border border-neutral-800 bg-neutral-950 overflow-hidden relative shrink-0">
+                      <img 
+                        src={imageUrl} 
+                        alt="Preview" 
+                        className="h-full w-full object-cover" 
+                        referrerPolicy="no-referrer"
+                        onError={(e) => {
+                          e.currentTarget.style.opacity = '0.2';
+                          if (e.currentTarget.nextElementSibling) {
+                            (e.currentTarget.nextElementSibling as HTMLElement).style.display = 'flex';
+                          }
+                        }}
+                      />
+                      <div className="absolute inset-0 hidden flex-col items-center justify-center pointer-events-none" style={{ display: 'none' }}>
+                        <span className="text-[8px] font-mono font-bold text-red-500 bg-black/80 px-1 py-0.5 rounded">BROKEN</span>
+                      </div>
+                    </div>
+                  )}
+                </div>
               </div>
 
               <div className="grid grid-cols-2 gap-3 items-center pt-2">
@@ -719,12 +742,35 @@ export default function ImpactEventsTab() {
 
               <div className="space-y-1">
                 <label className="text-[10px] font-mono text-neutral-400 uppercase">URL รูปภาพหน้าปกกิจกรรม (ภาพประกอบ)</label>
-                <input
-                  type="text"
-                  value={imageUrl}
-                  onChange={(e) => setImageUrl(e.target.value)}
-                  className="w-full bg-neutral-950 border border-neutral-850 rounded px-3 py-2 text-xs text-white focus:outline-none focus:border-brick"
-                />
+                <div className="flex gap-4">
+                  <div className="flex-1">
+                    <input
+                      type="text"
+                      value={imageUrl}
+                      onChange={(e) => setImageUrl(e.target.value)}
+                      className="w-full bg-neutral-950 border border-neutral-850 rounded px-3 py-2 text-xs text-white focus:outline-none focus:border-brick"
+                    />
+                  </div>
+                  {imageUrl && (
+                    <div className="h-16 w-24 rounded border border-neutral-800 bg-neutral-950 overflow-hidden relative shrink-0">
+                      <img 
+                        src={imageUrl} 
+                        alt="Preview" 
+                        className="h-full w-full object-cover" 
+                        referrerPolicy="no-referrer"
+                        onError={(e) => {
+                          e.currentTarget.style.opacity = '0.2';
+                          if (e.currentTarget.nextElementSibling) {
+                            (e.currentTarget.nextElementSibling as HTMLElement).style.display = 'flex';
+                          }
+                        }}
+                      />
+                      <div className="absolute inset-0 flex flex-col items-center justify-center pointer-events-none" style={{ display: 'none' }}>
+                        <span className="text-[8px] font-mono font-bold text-red-500 bg-black/80 px-1 py-0.5 rounded">BROKEN</span>
+                      </div>
+                    </div>
+                  )}
+                </div>
               </div>
 
               <div className="grid grid-cols-2 gap-3 items-center pt-2">

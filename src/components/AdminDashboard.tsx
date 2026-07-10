@@ -2097,14 +2097,23 @@ export default function AdminDashboard({ isOpen, onClose, isFullPage = false }: 
                             
                             <div className="h-16 w-24 bg-neutral-950 border border-neutral-800 rounded flex items-center justify-center overflow-hidden p-1 shrink-0 relative">
                               {room.imageUrl ? (
-                                <img 
-                                  src={room.imageUrl} 
-                                  alt={room.name} 
-                                  className="h-full w-full object-cover rounded" 
-                                  onError={(e) => {
-                                    e.currentTarget.style.border = '1px solid #ef4444'; 
-                                  }}
-                                />
+                                <>
+                                  <img 
+                                    src={room.imageUrl} 
+                                    alt={room.name} 
+                                    className="h-full w-full object-cover rounded" 
+                                    onError={(e) => {
+                                      e.currentTarget.style.opacity = '0.2';
+                                      e.currentTarget.style.border = '1px solid #ef4444'; 
+                                      if (e.currentTarget.nextElementSibling) {
+                                        (e.currentTarget.nextElementSibling as HTMLElement).style.display = 'flex';
+                                      }
+                                    }}
+                                  />
+                                  <div className="absolute inset-0 flex flex-col items-center justify-center pointer-events-none" style={{ display: 'none' }}>
+                                    <span className="text-[10px] font-mono font-bold text-red-500 bg-black/80 px-1 py-0.5 rounded">BROKEN</span>
+                                  </div>
+                                </>
                               ) : (
                                 <span className="text-[10px] text-neutral-650 font-mono text-center leading-tight">ไม่มีรูปภาพ<br />(No Image)</span>
                               )}
@@ -3115,7 +3124,28 @@ export default function AdminDashboard({ isOpen, onClose, isFullPage = false }: 
                           <Trash2 className="h-4 w-4" />
                         </button>
                         
-                        <div className="text-xs font-mono text-brick font-bold uppercase">GALLERY PHOTO BLOCK #{idx + 1}</div>
+                        <div className="flex justify-between items-start mb-3">
+                          <div className="text-xs font-mono text-brick font-bold uppercase">GALLERY PHOTO BLOCK #{idx + 1}</div>
+                          {item.url && (
+                            <div className="h-24 w-36 rounded border border-neutral-800 bg-neutral-950 overflow-hidden relative shadow-md">
+                              <img 
+                                src={item.url} 
+                                alt="Preview" 
+                                className="h-full w-full object-cover" 
+                                referrerPolicy="no-referrer"
+                                onError={(e) => {
+                                  e.currentTarget.style.opacity = '0.2';
+                                  if (e.currentTarget.nextElementSibling) {
+                                    (e.currentTarget.nextElementSibling as HTMLElement).style.display = 'flex';
+                                  }
+                                }}
+                              />
+                              <div className="absolute inset-0 flex flex-col items-center justify-center pointer-events-none" style={{ display: 'none' }}>
+                                <span className="text-[10px] font-mono font-bold text-red-500 bg-black/80 px-2 py-0.5 rounded">BROKEN IMAGE</span>
+                              </div>
+                            </div>
+                          )}
+                        </div>
                         
                         <div className="space-y-1 pr-8">
                           <label className="text-xs text-neutral-400 font-mono font-bold text-amber-500">ที่อยู่ URL รูปภาพ (URL Link - หากเว้นว่างไว้จะใช้รูปประกอบภาพลอฟท์เริ่มต้น)</label>

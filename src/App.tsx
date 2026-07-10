@@ -575,6 +575,7 @@ export default function App() {
                 src={coverImages[activeCoverImgIdx].url} 
                 alt={coverImages[activeCoverImgIdx].label}
                 className="w-full h-full object-cover opacity-60 scale-100 hover:scale-105 transition-all duration-[8000ms] ease-out brightness-90"
+                onError={(e) => { e.currentTarget.style.display = 'none'; }}
               />
             ) : (
               <div className="absolute inset-0 bg-neutral-900 flex flex-col items-center justify-center border border-neutral-800">
@@ -651,7 +652,7 @@ export default function App() {
                 >
                   <div className="h-10 w-16 overflow-hidden rounded relative bg-neutral-950 flex items-center justify-center">
                     {img.url ? (
-                      <img src={img.url} className="h-full w-full object-cover" />
+                      <img src={img.url} className="h-full w-full object-cover" onError={(e) => { e.currentTarget.style.display = 'none'; }} />
                     ) : (
                       <div className="h-full w-full bg-neutral-850 flex items-center justify-center text-neutral-600">
                         <Images className="h-4 w-4" />
@@ -1105,7 +1106,7 @@ export default function App() {
                         className="relative group h-28 sm:h-32 rounded overflow-hidden border border-neutral-900 cursor-pointer bg-neutral-950 hover:border-brick/50 transition-all duration-350 shadow-md hover:shadow-lg flex items-center justify-center"
                       >
                         {item.resolvedUrl ? (
-                          <img src={item.resolvedUrl} referrerPolicy="no-referrer" className="w-full h-full object-cover brightness-90 group-hover:scale-105 duration-500" />
+                          <img src={item.resolvedUrl} referrerPolicy="no-referrer" className="w-full h-full object-cover brightness-90 group-hover:scale-105 duration-500" onError={(e) => { e.currentTarget.style.opacity = '0'; }} />
                         ) : (
                           <div className="absolute inset-0 bg-neutral-850 flex flex-col items-center justify-center border border-neutral-800">
                             <Images className="h-6 w-6 text-neutral-600 mb-1" />
@@ -1743,7 +1744,7 @@ export default function App() {
                           : "border-neutral-800 opacity-55 hover:opacity-100"
                       }`}
                     >
-                      <img src={thumb.resolvedUrl || thumb.url} className="w-full h-full object-cover" referrerPolicy="no-referrer" />
+                      <img src={thumb.resolvedUrl || thumb.url} className="w-full h-full object-cover" referrerPolicy="no-referrer" onError={(e) => { e.currentTarget.style.opacity = '0'; }} />
                     </button>
                   );
                 })}

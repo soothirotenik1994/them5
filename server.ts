@@ -3227,15 +3227,12 @@ Generate a short personalized friendly recommendation in Thai for visitors or co
         }
         
         if (fs.existsSync(fallbackPath)) {
+          // If we serve a fallback image, we should STILL return a 404 status code so that the frontend's onError can detect it's a fallback!
           res.setHeader("Content-Type", "image/jpeg");
           res.setHeader("Cache-Control", "public, max-age=86400"); // Cache for 24 hours
-          return res.sendFile(fallbackPath);
+          return res.status(404).sendFile(fallbackPath);
         } else {
-          // Serve a 1x1 transparent pixel instead of a 403 text response so the image tag just appears empty instead of broken
-          const transparentPixel = Buffer.from("iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mNkYAAAAAYAAjCB0C8AAAAASUVORK5CYII=", "base64");
-          res.setHeader("Content-Type", "image/png");
-          res.setHeader("Cache-Control", "public, max-age=86400");
-          return res.status(200).send(transparentPixel);
+          return res.status(404).send("Asset not found");
         }
       }
       
