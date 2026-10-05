@@ -4,12 +4,12 @@ import { BookingDetails } from "../types";
 import { useSettings } from "../context/SettingsContext";
 
 const imageMap: Record<string, string> = {
-  superior: "https://images.unsplash.com/photo-1590490360182-c33d57733427?auto=format&fit=crop&w=800&q=80",
-  deluxe: "https://images.unsplash.com/photo-1582719508461-905c673771fd?auto=format&fit=crop&w=800&q=80",
-  studio: "https://images.unsplash.com/photo-1566665797739-1674de7a421a?auto=format&fit=crop&w=800&q=80"
+  superior: "/images/bedroom_superior_m5_1782203272229.jpg",
+  deluxe: "/images/bedroom_deluxe_m5_1782203318372.jpg",
+  studio: "/images/bedroom_studio_m5_1782203293730.jpg"
 };
 
-const defaultRoomImg = "https://images.unsplash.com/photo-1582719508461-905c673771fd?auto=format&fit=crop&w=800&q=80";
+const defaultRoomImg = "/images/bedroom_superior_m5_1782203272229.jpg";
 
 interface BookingModalProps {
   initialRoomId?: string;
@@ -818,6 +818,18 @@ export default function BookingModal({ initialRoomId = "deluxe", isOpen, onClose
                 <p className="text-xs text-neutral-300 font-light max-w-md mx-auto">
                   ระบบได้ส่งข้อมูลการจองไปยังอีเมลของคุณ <span className="font-medium text-white">{bookingResult.guestEmail}</span> แล้ว มาร์กวันที่รอพบความดิบเท่สไตล์ลอฟท์ได้ทันที
                 </p>
+
+                {/* Instant Notifications Signal Badges */}
+                <div className="flex flex-wrap items-center justify-center gap-2 pt-1">
+                  <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-[#06C755]/10 border border-[#06C755]/30 text-[#06C755] text-[11px] font-medium">
+                    <span className="w-2 h-2 rounded-full bg-[#06C755] animate-pulse"></span>
+                    แจ้งเตือนเจ้าหน้าที่โรงแรมผ่าน LINE เรียบร้อย
+                  </span>
+                  <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-blue-500/10 border border-blue-500/30 text-blue-400 text-[11px] font-medium">
+                    <span className="w-2 h-2 rounded-full bg-blue-400"></span>
+                    ส่งอีเมลยืนยัน ({bookingResult.guestEmail}) เรียบร้อย
+                  </span>
+                </div>
               </div>
 
               {/* Invoice Layout styled exactly like a receipt */}

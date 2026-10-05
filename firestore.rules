@@ -1,0 +1,51 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    // Rooms collection
+    match /rooms/{roomId} {
+      allow read: if true;
+      allow write: if true;
+    }
+    
+    // Bookings collection
+    match /bookings/{bookingId} {
+      allow read, write: if true;
+    }
+    
+    // Events collection
+    match /events/{eventId} {
+      allow read: if true;
+      allow write: if true;
+    }
+
+    // Settings collection
+    match /settings/{settingId} {
+      allow read, write: if true;
+    }
+    
+    // System collection
+    match /system/{docId} {
+      allow read, write: if true;
+    }
+
+    // Members collection
+    match /members/{memberId} {
+      allow read, write: if true;
+    }
+
+    // Notifications collection (LINE & Email delivery logs)
+    match /notifications/{notificationId} {
+      allow read, write: if true;
+    }
+
+    // Billing Documents (Tax Invoices, Quotations, Invoices)
+    match /documents/{docId} {
+      allow read, write: if true;
+    }
+
+    // Global fallback for any subcollections or records
+    match /{document=**} {
+      allow read, write: if true;
+    }
+  }
+}

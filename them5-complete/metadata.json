@@ -1,0 +1,6 @@
+{
+  "name": "The M5 Residence",
+  "description": "เดอะ เอ็มไฟว์ เรสซิเดนซ์ - เว็บไซต์จองห้องพักโรงแรมสไตล์ปูนเปลือย ลอฟท์ อินดัสเทรียล สุดพรีเมียม ใกล้อิมแพ็ค เมืองทองธานี พร้อมระบบ AI ผู้ช่วยส่วนตัวแชทบอทอัจฉริยะ",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}

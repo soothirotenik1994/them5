@@ -4,7 +4,7 @@ import { motion } from "motion/react";
 import { CheckAvailabilityRequest } from "../types";
 import { useSettings } from "../context/SettingsContext";
 
-const defaultLobbyImg = "https://images.unsplash.com/photo-1554118811-1e0d58224f24?auto=format&fit=crop&w=1200&q=80";
+const defaultLobbyImg = "/images/lobby_loft_m5_1782203250164.jpg";
 
 interface HeroProps {
   onCheckAvailability: (form: CheckAvailabilityRequest) => void;

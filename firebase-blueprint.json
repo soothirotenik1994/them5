@@ -1,0 +1,135 @@
+{
+  "entities": {
+    "Room": {
+      "title": "Room",
+      "description": "Hotel Room definition",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string" },
+        "name": { "type": "string" },
+        "thaiName": { "type": "string" },
+        "price": { "type": "number" },
+        "size": { "type": "number" },
+        "capacity": { "type": "number" },
+        "bedType": { "type": "string" },
+        "description": { "type": "string" },
+        "longDescription": { "type": "string" },
+        "imageUrl": { "type": "string" },
+        "amenities": { "type": "array" },
+        "active": { "type": "boolean" }
+      },
+      "required": ["id", "name", "price"]
+    },
+    "Booking": {
+      "title": "Booking",
+      "description": "Customer room booking record",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string" },
+        "roomId": { "type": "string" },
+        "roomName": { "type": "string" },
+        "checkIn": { "type": "string" },
+        "checkOut": { "type": "string" },
+        "guests": { "type": "number" },
+        "guestName": { "type": "string" },
+        "guestEmail": { "type": "string" },
+        "guestPhone": { "type": "string" },
+        "totalPrice": { "type": "number" },
+        "status": { "type": "string" },
+        "createdAt": { "type": "string" }
+      },
+      "required": ["id", "roomId", "checkIn", "checkOut", "guestName", "status"]
+    },
+    "Event": {
+      "title": "Event",
+      "description": "Exhibition or concert event",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string" },
+        "title": { "type": "string" },
+        "date": { "type": "string" },
+        "time": { "type": "string" },
+        "venue": { "type": "string" },
+        "description": { "type": "string" },
+        "imageUrl": { "type": "string" },
+        "category": { "type": "string" },
+        "active": { "type": "boolean" }
+      },
+      "required": ["id", "title", "date", "venue"]
+    },
+    "Settings": {
+      "title": "Settings",
+      "description": "Application settings and website metadata",
+      "type": "object",
+      "properties": {
+        "general": { "type": "object" },
+        "rooms": { "type": "array" },
+        "promotions": { "type": "array" },
+        "amenities": { "type": "array" },
+        "gallery": { "type": "array" },
+        "adminMenuConfig": { "type": "array" },
+        "adminRoles": { "type": "array" }
+      }
+    },
+    "Notification": {
+      "title": "Notification",
+      "description": "LINE and Email booking notification audit logs",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string" },
+        "bookingId": { "type": "string" },
+        "channel": { "type": "string" },
+        "recipient": { "type": "string" },
+        "status": { "type": "string" },
+        "message": { "type": "string" },
+        "createdAt": { "type": "string" }
+      },
+      "required": ["id", "bookingId", "channel", "status", "createdAt"]
+    },
+    "BillingDocument": {
+      "title": "BillingDocument",
+      "description": "Tax Invoices, Quotations, and Billing Notes for hotel bookings and corporate clients",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string" },
+        "documentNumber": { "type": "string" },
+        "type": { "type": "string" },
+        "status": { "type": "string" },
+        "issueDate": { "type": "string" },
+        "dueDate": { "type": "string" },
+        "totalAmount": { "type": "number" },
+        "netBeforeVat": { "type": "number" },
+        "vatAmount": { "type": "number" },
+        "bahtText": { "type": "string" },
+        "createdAt": { "type": "string" }
+      },
+      "required": ["id", "documentNumber", "type", "status", "issueDate", "totalAmount"]
+    }
+  },
+  "firestore": {
+    "/rooms/{roomId}": {
+      "schema": "Room",
+      "description": "List of available hotel rooms"
+    },
+    "/bookings/{bookingId}": {
+      "schema": "Booking",
+      "description": "Customer reservations"
+    },
+    "/events/{eventId}": {
+      "schema": "Event",
+      "description": "IMPACT and hotel events"
+    },
+    "/settings/{settingId}": {
+      "schema": "Settings",
+      "description": "Hotel configuration and site settings"
+    },
+    "/notifications/{notificationId}": {
+      "schema": "Notification",
+      "description": "Delivery history and logs for LINE and Email notifications"
+    },
+    "/documents/{docId}": {
+      "schema": "BillingDocument",
+      "description": "Tax Invoices, Quotations, and Invoices"
+    }
+  }
+}

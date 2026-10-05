@@ -1,0 +1,41 @@
+.invoice-view{background:#e7e8ea;min-height:100vh;padding:24px;color:#000}
+.invoice-toolbar{max-width:190mm;margin:0 auto 24px;display:flex;justify-content:space-between;gap:12px;align-items:center;font:14px Tahoma,sans-serif;color:#222}
+.invoice-toolbar button{background:#b54720;color:white;padding:10px 20px;border-radius:5px;cursor:pointer}
+.invoice-paper{position:relative;box-sizing:border-box;width:190mm;min-height:277mm;margin:0 auto;padding:7mm 0 0;background:white;color:#000;font-family:'Angsana New','TH Sarabun New','Times New Roman',serif;font-size:15pt;line-height:1.3;box-shadow:0 2px 14px #0002;isolation:isolate}
+.invoice-paper *{box-sizing:border-box;font-family:'Angsana New','TH Sarabun New','Times New Roman',serif!important;letter-spacing:0!important}
+.invoice-heading{position:relative;height:58mm;padding:0 1mm}
+.invoice-company{display:flex;gap:3mm;align-items:center;justify-content:center;margin-bottom:3mm;font-size:16pt;line-height:1.8}
+.invoice-company img{width:15mm;height:21mm;object-fit:contain}
+.invoice-logo{font-family:Georgia,serif;line-height:.85;border:double 4px #777;width:14mm;height:17mm;color:#9c4b23;padding:2mm 1mm;text-shadow:1px 1px #ccc;flex:none}
+.invoice-logo span{display:block;font-size:15pt}.invoice-logo strong{font-size:22pt}
+.invoice-contact{font-size:13pt;line-height:1.65;max-width:130mm}
+.invoice-heading h1{position:absolute;right:9mm;bottom:21mm;font-weight:bold;font-size:17pt;margin:0}
+.invoice-table{width:100%;border-collapse:collapse;table-layout:fixed;font-size:13pt;line-height:1.35}
+.invoice-table td,.invoice-table th{border:.25mm solid black;padding:1.3mm .8mm;overflow-wrap:anywhere}
+.invoice-buyer{height:46mm}.invoice-buyer>td{vertical-align:top;font-size:14pt}
+.invoice-buyer>td:first-child{position:relative;padding:2mm .7mm}
+.invoice-buyer>td:first-child>div{display:flex;gap:3mm;margin-bottom:2mm}
+.invoice-buyer b{white-space:nowrap}.invoice-address{white-space:pre-line;line-height:1.9}
+.invoice-buyer .invoice-buyer-tax{position:absolute;bottom:0;left:.7mm;right:.7mm;font-size:12pt;gap:4mm!important;align-items:center}
+.invoice-number{text-align:center!important;position:relative}.invoice-number strong{display:block}.invoice-number strong:last-child{position:absolute;bottom:2mm;left:0;width:100%;font-size:13pt}
+.invoice-columns{height:16mm}.invoice-columns th{text-align:center;font-size:14pt;line-height:1.7}
+.invoice-item td{border-top:0;border-bottom:0;vertical-align:top;padding-top:5mm;height:18mm}
+.invoice-item td:first-child,.invoice-item td:nth-child(3){text-align:center}
+.invoice-item td:nth-child(n+4){text-align:right;white-space:nowrap}
+.invoice-stay td{border-top:0;height:15mm;vertical-align:bottom;padding-bottom:2mm}.invoice-stay td:nth-child(2){color:#d80000;text-align:center;white-space:nowrap;font-size:12pt}
+.invoice-table .invoice-payment{border-left:0;border-bottom:0;vertical-align:top;padding:1mm}
+.invoice-payment>div{display:flex;align-items:baseline;gap:4mm;min-height:16mm;font-size:12pt}.invoice-payment>div:first-child{min-height:8mm;gap:3mm}
+.invoice-payment b{min-width:29mm}.invoice-payment span{flex:1;overflow-wrap:anywhere}
+.invoice-table th[colspan='2']{font-size:12pt;height:16.5mm;line-height:1.7;font-weight:bold;text-align:center}
+.invoice-table small{font-size:11pt;white-space:nowrap}.invoice-total{text-align:right;font-weight:bold;font-size:13pt}
+.invoice-words{display:flex;gap:25mm;align-items:center;padding:8mm 0 5mm 33mm;font-size:15pt;min-height:20mm}
+.invoice-words strong{font-size:13pt}
+.invoice-signatures{width:100%;border-collapse:collapse;table-layout:fixed;font-size:12pt;text-align:center}
+.invoice-signatures td{border:.25mm solid black;height:28mm;vertical-align:top;padding:1mm}.invoice-signatures td:first-child{width:67.5%}
+.signature-space{height:17mm;display:flex;align-items:flex-end;justify-content:center}
+.invoice-footnote{text-align:center;font-size:11pt;margin:1mm 0}
+.invoice-watermark{position:absolute;inset:40% 0 auto;text-align:center;transform:rotate(-30deg);color:#ad222233;font:bold 42pt Tahoma,sans-serif;pointer-events:none;z-index:5}
+.invoice-error{padding:40px;text-align:center}
+@page{size:A4;margin:10mm}
+@media print{html,body,#root{margin:0!important;padding:0!important;background:white!important}.invoice-view{padding:0;background:white}.invoice-toolbar{display:none!important}.invoice-paper{margin:0;width:190mm;box-shadow:none;min-height:0;print-color-adjust:exact;-webkit-print-color-adjust:exact}.invoice-paper table{break-inside:avoid}.invoice-paper .invoice-heading{break-after:avoid}}
+@media screen and (max-width:800px){.invoice-view{overflow-x:auto;padding:12px}.invoice-toolbar{min-width:600px}.invoice-paper{margin:0}}

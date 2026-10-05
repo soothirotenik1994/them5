@@ -1,26 +1,42 @@
 import { useState, useEffect, useRef } from "react";
+import { motion, AnimatePresence } from "motion/react";
 import * as LucideIcons from "lucide-react";
 import { 
   Landmark, CalendarDays, Menu, X, ShieldAlert, Phone, Mail, MapPin, 
   Facebook, Instagram, ChevronDown, ChevronUp, Zap, Sparkles, Wifi, 
   Tv, Check, Coffee, Car, Shield, Compass, BookOpen, Star, Images, ArrowRight,
   CloudSun, CloudRain, Cloud, Wind, Droplets, RefreshCw, UserPlus, UserCheck,
-  User, LogOut, Clock
+  User, LogOut, Clock, FileText
 } from "lucide-react";
 import { useSettings, defaultFaqs, defaultReviews, defaultGallery } from "./context/SettingsContext";
 import BookingModal from "./components/BookingModal";
 import AIChatbot from "./components/AIChatbot";
 import EventPopup from "./components/EventPopup";
 import AdminDashboard from "./components/AdminDashboard";
+import MemberPortalModal from "./components/MemberPortalModal";
+import CustomerQuotationModal from "./components/CustomerQuotationModal";
 import { CheckAvailabilityRequest } from "./types";
+import { 
+  getUpcomingEvents, 
+  getPastEvents, 
+  isPastEvent, 
+  isUpcomingEvent, 
+  isEventInCurrentWeek, 
+  isEventInNextWeek, 
+  getEventTimingBadge, 
+  groupUpcomingEventsByWeek, 
+  formatWeekRangeThai, 
+  getWeekBounds 
+} from "./utils/eventDateUtils";
 
-const lobbyImg = "https://images.unsplash.com/photo-1554118811-1e0d58224f24?auto=format&fit=crop&w=1200&q=80";
-const superiorImg = "https://images.unsplash.com/photo-1590490360182-c33d57733427?auto=format&fit=crop&w=1200&q=80";
-const studioImg = "https://images.unsplash.com/photo-1566665797739-1674de7a421a?auto=format&fit=crop&w=1200&q=80";
-const deluxeImg = "https://images.unsplash.com/photo-1582719508461-905c673771fd?auto=format&fit=crop&w=1200&q=80";
+const lobbyImg = "/images/lobby_loft_m5_1782203250164.jpg";
+const superiorImg = "/images/bedroom_superior_m5_1782203272229.jpg";
+const studioImg = "/images/bedroom_studio_m5_1782203293730.jpg";
+const deluxeImg = "/images/bedroom_deluxe_m5_1782203318372.jpg";
 
 export default function App() {
   const [isBookingOpen, setIsBookingOpen] = useState(false);
+  const [isQuotationModalOpen, setIsQuotationModalOpen] = useState(false);
   const [selectedRoomId, setSelectedRoomId] = useState<string>("deluxe");
   const [path, setPath] = useState(window.location.pathname);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
@@ -40,6 +56,8 @@ export default function App() {
   const [quickGuests, setQuickGuests] = useState(2);
   const [impactFilterCategory, setImpactFilterCategory] = useState("ทั้งหมด");
   const [impactSearchQuery, setImpactSearchQuery] = useState("");
+  const [impactPeriodFilter, setImpactPeriodFilter] = useState<"upcoming" | "this_week" | "next_week" | "all" | "past">("upcoming");
+  const [impactViewLayout, setImpactViewLayout] = useState<"weekly" | "list">("weekly");
 
   // Initialize dates for Quick-Check Bar on load
   useEffect(() => {
@@ -55,15 +73,46 @@ export default function App() {
 
   // Weather state and fetcher utilizing Gemini with Google Search grounding
   const [weatherData, setWeatherData] = useState<any>(null);
+  const [liveImpactEvents, setLiveImpactEvents] = useState<any[]>([]);
+  const [isImpactLoading, setIsImpactLoading] = useState(false);
+
+  useEffect(() => {
+    const fetchLiveImpact = async () => {
+      setIsImpactLoading(true);
+      try {
+        const res = await fetch("/api/impact-events/live");
+        if (res.ok) {
+          const data = await res.json();
+          if (data.success && data.events) {
+            setLiveImpactEvents(data.events);
+          }
+        }
+      } catch (err) {
+        console.error("Failed to fetch live impact events", err);
+      } finally {
+        setIsImpactLoading(false);
+      }
+    };
+    fetchLiveImpact();
+  }, []);
+
   const [isWeatherLoading, setIsWeatherLoading] = useState(false);
 
   const fetchWeather = async () => {
     setIsWeatherLoading(true);
     try {
       const res = await fetch("/api/weather");
-      const data = await res.json();
-      if (data.success) {
-        setWeatherData(data);
+      if (!res.ok) {
+        throw new Error(`HTTP status: ${res.status}`);
+      }
+      const contentType = res.headers.get("content-type");
+      if (contentType && contentType.indexOf("application/json") !== -1) {
+        const data = await res.json();
+        if (data.success) {
+          setWeatherData(data);
+        }
+      } else {
+        throw new Error("Invalid content type received, expected JSON");
       }
     } catch (err) {
       console.error("Failed to fetch weather:", err);
@@ -126,29 +175,50 @@ export default function App() {
     }
   }, [gen]);
 
+  // Default high-resolution industrial loft hotel slides
+  const DEFAULT_HOTEL_SLIDES = [
+    {
+      url: "/images/lobby_loft_m5_1782203250164.jpg",
+      label: "LOBBY & RECEPTION",
+      desc: "โถงต้อนรับสไตล์อินดัสเทรียลลอฟท์ อิฐมอญธรรมชาติและโครงสร้างเหล็กดำสุดคลาสสิก"
+    },
+    {
+      url: "/images/bedroom_deluxe_m5_1782203318372.jpg",
+      label: "DELUXE LOFT ROOM",
+      desc: "ห้องพักเตียงคิงไซส์ 6 ฟุต พร้อมพื้นที่นั่งเล่นและสิ่งอำนวยความสะดวกครบครัน"
+    },
+    {
+      url: "/images/bedroom_superior_m5_1782203272229.jpg",
+      label: "SUPERIOR TWIN ROOM",
+      desc: "ห้องพักเตียงคู่ แยกเตียงเดี่ยว 3.5 ฟุต พักผ่อนสบาย ปลอดโปร่ง ใกล้อิมแพ็ค"
+    },
+    {
+      url: "/images/bedroom_studio_m5_1782203293730.jpg",
+      label: "STUDIO LOFT ROOM",
+      desc: "ห้องสตูดิโอขนาดกว้างขวาง ดีไซน์ปูนเปลือยขัดมันอบอุ่น"
+    }
+  ];
+
   // Background slider of the Lobby Cover side
   const [activeCoverImgIdx, setActiveCoverImgIdx] = useState(0);
   
   const coverImages = (settings.slides && settings.slides.length > 0)
     ? settings.slides.map((slide, idx) => {
-        let finalUrl = slide.url;
+        let finalUrl = slide.url?.trim();
+        const fallback = DEFAULT_HOTEL_SLIDES[idx % DEFAULT_HOTEL_SLIDES.length];
         if (!finalUrl) {
-          if (idx === 0) finalUrl = gen.coverImg1 || "";
-          else if (idx === 1) finalUrl = gen.coverImg2 || "";
-          else if (idx === 2) finalUrl = gen.coverImg3 || "";
-          else finalUrl = "";
+          if (idx === 0) finalUrl = gen.coverImg1 || fallback.url;
+          else if (idx === 1) finalUrl = gen.coverImg2 || fallback.url;
+          else if (idx === 2) finalUrl = gen.coverImg3 || fallback.url;
+          else finalUrl = fallback.url;
         }
         return {
-          url: finalUrl,
-          label: slide.label || `SLIDE ${idx + 1}`,
-          desc: slide.desc || ""
+          url: finalUrl || fallback.url,
+          label: slide.label || fallback.label,
+          desc: slide.desc || fallback.desc
         };
       })
-    : [
-        { url: gen.coverImg1 || "", label: "SLIDE 1", desc: "ยังไม่มีภาพสไลด์แบนเนอร์หลัก" },
-        { url: gen.coverImg2 || "", label: "SLIDE 2", desc: "ยังไม่มีภาพสไลด์แบนเนอร์หลัก" },
-        { url: gen.coverImg3 || "", label: "SLIDE 3", desc: "ยังไม่มีภาพสไลด์แบนเนอร์หลัก" }
-      ];
+    : DEFAULT_HOTEL_SLIDES;
 
   // Auto-play interval for cinematic cover images
   useEffect(() => {
@@ -168,27 +238,7 @@ export default function App() {
 
   const [isMemberPortalOpen, setIsMemberPortalOpen] = useState(false);
   const [memberPortalMode, setMemberPortalMode] = useState<"login" | "register">("login");
-  const [pEmail, setPEmail] = useState("");
-  const [pPassword, setPPassword] = useState("");
-  const [pName, setPName] = useState("");
-  const [pPhone, setPPhone] = useState("");
-
-  const [memberPortalTab, setMemberPortalTab] = useState<"card" | "profile">("card");
-  const [editName, setEditName] = useState("");
-  const [editPhone, setEditPhone] = useState("");
-  const [editEmail, setEditEmail] = useState("");
-  const [editPassword, setEditPassword] = useState("");
-  const [editStatusMsg, setEditStatusMsg] = useState("");
-
-  useEffect(() => {
-    if (currentMember) {
-      setEditName(currentMember.name || "");
-      setEditPhone(currentMember.phone || "");
-      setEditEmail(currentMember.email || "");
-      setEditPassword(currentMember.password || "");
-      setEditStatusMsg("");
-    }
-  }, [currentMember, isMemberPortalOpen]);
+  const [memberPortalTab, setMemberPortalTab] = useState<"card" | "bookings" | "profile">("card");
 
   // Refs for smooth scrolling sections inside scrollable content pane
   const roomsRef = useRef<HTMLDivElement>(null);
@@ -433,6 +483,15 @@ export default function App() {
                 )}
 
                 <button
+                  onClick={() => setIsQuotationModalOpen(true)}
+                  className="hidden xl:flex items-center space-x-1.5 px-4 py-3 rounded bg-neutral-950 hover:bg-neutral-900 border border-amber-500/40 text-amber-400 hover:text-amber-300 text-xs font-bold transition-all cursor-pointer font-sans whitespace-nowrap shrink-0 shadow-sm"
+                  title="ขอใบเสนอราคาสำหรับองค์กรและกรุ๊ปสัมมนา"
+                >
+                  <FileText className="h-4 w-4 text-amber-400" />
+                  <span>ขอใบเสนอราคา</span>
+                </button>
+
+                <button
                   onClick={handleBookClick}
                   className="flex items-center space-x-2 px-6 py-3 rounded bg-brick hover:bg-brick-dark text-white font-semibold text-xs tracking-wider border border-brick-light/10 shadow-lg shadow-brick/20 hover:scale-[1.03] transition-all hover:brightness-110 relative overflow-hidden font-sans cursor-pointer whitespace-nowrap shrink-0"
                   style={{
@@ -549,6 +608,16 @@ export default function App() {
             <button 
               onClick={() => {
                 setIsMobileMenuOpen(false);
+                setIsQuotationModalOpen(true);
+              }} 
+              className="w-full flex items-center justify-center space-x-2 py-2.5 px-4 bg-amber-950/40 hover:bg-amber-900/50 text-amber-300 border border-amber-500/40 rounded font-semibold text-center text-xs transition-colors"
+            >
+              <FileText className="h-4 w-4" />
+              <span>ขอใบเสนอราคาออนไลน์ (Quotation)</span>
+            </button>
+            <button 
+              onClick={() => {
+                setIsMobileMenuOpen(false);
                 handleBookClick();
               }}
               className="w-full flex items-center justify-center space-x-2 py-3 px-4 bg-brick hover:bg-brick-dark text-white rounded font-bold text-center shadow-lg shadow-brick/20"
@@ -569,66 +638,113 @@ export default function App() {
         <div className="w-full lg:w-[62%] xl:w-[65%] lg:h-[calc(100vh-80px)] lg:fixed lg:top-20 lg:left-0 z-10 flex flex-col justify-between p-6 sm:p-10 lg:p-12 xl:p-16 relative overflow-hidden border-b lg:border-b-0 lg:border-r border-neutral-900">
           
           {/* Active Background Fade-in effect */}
-          <div className="absolute inset-0 z-0 bg-[#070707] transition-all duration-700 flex items-center justify-center">
-            {coverImages[activeCoverImgIdx]?.url ? (
-              <img 
-                src={coverImages[activeCoverImgIdx].url} 
-                alt={coverImages[activeCoverImgIdx].label}
-                className="w-full h-full object-cover opacity-60 scale-100 hover:scale-105 transition-all duration-[8000ms] ease-out brightness-90"
-                onError={(e) => { e.currentTarget.style.display = 'none'; }}
-              />
-            ) : (
-              <div className="absolute inset-0 bg-neutral-900 flex flex-col items-center justify-center border border-neutral-800">
-                <Images className="h-12 w-12 text-neutral-700 mb-2 animate-pulse" />
-                <span className="text-xs font-mono text-neutral-500 uppercase tracking-widest">// NO IMAGE UPLOADED (ยังไม่มีภาพสไลด์)</span>
-              </div>
-            )}
+          <div className="absolute inset-0 z-0 bg-[#070707] flex items-center justify-center overflow-hidden">
+            <AnimatePresence mode="wait">
+              {coverImages[activeCoverImgIdx]?.url ? (
+                <motion.img 
+                  key={activeCoverImgIdx}
+                  initial={{ scale: 1, opacity: 0 }}
+                  animate={{ scale: 1.05, opacity: 0.85 }}
+                  exit={{ opacity: 0, transition: { duration: 0.8 } }}
+                  transition={{ 
+                    scale: { duration: 25, ease: "linear" }, 
+                    opacity: { duration: 1.2, ease: "easeOut" } 
+                  }}
+                  src={coverImages[activeCoverImgIdx].url} 
+                  alt={coverImages[activeCoverImgIdx].label}
+                  className="w-full h-full object-cover brightness-95 absolute inset-0"
+                  onError={(e) => { 
+                    const fallbackUrl = DEFAULT_HOTEL_SLIDES[activeCoverImgIdx % DEFAULT_HOTEL_SLIDES.length].url;
+                    if (e.currentTarget.src !== fallbackUrl) {
+                      e.currentTarget.src = fallbackUrl;
+                    }
+                  }}
+                />
+              ) : (
+                <img 
+                  src={lobbyImg}
+                  alt="The M5 Residence"
+                  className="w-full h-full object-cover brightness-95 absolute inset-0"
+                />
+              )}
+            </AnimatePresence>
             {/* Cinematic Overlay: matching vignette depth of mockup */}
-            <div className="absolute inset-0 bg-gradient-to-t from-[#050505] via-black/30 to-black/60"></div>
-            <div className="absolute inset-0 bg-gradient-to-r from-black/50 via-transparent to-black/10"></div>
+            <div className="absolute inset-0 bg-gradient-to-t from-[#050505] via-black/25 to-black/40 pointer-events-none"></div>
+            <div className="absolute inset-0 bg-gradient-to-r from-black/45 via-transparent to-black/10 pointer-events-none"></div>
           </div>
 
           {/* Top category label */}
-          <div className="relative z-10 self-start">
+          <motion.div 
+            initial={{ opacity: 0, y: -20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.8, delay: 0.2 }}
+            className="relative z-10 self-start"
+          >
             <div className="inline-flex items-center space-x-2 px-3 py-1 bg-brick/10 border border-brick/40 rounded-full text-[10px] font-mono tracking-widest text-brick uppercase shadow-[0_4px_12px_rgba(255,106,0,0.15)] backdrop-blur-sm animate-pulse">
               <Sparkles className="h-3 w-3 text-brick-light shrink-0" />
               <span>THE M5 RESIDENCE</span>
             </div>
-          </div>
+          </motion.div>
 
           {/* Middle: Majestic Brand Title exactly conforming to mockup reference */}
           <div className="relative z-10 max-w-2xl my-24 lg:my-auto space-y-6">
-            <span className="font-mono text-xs sm:text-sm tracking-[0.45em] text-brick-light block uppercase font-semibold">
+            <motion.span 
+              initial={{ opacity: 0, x: -20 }}
+              animate={{ opacity: 1, x: 0 }}
+              transition={{ duration: 0.8, delay: 0.4 }}
+              className="font-mono text-xs sm:text-sm tracking-[0.45em] text-brick-light block uppercase font-semibold"
+            >
               THE M5 RESIDENCE:
-            </span>
-            <h1 className="text-3xl sm:text-4xl md:text-5xl lg:text-5xl xl:text-6xl font-bold tracking-tight text-white leading-[1.12]">
+            </motion.span>
+            <motion.h1 
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.8, delay: 0.5 }}
+              className="text-3xl sm:text-4xl md:text-5xl lg:text-5xl xl:text-6xl font-bold tracking-tight text-white leading-[1.12]"
+            >
               {gen.heroTitle || "นิยามใหม่ของการพักผ่อนสไตล์ลอฟท์"}
-            </h1>
-            <p className="text-sm sm:text-base md:text-lg text-neutral-300 font-light leading-relaxed max-w-xl">
+            </motion.h1>
+            <motion.p 
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.8, delay: 0.6 }}
+              className="text-sm sm:text-base md:text-lg text-neutral-300 font-light leading-relaxed max-w-xl"
+            >
               {gen.heroSubtitle || "ดีไซน์เท่ ทันสมัย ใกล้ทุกการเดินทางในปากเกร็ด นนทบุรี ใกล้อิมแพ็คเพียง 5-10 นาที"}
-            </p>
+            </motion.p>
 
             {/* Custom CTAs matching layout buttons */}
-            <div className="flex flex-wrap items-center gap-4 pt-3">
+            <motion.div 
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.8, delay: 0.7 }}
+              className="flex flex-wrap items-center gap-4 pt-3"
+            >
               <button 
                 onClick={() => handleSectionScroll("rooms")}
-                className="px-6 py-3.5 border border-neutral-700 hover:border-brick-light bg-black/40 hover:bg-black/60 rounded text-neutral-250 hover:text-white text-xs sm:text-sm tracking-wider uppercase font-sans font-semibold transition-all duration-300 backdrop-blur-sm hover:scale-105"
+                className="px-6 py-3.5 border border-neutral-700 hover:border-brick-light bg-black/40 hover:bg-black/60 rounded text-neutral-250 hover:text-white text-xs sm:text-sm tracking-wider uppercase font-sans font-semibold transition-all duration-300 backdrop-blur-sm hover:-translate-y-1"
               >
                 ดูห้องพักทั้งหมด
               </button>
               <button 
                 onClick={handleBookClick}
-                className="px-6 py-3.5 bg-brick hover:bg-brick-dark border border-brick-light/10 hover:border-brick text-white rounded text-xs sm:text-sm tracking-wider uppercase font-sans font-bold transition-all duration-300 shadow-xl shadow-brick/25 hover:scale-105 cursor-pointer"
+                className="px-6 py-3.5 bg-brick hover:bg-brick-dark border border-brick-light/10 hover:border-brick text-white rounded text-xs sm:text-sm tracking-wider uppercase font-sans font-bold transition-all duration-300 shadow-xl shadow-brick/25 hover:-translate-y-1 cursor-pointer overflow-hidden relative group"
                 style={{ backgroundImage: "linear-gradient(to right, #d95a06 0%, #b84100 100%)" }}
               >
-                จองห้องพัก
+                <div className="absolute inset-0 bg-white/20 translate-y-full group-hover:translate-y-0 transition-transform duration-300 ease-out"></div>
+                <span className="relative z-10">จองห้องพัก</span>
               </button>
-            </div>
+            </motion.div>
           </div>
 
           {/* Bottom Left: Interactive Thumbnail Carousel swapper */}
           {/* Exactly mimics the room previews on the mockup slider footer */}
-          <div className="relative z-10 w-full pt-4 border-t border-neutral-900/50 flex flex-col sm:flex-row justify-between sm:items-center gap-4">
+          <motion.div 
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.8, delay: 0.9 }}
+            className="relative z-10 w-full pt-4 border-t border-neutral-900/50 flex flex-col sm:flex-row justify-between sm:items-center gap-4"
+          >
             <div className="space-y-1">
               <span className="text-[10px] sm:text-xs font-mono text-brick uppercase tracking-widest block font-bold">
                 {coverImages[activeCoverImgIdx].label}
@@ -651,20 +767,23 @@ export default function App() {
                   }`}
                 >
                   <div className="h-10 w-16 overflow-hidden rounded relative bg-neutral-950 flex items-center justify-center">
-                    {img.url ? (
-                      <img src={img.url} className="h-full w-full object-cover" onError={(e) => { e.currentTarget.style.display = 'none'; }} />
-                    ) : (
-                      <div className="h-full w-full bg-neutral-850 flex items-center justify-center text-neutral-600">
-                        <Images className="h-4 w-4" />
-                      </div>
-                    )}
+                    <img 
+                      src={img.url || DEFAULT_HOTEL_SLIDES[idx % DEFAULT_HOTEL_SLIDES.length].url} 
+                      alt={img.label}
+                      className="h-full w-full object-cover" 
+                      onError={(e) => { 
+                        const fallbackUrl = DEFAULT_HOTEL_SLIDES[idx % DEFAULT_HOTEL_SLIDES.length].url;
+                        if (e.currentTarget.src !== fallbackUrl) {
+                          e.currentTarget.src = fallbackUrl;
+                        }
+                      }} 
+                    />
                     <div className="absolute inset-0 bg-black/20 group-hover:bg-transparent duration-200"></div>
                   </div>
                 </button>
               ))}
             </div>
-          </div>
-
+          </motion.div>
         </div>
 
         {/* RIGHT COLUMN: Curated Content Stream Dashboard */}
@@ -777,6 +896,38 @@ export default function App() {
             )}
           </div>
 
+          {/* CORPORATE & GROUP QUOTATION BANNER */}
+          <div className="p-4 sm:p-5 border-b border-neutral-900 bg-gradient-to-br from-amber-950/20 via-neutral-950 to-neutral-950 space-y-3 relative">
+            <div className="flex items-start justify-between">
+              <div className="flex items-center space-x-3">
+                <div className="p-2.5 bg-amber-500/10 border border-amber-500/30 rounded-xl text-amber-400 shrink-0">
+                  <FileText className="h-5 w-5" />
+                </div>
+                <div>
+                  <div className="flex items-center space-x-2">
+                    <h3 className="text-xs font-bold text-white font-mono uppercase tracking-wide">
+                      ขอใบเสนอราคา & ใบกำกับภาษี
+                    </h3>
+                    <span className="text-[9px] font-mono text-amber-400 bg-amber-950/60 border border-amber-900/70 px-1.5 py-0.5 rounded font-bold">
+                      องค์กร/ราชการ
+                    </span>
+                  </div>
+                  <p className="text-[11px] text-neutral-400 font-sans mt-0.5 leading-snug">
+                    สำหรับหน่วยงานราชการ บริษัทเอกชน กรุ๊ปสัมมนา หรือการพักระยะยาว
+                  </p>
+                </div>
+              </div>
+            </div>
+
+            <button
+              onClick={() => setIsQuotationModalOpen(true)}
+              className="w-full py-2.5 px-3 bg-neutral-900 hover:bg-neutral-850 hover:border-amber-500/50 text-amber-300 border border-amber-500/30 rounded-lg text-xs font-mono font-bold flex items-center justify-center space-x-2 transition-all cursor-pointer shadow-md"
+            >
+              <span>กรอกข้อมูลขอใบเสนอราคาออนไลน์ (Online Quotation)</span>
+              <ArrowRight className="h-3.5 w-3.5" />
+            </button>
+          </div>
+
           {/* WEATHER WIDGET (รายงานสภาพอากาศปากเกร็ด) */}
           <div className="p-6 sm:p-8 lg:p-6 xl:p-8 border-b border-neutral-900 bg-neutral-950/20 space-y-4 relative">
             <div className="absolute top-2 left-2 w-1 h-1 rounded-full bg-neutral-800"></div>
@@ -875,7 +1026,15 @@ export default function App() {
           </div>
 
           {/* SECTION 1: EXCLUSIVE LOFT ROOMS */}
-          <div id="rooms" ref={roomsRef} className="p-6 sm:p-8 lg:p-6 xl:p-8 border-b border-neutral-900 space-y-6">
+          <motion.div 
+            id="rooms" 
+            ref={roomsRef} 
+            initial={{ opacity: 0, y: 30 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ once: true, margin: "-100px" }}
+            transition={{ duration: 0.6 }}
+            className="p-6 sm:p-8 lg:p-6 xl:p-8 border-b border-neutral-900 space-y-6"
+          >
             <div className="border-l-2 border-brick pl-3">
               <h2 className="text-lg sm:text-xl font-bold tracking-tight text-white uppercase font-sans">
                 ห้องพักสไตล์ลอฟท์สุดพิเศษ
@@ -886,7 +1045,7 @@ export default function App() {
             </div>
 
             {/* Renders dynamic catalog directly from database */}
-            <div className="space-y-5">
+            <div className="space-y-6">
               {(() => {
                 const activeRooms = rooms.filter((r: any) => r.active !== false);
                 if (activeRooms.length === 0) {
@@ -901,18 +1060,31 @@ export default function App() {
                   const isExpanded = expandedRoomIdx === idx;
 
                   return (
-                    <div 
+                    <motion.div 
                       key={room.id}
-                      className="p-4 bg-[#111111] border border-neutral-900 rounded-lg shadow-md group hover:border-neutral-800 transition-all duration-300"
+                      initial={{ opacity: 0, y: 30 }}
+                      whileInView={{ opacity: 1, y: 0 }}
+                      viewport={{ once: true, margin: "-50px" }}
+                      transition={{ duration: 0.6, delay: idx * 0.15 }}
+                      className="p-5 bg-[#111111]/80 backdrop-blur-sm border border-neutral-900/80 rounded-xl shadow-[0_4px_20px_rgba(0,0,0,0.2)] group hover:border-brick/40 hover:-translate-y-1 hover:shadow-[0_8px_30px_rgba(217,90,6,0.15)] transition-all duration-300 relative overflow-hidden"
                     >
+                      {/* Subtle hover gradient glow inside card */}
+                      <div className="absolute inset-0 bg-gradient-to-br from-brick/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500 pointer-events-none"></div>
+
                       {/* Thumbnail representation */}
-                      <div className="relative h-44 sm:h-48 w-full overflow-hidden rounded mb-3 bg-neutral-950 flex items-center justify-center">
+                      <div className="relative h-48 sm:h-56 w-full overflow-hidden rounded-lg mb-4 bg-neutral-950 flex items-center justify-center border border-neutral-800">
                         {roomImg ? (
                           <img 
                             src={roomImg} 
                             alt={room.name} 
-                            className="h-full w-full object-cover group-hover:scale-105 transition-all duration-500 brightness-95" 
+                            className="absolute inset-0 h-full w-full object-cover group-hover:scale-105 transition-transform duration-700 ease-out brightness-90 group-hover:brightness-100" 
                             referrerPolicy="no-referrer"
+                            onError={(e) => {
+                              const target = e.currentTarget;
+                              if (!target.src.includes("bedroom_superior_m5")) {
+                                target.src = "/images/bedroom_superior_m5_1782203272229.jpg";
+                              }
+                            }}
                           />
                         ) : (
                           <div className="absolute inset-0 bg-neutral-850 flex flex-col items-center justify-center border border-neutral-800">
@@ -920,10 +1092,13 @@ export default function App() {
                             <span className="text-[10px] font-mono text-neutral-500 uppercase tracking-widest">// NO ROOM IMAGE (ยังไม่มีภาพห้องพัก)</span>
                           </div>
                         )}
+                        {/* Gradient Vignette over image */}
+                        <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-transparent pointer-events-none"></div>
+
                         {/* Price Tag badge */}
-                        <div className="absolute bottom-3 right-3 bg-neutral-950/90 border border-neutral-850 px-3 py-1 rounded text-right backdrop-blur-sm">
+                        <div className="absolute bottom-3 right-3 bg-[#0a0a0a]/90 border border-neutral-800/80 px-3 py-1.5 rounded-md text-right backdrop-blur-md shadow-lg transform group-hover:scale-105 transition-transform duration-300">
                           <span className="block text-[8px] font-mono text-brick uppercase leading-tight">STARTING_RATE</span>
-                          <span className="text-amber-500 font-mono font-bold text-sm leading-tight">
+                          <span className="text-amber-500 font-mono font-bold text-sm sm:text-base leading-tight">
                             ฿{room.price.toLocaleString()}
                           </span>
                           <span className="text-[9px] text-neutral-400 font-light block -mt-1">/ คืน (night)</span>
@@ -937,22 +1112,23 @@ export default function App() {
                               e.stopPropagation();
                               setSelected360Room(room);
                             }}
-                            className="absolute top-3 right-3 bg-brick hover:bg-brick-dark px-2.5 py-1 rounded text-[9px] font-mono text-white border border-brick-light/35 flex items-center space-x-1 shadow-lg backdrop-blur-xs transition-all duration-205 hover:scale-105"
+                            className="absolute top-3 right-3 bg-brick hover:bg-brick-dark px-2.5 py-1.5 rounded-md text-[9px] font-mono text-white border border-brick-light/35 flex items-center space-x-1.5 shadow-lg backdrop-blur-md transition-all duration-300 hover:scale-105 overflow-hidden group/360"
                             style={{ backgroundImage: "linear-gradient(to right, #d95a06 0%, #b84100 100%)" }}
                           >
-                            <Compass className="h-3 w-3 animate-spin-slow" />
-                            <span className="font-sans font-bold">ชมห้องเสมือนจริง 360°</span>
+                            <div className="absolute inset-0 bg-white/20 translate-y-full group-hover/360:translate-y-0 transition-transform duration-300 ease-out"></div>
+                            <Compass className="h-3 w-3 animate-spin-slow relative z-10" />
+                            <span className="font-sans font-bold relative z-10">ชมห้องเสมือนจริง 360°</span>
                           </button>
                         )}
                         
                         {/* Corner specification details */}
-                        <div className="absolute top-3 left-3 bg-black/75 px-2 py-0.5 rounded text-[8px] font-mono text-neutral-300 border border-neutral-800/80">
+                        <div className="absolute top-3 left-3 bg-black/60 backdrop-blur-md px-2.5 py-1 rounded-md text-[9px] font-mono text-neutral-300 border border-neutral-800/80">
                           {room.id.toUpperCase()}
                         </div>
                       </div>
 
                       {/* Room content */}
-                      <div className="space-y-1">
+                      <div className="space-y-2 relative z-10">
                         <div className="flex justify-between items-start gap-2">
                           <h3 className="font-mono text-xs text-neutral-300 font-bold uppercase tracking-wider">
                             {room.name}
@@ -1019,12 +1195,12 @@ export default function App() {
                         </button>
                       </div>
 
-                    </div>
+                    </motion.div>
                   );
                 });
               })()}
             </div>
-          </div>
+          </motion.div>
 
           {/* INTERACTIVE LIFESTYLE GALLERY (คลังภาพความสวยเด่นสไตล์ลอฟท์) */}
           {(() => {
@@ -1046,7 +1222,15 @@ export default function App() {
             const hasMoreGallery = filteredGalleryItems.length > initialLimit;
 
             return (
-              <div id="gallery" ref={gallerySectionRef} className="p-6 sm:p-8 lg:p-6 xl:p-8 border-b border-neutral-900 space-y-5">
+              <motion.div 
+                id="gallery" 
+                ref={gallerySectionRef} 
+                initial={{ opacity: 0, y: 30 }}
+                whileInView={{ opacity: 1, y: 0 }}
+                viewport={{ once: true, margin: "-50px" }}
+                transition={{ duration: 0.6 }}
+                className="p-6 sm:p-8 lg:p-6 xl:p-8 border-b border-neutral-900 space-y-5"
+              >
                 <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 border-l-2 border-brick pl-3">
                   <div>
                     <h2 className="text-lg sm:text-xl font-bold tracking-tight text-white uppercase font-sans">
@@ -1097,13 +1281,17 @@ export default function App() {
                 ) : (
                   <div className="grid grid-cols-2 gap-3.5 transition-all duration-500">
                     {displayedGalleryItems.map((item, idx) => (
-                      <div 
+                      <motion.div 
                         key={idx}
+                        initial={{ opacity: 0, scale: 0.95 }}
+                        whileInView={{ opacity: 1, scale: 1 }}
+                        viewport={{ once: true, margin: "-20px" }}
+                        transition={{ duration: 0.5, delay: idx * 0.05 }}
                         onClick={() => {
                           setLightboxItems(filteredGalleryItems);
                           setLightboxIndex(idx);
                         }}
-                        className="relative group h-28 sm:h-32 rounded overflow-hidden border border-neutral-900 cursor-pointer bg-neutral-950 hover:border-brick/50 transition-all duration-350 shadow-md hover:shadow-lg flex items-center justify-center"
+                        className="relative group h-32 sm:h-40 rounded-lg overflow-hidden border border-neutral-900 cursor-pointer bg-neutral-950 hover:border-brick/50 hover:shadow-[0_4px_15px_rgba(217,90,6,0.15)] hover:-translate-y-0.5 transition-all duration-300 flex items-center justify-center"
                       >
                         {item.resolvedUrl ? (
                           <img src={item.resolvedUrl} referrerPolicy="no-referrer" className="w-full h-full object-cover brightness-90 group-hover:scale-105 duration-500" onError={(e) => { e.currentTarget.style.opacity = '0'; }} />
@@ -1113,20 +1301,25 @@ export default function App() {
                             <span className="text-[9px] font-mono text-neutral-500 tracking-wider">NO IMAGE</span>
                           </div>
                         )}
-                        <div className="absolute inset-0 bg-gradient-to-t from-black/85 via-black/10 to-transparent flex flex-col justify-end p-2.5 z-10">
-                          <span className="text-[7.5px] font-mono text-brick font-bold tracking-wider">{item.cat?.toUpperCase() || "ทั่วไป"}</span>
-                          <span className="text-[10px] text-white font-medium font-sans leading-tight block truncate mt-0.5 group-hover:text-brick-light duration-200">
-                            {item.title}
+                        <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/20 to-transparent flex flex-col justify-end p-3 z-10 translate-y-2 group-hover:translate-y-0 opacity-80 group-hover:opacity-100 transition-all duration-300">
+                          <span className="text-[8px] font-mono text-brick font-bold tracking-wider">{item.cat?.toUpperCase() || "ทั่วไป"}</span>
+                          <span className="text-[11px] text-white font-medium font-sans leading-tight block truncate mt-0.5 group-hover:text-brick-light duration-200">
+                            {item.title || "บรรยากาศที่พัก"}
                           </span>
                         </div>
-                      </div>
+                      </motion.div>
                     ))}
                   </div>
                 )}
 
                 {/* Load More Button */}
                 {hasMoreGallery && (
-                  <div className="flex justify-center pt-2">
+                  <motion.div 
+                    initial={{ opacity: 0 }}
+                    whileInView={{ opacity: 1 }}
+                    viewport={{ once: true }}
+                    className="flex justify-center pt-4"
+                  >
                     <button
                       type="button"
                       onClick={() => setShowAllGallery(!showAllGallery)}
@@ -1135,14 +1328,22 @@ export default function App() {
                       <span>{showAllGallery ? "แสดงย่อลง" : `ดูทั้งหมดอีก (+${filteredGalleryItems.length - initialLimit} รูป)`}</span>
                       <ChevronDown className={`h-3 w-3 text-neutral-500 transition-transform duration-300 ${showAllGallery ? "rotate-180 text-brick" : ""}`} />
                     </button>
-                  </div>
+                  </motion.div>
                 )}
-              </div>
+              </motion.div>
             );
           })()}
 
           {/* SECTION 2: AMENITIES THAT FIT */}
-          <div id="amenities" ref={amenitiesRef} className="p-6 sm:p-8 lg:p-6 xl:p-8 border-b border-neutral-900 space-y-6">
+          <motion.div 
+            id="amenities" 
+            ref={amenitiesRef} 
+            initial={{ opacity: 0, y: 30 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ once: true, margin: "-50px" }}
+            transition={{ duration: 0.6 }}
+            className="p-6 sm:p-8 lg:p-6 xl:p-8 border-b border-neutral-900 space-y-6"
+          >
             <div className="border-l-2 border-brick pl-3">
               <h2 className="text-lg sm:text-xl font-bold tracking-tight text-white uppercase font-sans">
                 สิ่งอำนวยความสะดวกที่ลงตัว
@@ -1174,7 +1375,14 @@ export default function App() {
                   <span className="text-[10px] font-mono text-neutral-400 uppercase tracking-widest block">// แคมเปญโปรโมชั่นและข้อเสนอพิเศษล่าสุด</span>
                 </div>
                 {settings.promotions.filter((p: any) => p.active !== false).map((p: any, pIdx: number) => (
-                  <div key={p.id || pIdx} className="p-4 bg-gradient-to-r from-brick/15 to-transparent border border-brick/20 rounded-lg flex items-start justify-between relative overflow-hidden group hover:border-brick/40 duration-300">
+                  <motion.div 
+                    key={p.id || pIdx} 
+                    initial={{ opacity: 0, x: -20 }}
+                    whileInView={{ opacity: 1, x: 0 }}
+                    viewport={{ once: true }}
+                    transition={{ duration: 0.4, delay: pIdx * 0.1 }}
+                    className="p-4 bg-gradient-to-r from-brick/15 to-transparent border border-brick/20 rounded-lg flex items-start justify-between relative overflow-hidden group hover:border-brick/40 duration-300"
+                  >
                     <div className="space-y-1.5 pr-2">
                       <div className="flex items-center space-x-2">
                         <span className="text-[9px] font-mono bg-brick/10 border border-brick/40 text-brick-light px-2 py-0.5 rounded uppercase font-bold tracking-wider">
@@ -1190,7 +1398,7 @@ export default function App() {
                       <p className="text-[11px] text-neutral-400 font-light leading-relaxed whitespace-pre-line">{p.desc}</p>
                     </div>
                     <Compass className="h-6 w-6 text-brick/40 shrink-0 group-hover:text-brick duration-300 self-center" />
-                  </div>
+                  </motion.div>
                 ))}
               </div>
             ) : (
@@ -1203,10 +1411,10 @@ export default function App() {
                 <Compass className="h-8 w-8 text-brick-light shrink-0 opacity-70" />
               </div>
             )}
-          </div>
+          </motion.div>
 
           {/* IMPACT MUANG THONG THANI EVENT CALENDAR (ปฏิทินตารางงาน อิมแพ็ค เมืองทองธานี) */}
-          <div className="p-6 sm:p-8 lg:p-6 xl:p-8 border-b border-neutral-900 space-y-6 bg-gradient-to-b from-[#0a0a0a] to-[#0d0d0d]">
+          <div id="impact-calendar-section" className="p-6 sm:p-8 lg:p-6 xl:p-8 border-b border-neutral-900 space-y-6 bg-gradient-to-b from-[#0a0a0a] to-[#0d0d0d]">
             <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-l-2 border-brick pl-3">
               <div>
                 <h2 className="text-lg sm:text-xl font-bold tracking-tight text-white uppercase font-sans flex items-center gap-2">
@@ -1223,11 +1431,11 @@ export default function App() {
             </div>
 
             <p className="text-xs text-neutral-400 font-sans font-light leading-relaxed">
-              เดอะ เอ็มไฟว์ เรสซิเดนซ์ ตั้งอยู่ใกล้ศูนย์แสดงสินค้าและการประชุม **IMPACT เมืองทองธานี** พักที่นี่เดินทางสะดวก รวดเร็ว เลี่ยงปัญหารถติดในเมืองได้ยอดเยี่ยม เช็คกิจกรรมและคอนเสิร์ตล่าสุดด้านล่างเพื่อวางแผนจองห้องพักล่วงหน้า:
+              เดอะ เอ็มไฟว์ เรสซิเดนซ์ ตั้งอยู่ใกล้ศูนย์แสดงสินค้าและการประชุม <strong>IMPACT เมืองทองธานี</strong> พักที่นี่เดินทางสะดวก รวดเร็ว เลี่ยงปัญหารถติดในเมืองได้ยอดเยี่ยม เช็คกิจกรรมและคอนเสิร์ตล่าสุดด้านล่างเพื่อวางแผนจองห้องพักล่วงหน้า:
             </p>
 
             {/* Filter and Search Bar */}
-            <div className="space-y-3">
+            <div className="space-y-3.5">
               <div className="relative">
                 <LucideIcons.Search className="absolute left-3 top-2.5 h-3.5 w-3.5 text-neutral-500" />
                 <input
@@ -1247,20 +1455,123 @@ export default function App() {
                 )}
               </div>
 
+              {/* Time Period Filter Tabs */}
+              {(() => {
+                const now = new Date();
+                const rawEvents = liveImpactEvents.length > 0 ? liveImpactEvents : (settings.impactEvents || []);
+                const activeEvents = rawEvents.filter((e: any) => e.active !== false);
+                const allUpcoming = getUpcomingEvents(activeEvents, now);
+                const thisWeekCount = allUpcoming.filter((e: any) => isEventInCurrentWeek(e.date, now)).length;
+                const nextWeekCount = allUpcoming.filter((e: any) => isEventInNextWeek(e.date, now)).length;
+                const pastCount = getPastEvents(activeEvents, now).length;
+
+                return (
+                  <div className="flex flex-wrap items-center justify-between gap-2 pt-1 border-t border-neutral-900/60">
+                    <div className="flex flex-wrap gap-1.5 overflow-x-auto scrollbar-none">
+                      <button
+                        type="button"
+                        onClick={() => setImpactPeriodFilter("upcoming")}
+                        className={`px-3 py-1.5 rounded text-[11px] font-mono font-semibold transition-all cursor-pointer flex items-center gap-1.5 ${
+                          impactPeriodFilter === "upcoming"
+                            ? "bg-brick text-white shadow-sm ring-1 ring-brick-light"
+                            : "bg-neutral-950 hover:bg-neutral-900 text-neutral-400 border border-neutral-900"
+                        }`}
+                      >
+                        <span>🔥 งานที่กำลังจะมาถึง</span>
+                        <span className="text-[9.5px] px-1.5 py-0.2 rounded bg-black/40 text-neutral-200">
+                          {allUpcoming.length}
+                        </span>
+                      </button>
+                      
+                      <button
+                        type="button"
+                        onClick={() => setImpactPeriodFilter("this_week")}
+                        className={`px-3 py-1.5 rounded text-[11px] font-mono font-semibold transition-all cursor-pointer flex items-center gap-1.5 ${
+                          impactPeriodFilter === "this_week"
+                            ? "bg-amber-600 text-white shadow-sm ring-1 ring-amber-400"
+                            : "bg-neutral-950 hover:bg-neutral-900 text-neutral-400 border border-neutral-900"
+                        }`}
+                      >
+                        <span>⚡ สัปดาห์นี้</span>
+                        <span className="text-[9.5px] px-1.5 py-0.2 rounded bg-black/40 text-neutral-200">
+                          {thisWeekCount}
+                        </span>
+                      </button>
+
+                      <button
+                        type="button"
+                        onClick={() => setImpactPeriodFilter("next_week")}
+                        className={`px-3 py-1.5 rounded text-[11px] font-mono font-semibold transition-all cursor-pointer flex items-center gap-1.5 ${
+                          impactPeriodFilter === "next_week"
+                            ? "bg-cyan-600 text-white shadow-sm ring-1 ring-cyan-400"
+                            : "bg-neutral-950 hover:bg-neutral-900 text-neutral-400 border border-neutral-900"
+                        }`}
+                      >
+                        <span>📅 สัปดาห์หน้า</span>
+                        <span className="text-[9.5px] px-1.5 py-0.2 rounded bg-black/40 text-neutral-200">
+                          {nextWeekCount}
+                        </span>
+                      </button>
+
+                      {pastCount > 0 && (
+                        <button
+                          type="button"
+                          onClick={() => setImpactPeriodFilter("past")}
+                          className={`px-2.5 py-1.5 rounded text-[10.5px] font-mono transition-all cursor-pointer flex items-center gap-1 ${
+                            impactPeriodFilter === "past"
+                              ? "bg-neutral-800 text-white shadow-sm ring-1 ring-neutral-600"
+                              : "bg-neutral-950 hover:bg-neutral-900 text-neutral-500 border border-neutral-900"
+                          }`}
+                        >
+                          <span>⏳ ประวัติงานที่ผ่านมา</span>
+                          <span className="text-[9px] px-1.5 py-0.2 rounded bg-black/40 text-neutral-400">
+                            {pastCount}
+                          </span>
+                        </button>
+                      )}
+                    </div>
+
+                    {/* Layout switcher */}
+                    <div className="flex items-center bg-neutral-950 p-0.5 rounded-lg border border-neutral-900 shrink-0">
+                      <button
+                        type="button"
+                        onClick={() => setImpactViewLayout("weekly")}
+                        className={`px-2.5 py-1 rounded text-[10px] font-mono transition-all cursor-pointer ${
+                          impactViewLayout === "weekly" ? "bg-neutral-850 text-white font-bold" : "text-neutral-500 hover:text-white"
+                        }`}
+                        title="จัดกลุ่มตามสัปดาห์นั้นๆ"
+                      >
+                        📅 ตารางรายสัปดาห์
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => setImpactViewLayout("list")}
+                        className={`px-2.5 py-1 rounded text-[10px] font-mono transition-all cursor-pointer ${
+                          impactViewLayout === "list" ? "bg-neutral-850 text-white font-bold" : "text-neutral-500 hover:text-white"
+                        }`}
+                        title="รายการทั้งหมด"
+                      >
+                        📋 รายการทั้งหมด
+                      </button>
+                    </div>
+                  </div>
+                );
+              })()}
+
               {/* Category pills */}
               <div className="flex flex-wrap gap-1.5 overflow-x-auto scrollbar-none pb-1">
                 {["ทั้งหมด", "Concert", "Exhibition", "Other"].map((cat) => {
-                  const label = cat === "ทั้งหมด" ? "ทั้งหมด" : cat === "Concert" ? "🎵 คอนเสิร์ต" : cat === "Exhibition" ? "🏢 นิทรรศการ/เอ็กซ์โป" : "✨ กิจกรรมอื่นๆ";
+                  const label = cat === "ทั้งหมด" ? "ทุกหมวดหมู่" : cat === "Concert" ? "🎵 คอนเสิร์ต" : cat === "Exhibition" ? "🏢 นิทรรศการ/เอ็กซ์โป" : "✨ กิจกรรมอื่นๆ";
                   const isActive = impactFilterCategory === cat;
                   return (
                     <button
                       key={cat}
                       type="button"
                       onClick={() => setImpactFilterCategory(cat)}
-                      className={`px-3 py-1.5 rounded text-[10px] sm:text-xs font-medium transition-all duration-200 whitespace-nowrap cursor-pointer ${
+                      className={`px-3 py-1 rounded text-[10px] sm:text-xs font-medium transition-all duration-200 whitespace-nowrap cursor-pointer ${
                         isActive
-                          ? "bg-brick text-white font-semibold"
-                          : "bg-neutral-950 hover:bg-neutral-900 text-neutral-400 border border-neutral-900"
+                          ? "bg-neutral-800 text-white font-semibold border border-neutral-700"
+                          : "bg-neutral-950 hover:bg-neutral-900 text-neutral-450 border border-neutral-900"
                       }`}
                     >
                       {label}
@@ -1272,11 +1583,40 @@ export default function App() {
 
             {/* Event List Rendering */}
             {(() => {
-              const rawEvents = settings.impactEvents && settings.impactEvents.length > 0 ? settings.impactEvents : [];
+              if (isImpactLoading && liveImpactEvents.length === 0) {
+                return (
+                  <div className="p-8 text-center bg-neutral-950 border border-neutral-900 rounded-lg space-y-2">
+                    <div className="h-8 w-8 mx-auto border-2 border-brick border-t-transparent rounded-full animate-spin"></div>
+                    <p className="text-xs text-neutral-450 font-medium">กำลังโหลดตารางกิจกรรมล่าสุด...</p>
+                  </div>
+                );
+              }
+
+              const now = new Date();
+              const rawEvents = liveImpactEvents.length > 0 ? liveImpactEvents : (settings.impactEvents || []);
               const activeEvents = rawEvents.filter((e: any) => e.active !== false);
               
-              const filtered = activeEvents.filter((e: any) => {
-                const matchesSearch = String(e.title).toLowerCase().includes(impactSearchQuery.toLowerCase()) || 
+              const allUpcoming = getUpcomingEvents(activeEvents, now);
+              const thisWeekEvents = allUpcoming.filter((e: any) => isEventInCurrentWeek(e.date, now));
+              const nextWeekEvents = allUpcoming.filter((e: any) => isEventInNextWeek(e.date, now));
+              const allPast = getPastEvents(activeEvents, now);
+
+              // 1. Choose base set according to period filter
+              let baseList: any[] = [];
+              if (impactPeriodFilter === "this_week") {
+                baseList = thisWeekEvents;
+              } else if (impactPeriodFilter === "next_week") {
+                baseList = nextWeekEvents;
+              } else if (impactPeriodFilter === "past") {
+                baseList = allPast;
+              } else {
+                // "upcoming" (DEFAULT: NEVER show past events, only upcoming events!)
+                baseList = allUpcoming;
+              }
+
+              // 2. Search & Category filtering
+              const filtered = baseList.filter((e: any) => {
+                const matchesSearch = String(e.title || "").toLowerCase().includes(impactSearchQuery.toLowerCase()) || 
                                       String(e.description || "").toLowerCase().includes(impactSearchQuery.toLowerCase()) ||
                                       String(e.venue || "").toLowerCase().includes(impactSearchQuery.toLowerCase());
                 const matchesCat = impactFilterCategory === "ทั้งหมด" || e.category === impactFilterCategory;
@@ -1288,85 +1628,255 @@ export default function App() {
                   <div className="p-8 text-center bg-neutral-950 border border-neutral-900 rounded-lg space-y-2">
                     <CalendarDays className="h-8 w-8 text-neutral-600 mx-auto" />
                     <p className="text-xs text-neutral-450 font-medium">ไม่พบรายการกิจกรรมตามตัวกรองในขณะนี้</p>
-                    <p className="text-[10px] text-neutral-600 font-sans">คุณสามารถเพิ่มกิจกรรมที่สนใจหรือซิงค์ผ่านระบบหลังบ้านได้ตลอดเวลา</p>
+                    <p className="text-[10px] text-neutral-600 font-sans">
+                      {impactPeriodFilter === "this_week" ? "ไม่มีกิจกรรมที่จัดขึ้นในสัปดาห์นี้ ลองดูงานในสัปดาห์หน้าหรือกิจกรรมที่กำลังจะมาถึง" : "คุณสามารถเพิ่มกิจกรรมที่สนใจหรือซิงค์ผ่านระบบหลังบ้านได้ตลอดเวลา"}
+                    </p>
                   </div>
                 );
               }
 
-              return (
-                <div className="space-y-4 max-h-[500px] overflow-y-auto pr-1 scrollbar-thin scrollbar-thumb-neutral-800">
-                  {filtered.map((evt: any) => (
-                    <div key={evt.id} className="p-4 bg-[#111111] border border-neutral-900 rounded-lg hover:border-brick/30 duration-300 flex flex-col sm:flex-row gap-4 relative overflow-hidden group">
-                      {/* Left thumbnail image */}
-                      <div className="w-full sm:w-28 h-24 rounded overflow-hidden shrink-0 bg-neutral-950 border border-neutral-900 relative flex items-center justify-center">
-                        {evt.imageUrl ? (
-                          <img 
-                            src={evt.imageUrl} 
-                            alt={evt.title}
-                            referrerPolicy="no-referrer"
-                            className="w-full h-full object-cover group-hover:scale-105 duration-500"
-                          />
-                        ) : (
-                          <div className="absolute inset-0 bg-neutral-850 flex flex-col items-center justify-center border border-neutral-800">
-                            <CalendarDays className="h-6 w-6 text-neutral-650 mb-1" />
-                            <span className="text-[9px] font-mono text-neutral-500">NO IMAGE</span>
-                          </div>
-                        )}
-                        <span className={`absolute top-1.5 left-1.5 px-1.5 py-0.5 rounded text-[8px] font-mono font-bold tracking-wider uppercase text-white z-10 ${
-                          evt.category === "Concert" ? "bg-purple-600" : evt.category === "Exhibition" ? "bg-blue-600" : "bg-neutral-600"
+              // 3. Render grouped by week or flat list
+              if (impactViewLayout === "weekly" && impactPeriodFilter !== "past") {
+                const weekGroups = groupUpcomingEventsByWeek(filtered, now);
+
+                return (
+                  <div className="space-y-6 max-h-[640px] overflow-y-auto pr-2 scrollbar-thin scrollbar-thumb-neutral-800 pb-10">
+                    {weekGroups.map((group, gIdx) => (
+                      <div key={group.weekKey} className="space-y-3">
+                        {/* Weekly Schedule Header */}
+                        <div className={`flex items-center justify-between py-2 px-3 rounded-lg border sticky top-0 backdrop-blur-md z-20 shadow-sm ${
+                          group.isCurrentWeek 
+                            ? "bg-amber-950/40 border-amber-600/40 text-amber-300"
+                            : group.isNextWeek 
+                            ? "bg-cyan-950/40 border-cyan-600/40 text-cyan-300"
+                            : "bg-neutral-900/90 border-neutral-800 text-white"
                         }`}>
-                          {evt.category}
+                          <div className="flex items-center space-x-2">
+                            <CalendarDays className={`h-4 w-4 ${group.isCurrentWeek ? "text-amber-400" : group.isNextWeek ? "text-cyan-400" : "text-brick"}`} />
+                            <h3 className="text-xs sm:text-sm font-bold tracking-wide">
+                              {group.weekLabel}
+                            </h3>
+                          </div>
+                          <span className="text-[10px] font-mono px-2 py-0.5 rounded bg-black/40 border border-white/5 font-semibold">
+                            {group.events.length} กิจกรรม
+                          </span>
+                        </div>
+
+                        {/* Events in this week */}
+                        <div className="space-y-3 pl-1 sm:pl-2">
+                          {group.events.map((evt: any, eIdx: number) => {
+                            const timing = getEventTimingBadge(evt.date, now);
+                            return (
+                              <motion.div 
+                                key={evt.id || `${gIdx}-${eIdx}`} 
+                                initial={{ opacity: 0, y: 10 }}
+                                whileInView={{ opacity: 1, y: 0 }}
+                                viewport={{ once: true }}
+                                transition={{ duration: 0.3, delay: eIdx * 0.04 }}
+                                className="p-4 bg-[#111111] border border-neutral-900 rounded-lg hover:border-brick/40 hover:shadow-[0_4px_15px_rgba(217,90,6,0.1)] hover:-translate-y-0.5 duration-300 flex flex-col sm:flex-row gap-4 relative overflow-hidden group"
+                              >
+                                {/* Left thumbnail image */}
+                                <div className="w-full sm:w-28 h-24 rounded overflow-hidden shrink-0 bg-neutral-950 border border-neutral-900 relative flex items-center justify-center">
+                                  {evt.imageUrl ? (
+                                    <img 
+                                      src={evt.imageUrl} 
+                                      alt={evt.title}
+                                      referrerPolicy="no-referrer"
+                                      className="w-full h-full object-cover group-hover:scale-105 duration-500"
+                                    />
+                                  ) : (
+                                    <div className="absolute inset-0 bg-neutral-850 flex flex-col items-center justify-center border border-neutral-800">
+                                      <CalendarDays className="h-6 w-6 text-neutral-650 mb-1" />
+                                      <span className="text-[9px] font-mono text-neutral-500">NO IMAGE</span>
+                                    </div>
+                                  )}
+                                  <span className={`absolute top-1.5 left-1.5 px-1.5 py-0.5 rounded text-[8px] font-mono font-bold tracking-wider uppercase text-white z-10 ${
+                                    evt.category === "Concert" ? "bg-purple-600" : evt.category === "Exhibition" ? "bg-blue-600" : "bg-neutral-600"
+                                  }`}>
+                                    {evt.category}
+                                  </span>
+                                </div>
+
+                                {/* Right Details */}
+                                <div className="flex-1 space-y-2 flex flex-col justify-between">
+                                  <div className="space-y-1">
+                                    <div className="flex flex-wrap items-center gap-2">
+                                      <h4 className="text-sm font-bold text-white group-hover:text-brick-light duration-300 leading-tight">
+                                        {evt.title}
+                                      </h4>
+                                      <span className={`text-[9px] font-mono px-2 py-0.5 rounded font-semibold ${timing.color}`}>
+                                        {timing.text}
+                                      </span>
+                                    </div>
+                                    
+                                    {/* Date and Venue tags */}
+                                    <div className="flex flex-wrap items-center gap-x-3 gap-y-1 text-[10.5px] text-neutral-400 font-mono">
+                                      <span className="flex items-center gap-1 text-amber-400 font-medium">
+                                        <CalendarDays className="h-3 w-3 shrink-0" />
+                                        {evt.date}
+                                      </span>
+                                      {evt.time && (
+                                        <span className="flex items-center gap-1">
+                                          <Clock className="h-3 w-3 shrink-0" />
+                                          {evt.time}
+                                        </span>
+                                      )}
+                                      <span className="flex items-center gap-1 text-neutral-450 truncate max-w-xs">
+                                        <MapPin className="h-3 w-3 shrink-0 text-brick/70" />
+                                        {evt.venue}
+                                      </span>
+                                    </div>
+
+                                    <p className="text-[11px] text-neutral-450 leading-relaxed line-clamp-2 pt-0.5 font-light">
+                                      {evt.description || "กิจกรรมจัดขึ้นที่อิมแพ็ค เมืองทองธานี แนะนำจองห้องพัก The M5 Residence เพื่ออำนวยความสะดวกในการเดินทาง"}
+                                    </p>
+                                  </div>
+
+                                  {/* Booking Prompt */}
+                                  <div className="pt-2 flex items-center justify-between border-t border-neutral-900/40">
+                                    <span className="text-[10px] text-neutral-500 font-mono">
+                                      #พักใกล้บิดรถติดเลี่ยงปัญหารถติด
+                                    </span>
+                                    <button
+                                      type="button"
+                                      onClick={() => {
+                                        setSelectedRoomId("deluxe");
+                                        setIsBookingOpen(true);
+                                      }}
+                                      className="px-3 py-1 bg-brick/10 hover:bg-brick border border-brick/30 hover:border-transparent text-brick-light hover:text-white rounded text-[10.5px] font-medium transition-all duration-300 flex items-center gap-1 cursor-pointer"
+                                    >
+                                      <span>จองเข้าพักช่วงนี้</span>
+                                      <ArrowRight className="h-3 w-3" />
+                                    </button>
+                                  </div>
+                                </div>
+                              </motion.div>
+                            );
+                          })}
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                );
+              }
+
+              // Otherwise render flat list grouped by month
+              const grouped: Record<string, any[]> = {};
+              filtered.forEach((evt: any) => {
+                let monthStr = "กิจกรรมอื่นๆ";
+                if (evt.date) {
+                  const match = evt.date.match(/([ก-๙]+)\s+(\d{4})/);
+                  if (match) {
+                    monthStr = `${match[1]} ${match[2]}`;
+                  }
+                }
+                if (!grouped[monthStr]) {
+                  grouped[monthStr] = [];
+                }
+                grouped[monthStr].push(evt);
+              });
+
+              return (
+                <div className="space-y-6 max-h-[600px] overflow-y-auto pr-2 scrollbar-thin scrollbar-thumb-neutral-800 pb-10">
+                  {Object.keys(grouped).map(month => (
+                    <div key={month} className="space-y-4">
+                      <div className="flex items-center space-x-3 mb-2 sticky top-0 bg-neutral-900/90 backdrop-blur-sm z-20 py-2 rounded-lg px-3 border-l-4 border-brick shadow-sm">
+                        <CalendarDays className="h-4 w-4 text-brick" />
+                        <h3 className="text-sm font-bold text-white tracking-wide">{month}</h3>
+                        <span className="text-[10px] font-mono text-neutral-400 bg-black/40 px-2 py-0.5 rounded">
+                          {grouped[month].length} รายการ
                         </span>
                       </div>
+                      <div className="space-y-4">
+                        {grouped[month].map((evt: any, eIdx: number) => {
+                          const timing = getEventTimingBadge(evt.date, now);
+                          return (
+                            <motion.div 
+                              key={evt.id || eIdx} 
+                              initial={{ opacity: 0, x: -20 }}
+                              whileInView={{ opacity: 1, x: 0 }}
+                              viewport={{ once: true }}
+                              transition={{ duration: 0.4, delay: eIdx * 0.05 }}
+                              className="p-4 bg-[#111111] border border-neutral-900 rounded-lg hover:border-brick/40 hover:shadow-[0_4px_15px_rgba(217,90,6,0.1)] hover:-translate-y-0.5 duration-300 flex flex-col sm:flex-row gap-4 relative overflow-hidden group"
+                            >
+                              {/* Left thumbnail image */}
+                              <div className="w-full sm:w-28 h-24 rounded overflow-hidden shrink-0 bg-neutral-950 border border-neutral-900 relative flex items-center justify-center">
+                                {evt.imageUrl ? (
+                                  <img 
+                                    src={evt.imageUrl} 
+                                    alt={evt.title}
+                                    referrerPolicy="no-referrer"
+                                    className="w-full h-full object-cover group-hover:scale-105 duration-500"
+                                  />
+                                ) : (
+                                  <div className="absolute inset-0 bg-neutral-850 flex flex-col items-center justify-center border border-neutral-800">
+                                    <CalendarDays className="h-6 w-6 text-neutral-650 mb-1" />
+                                    <span className="text-[9px] font-mono text-neutral-500">NO IMAGE</span>
+                                  </div>
+                                )}
+                                <span className={`absolute top-1.5 left-1.5 px-1.5 py-0.5 rounded text-[8px] font-mono font-bold tracking-wider uppercase text-white z-10 ${
+                                  evt.category === "Concert" ? "bg-purple-600" : evt.category === "Exhibition" ? "bg-blue-600" : "bg-neutral-600"
+                                }`}>
+                                  {evt.category}
+                                </span>
+                              </div>
 
-                      {/* Right Details */}
-                      <div className="flex-1 space-y-2 flex flex-col justify-between">
-                        <div className="space-y-1">
-                          <h4 className="text-sm font-bold text-white group-hover:text-brick-light duration-300 leading-tight">
-                            {evt.title}
-                          </h4>
-                          
-                          {/* Date and Venue tags */}
-                          <div className="flex flex-wrap items-center gap-x-3 gap-y-1 text-[10.5px] text-neutral-400 font-mono">
-                            <span className="flex items-center gap-1 text-amber-400 font-medium">
-                              <CalendarDays className="h-3 w-3 shrink-0" />
-                              {evt.date}
-                            </span>
-                            {evt.time && (
-                              <span className="flex items-center gap-1">
-                                <Clock className="h-3 w-3 shrink-0" />
-                                {evt.time}
-                              </span>
-                            )}
-                            <span className="flex items-center gap-1 text-neutral-450 truncate max-w-xs">
-                              <MapPin className="h-3 w-3 shrink-0 text-brick/70" />
-                              {evt.venue}
-                            </span>
-                          </div>
+                              {/* Right Details */}
+                              <div className="flex-1 space-y-2 flex flex-col justify-between">
+                                <div className="space-y-1">
+                                  <div className="flex flex-wrap items-center gap-2">
+                                    <h4 className="text-sm font-bold text-white group-hover:text-brick-light duration-300 leading-tight">
+                                      {evt.title}
+                                    </h4>
+                                    <span className={`text-[9px] font-mono px-2 py-0.5 rounded font-semibold ${timing.color}`}>
+                                      {timing.text}
+                                    </span>
+                                  </div>
+                                  
+                                  {/* Date and Venue tags */}
+                                  <div className="flex flex-wrap items-center gap-x-3 gap-y-1 text-[10.5px] text-neutral-400 font-mono">
+                                    <span className="flex items-center gap-1 text-amber-400 font-medium">
+                                      <CalendarDays className="h-3 w-3 shrink-0" />
+                                      {evt.date}
+                                    </span>
+                                    {evt.time && (
+                                      <span className="flex items-center gap-1">
+                                        <Clock className="h-3 w-3 shrink-0" />
+                                        {evt.time}
+                                      </span>
+                                    )}
+                                    <span className="flex items-center gap-1 text-neutral-450 truncate max-w-xs">
+                                      <MapPin className="h-3 w-3 shrink-0 text-brick/70" />
+                                      {evt.venue}
+                                    </span>
+                                  </div>
 
-                          <p className="text-[11px] text-neutral-450 leading-relaxed line-clamp-2 pt-0.5 font-light">
-                            {evt.description || "กิจกรรมจัดขึ้นที่อิมแพ็ค เมืองทองธานี แนะนำจองห้องพักเพื่ออำนวยความสะดวกในการเดินทาง"}
-                          </p>
-                        </div>
+                                  <p className="text-[11px] text-neutral-450 leading-relaxed line-clamp-2 pt-0.5 font-light">
+                                    {evt.description || "กิจกรรมจัดขึ้นที่อิมแพ็ค เมืองทองธานี แนะนำจองห้องพักเพื่ออำนวยความสะดวกในการเดินทาง"}
+                                  </p>
+                                </div>
 
-                        {/* Booking Prompt */}
-                        <div className="pt-2 flex items-center justify-between border-t border-neutral-900/40">
-                          <span className="text-[10px] text-neutral-500 font-mono">
-                            #พักใกล้บิดรถติดเลี่ยงปัญหารถติด
-                          </span>
-                          <button
-                            type="button"
-                            onClick={() => {
-                              setSelectedRoomId("deluxe");
-                              setIsBookingOpen(true);
-                              // Smooth notice via temporary alert/toast helper or autofill requests if desired
-                            }}
-                            className="px-3 py-1 bg-brick/10 hover:bg-brick border border-brick/30 hover:border-transparent text-brick-light hover:text-white rounded text-[10.5px] font-medium transition-all duration-300 flex items-center gap-1 cursor-pointer"
-                          >
-                            <span>จองเข้าพักช่วงนี้</span>
-                            <ArrowRight className="h-3 w-3" />
-                          </button>
-                        </div>
+                                {/* Booking Prompt */}
+                                <div className="pt-2 flex items-center justify-between border-t border-neutral-900/40">
+                                  <span className="text-[10px] text-neutral-500 font-mono">
+                                    #พักใกล้บิดรถติดเลี่ยงปัญหารถติด
+                                  </span>
+                                  <button
+                                    type="button"
+                                    onClick={() => {
+                                      setSelectedRoomId("deluxe");
+                                      setIsBookingOpen(true);
+                                    }}
+                                    className="px-3 py-1 bg-brick/10 hover:bg-brick border border-brick/30 hover:border-transparent text-brick-light hover:text-white rounded text-[10.5px] font-medium transition-all duration-300 flex items-center gap-1 cursor-pointer"
+                                  >
+                                    <span>จองเข้าพักช่วงนี้</span>
+                                    <ArrowRight className="h-3 w-3" />
+                                  </button>
+                                </div>
+                              </div>
+                            </motion.div>
+                          );
+                        })}
                       </div>
                     </div>
                   ))}
@@ -1376,7 +1886,13 @@ export default function App() {
           </div>
 
           {/* GUEST REVIEWS & TESTIMONIALS (ความประทับใจและความคิดเห็นรับรองจริง) */}
-          <div className="p-6 sm:p-8 lg:p-6 xl:p-8 border-b border-neutral-900 space-y-5">
+          <motion.div 
+            initial={{ opacity: 0, y: 20 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ once: true, margin: "-50px" }}
+            transition={{ duration: 0.6 }}
+            className="p-6 sm:p-8 lg:p-6 xl:p-8 border-b border-neutral-900 space-y-5"
+          >
             <div className="flex justify-between items-end border-l-2 border-brick pl-3">
               <div>
                 <h2 className="text-lg sm:text-xl font-bold tracking-tight text-white uppercase font-sans">
@@ -1399,7 +1915,14 @@ export default function App() {
                   );
                 }
                 return reviewsList.map((rev, idx) => (
-                  <div key={idx} className="p-3.5 bg-[#111111] border border-neutral-900 rounded-lg space-y-3.5 text-xs">
+                  <motion.div 
+                    key={idx} 
+                    initial={{ opacity: 0, y: 20 }}
+                    whileInView={{ opacity: 1, y: 0 }}
+                    viewport={{ once: true }}
+                    transition={{ duration: 0.5, delay: idx * 0.1 }}
+                    className="p-4 bg-[#111111] border border-neutral-900 rounded-xl space-y-3.5 text-xs hover:border-brick/40 hover:-translate-y-0.5 duration-300 shadow-[0_4px_15px_rgba(0,0,0,0.2)]"
+                  >
                     <div className="flex justify-between items-start">
                       <div className="flex items-center space-x-2.5">
                         {rev.avatarUrl ? (
@@ -1434,11 +1957,11 @@ export default function App() {
                     <div className="text-[9px] text-neutral-500 font-mono flex justify-end pt-0.5 border-t border-neutral-900/40">
                       <span>รีวิวเมื่อ: {rev.date}</span>
                     </div>
-                  </div>
+                  </motion.div>
                 ));
               })()}
             </div>
-          </div>
+          </motion.div>
 
           {/* INTERACTIVE FAQs SECURED ACCORDION (คำถามที่พบบ่อย) */}
           <div className="p-6 sm:p-8 lg:p-6 xl:p-8 border-b border-neutral-900 space-y-5">
@@ -1624,6 +2147,27 @@ export default function App() {
         </div>
 
       </div>
+
+      {/* Mobile Sticky Booking Bar */}
+      <motion.div 
+        initial={{ y: 100 }}
+        animate={{ y: 0 }}
+        transition={{ delay: 1, type: "spring", stiffness: 100 }}
+        className="lg:hidden fixed bottom-0 left-0 right-0 z-40 bg-[#0a0a0a]/90 backdrop-blur-md border-t border-neutral-800 p-3 sm:p-4 flex items-center justify-between shadow-[0_-5px_30px_rgba(0,0,0,0.6)]"
+      >
+        <div className="flex flex-col">
+          <span className="text-[10px] sm:text-xs text-neutral-400 font-mono tracking-wider uppercase">Starting Rate</span>
+          <span className="text-sm sm:text-base font-bold text-amber-500">฿850 <span className="text-[10px] sm:text-xs text-neutral-500 font-normal">/ คืน</span></span>
+        </div>
+        <button 
+          onClick={handleBookClick}
+          className="px-6 py-2.5 sm:py-3 bg-brick hover:bg-brick-dark text-white rounded text-xs sm:text-sm font-sans font-bold shadow-lg shadow-brick/20 overflow-hidden relative group"
+          style={{ backgroundImage: "linear-gradient(to right, #d95a06 0%, #b84100 100%)" }}
+        >
+          <div className="absolute inset-0 bg-white/20 translate-y-full group-hover:translate-y-0 transition-transform duration-300 ease-out"></div>
+          <span className="relative z-10">จองห้องพักตอนนี้</span>
+        </button>
+      </motion.div>
 
       {/* Floating Concierge AI Support Chatbot */}
       <AIChatbot />
@@ -1858,546 +2402,26 @@ export default function App() {
       )}
 
       {/* MEMBER PORTAL MODAL */}
-      {isMemberPortalOpen && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/85 backdrop-blur-xs font-sans">
-          <div className="bg-charcoal-medium border border-neutral-850 rounded-xl max-w-xl w-full relative max-h-[90vh] overflow-y-auto shadow-2xl flex flex-col">
-            
-            {/* Header */}
-            <div className="p-5 border-b border-neutral-850 flex items-center justify-between bg-[#0e0e0e] shrink-0">
-              <div className="flex items-center space-x-2.5">
-                <Sparkles className="h-5 w-5 text-brick animate-pulse" />
-                <div className="text-left">
-                  <h3 className="text-sm font-bold text-white font-mono tracking-wider uppercase">CLUB M5 MEMBER PORTAL</h3>
-                  <span className="text-[10px] text-neutral-400 font-light block mt-0.5">พอร์ทัลดูแลสิทธิประโยชน์และตรวจสอบข้อมูลเข้าพักของคุณ</span>
-                </div>
-              </div>
-              <button
-                type="button"
-                onClick={() => setIsMemberPortalOpen(false)}
-                className="p-1 px-2.5 bg-neutral-900 hover:bg-neutral-800 text-neutral-400 hover:text-white rounded text-xs border border-neutral-800 transition-colors font-semibold cursor-pointer"
-              >
-                ปิด
-              </button>
-            </div>
+      <MemberPortalModal
+        isOpen={isMemberPortalOpen}
+        onClose={() => setIsMemberPortalOpen(false)}
+        settings={settings}
+        currentMember={currentMember}
+        bookings={bookings}
+        loginMember={loginMember}
+        registerMember={registerMember}
+        logoutMember={logoutMember}
+        updateMemberOnServer={updateMemberOnServer}
+        initialAuthMode={memberPortalMode}
+        initialTab={memberPortalTab}
+        onBookNowClick={() => handleSectionScroll("rooms")}
+      />
 
-            {currentMember ? (
-              <>
-                {/* Sub-navigation Tab Bar */}
-                <div className="flex border-b border-neutral-850 bg-[#0a0a0a] px-6 shrink-0 justify-start space-x-6">
-                  <button
-                    type="button"
-                    onClick={() => setMemberPortalTab("card")}
-                    className={`text-xs font-bold pb-3 pt-3 transition-all cursor-pointer flex items-center space-x-1.5 focus:outline-none relative ${
-                      memberPortalTab === "card" ? "text-brick" : "text-neutral-500 hover:text-neutral-300"
-                    }`}
-                  >
-                    <Sparkles className="h-3.5 w-3.5" />
-                    <span>บัตรสมาชิกและคะแนน</span>
-                    {memberPortalTab === "card" && (
-                      <div className="absolute bottom-0 left-0 right-0 h-[2px] bg-brick"></div>
-                    )}
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => setMemberPortalTab("profile")}
-                    className={`text-xs font-bold pb-3 pt-3 transition-all cursor-pointer flex items-center space-x-1.5 focus:outline-none relative ${
-                      memberPortalTab === "profile" ? "text-brick" : "text-neutral-500 hover:text-neutral-300"
-                    }`}
-                  >
-                    <User className="h-3.5 w-3.5" />
-                    <span>ข้อมูลส่วนตัว (Profile)</span>
-                    {memberPortalTab === "profile" && (
-                      <div className="absolute bottom-0 left-0 right-0 h-[2px] bg-brick"></div>
-                    )}
-                  </button>
-                </div>
-
-                {memberPortalTab === "card" ? (
-                  /* Portal Content: Card & Perks */
-                  <div className="p-6 space-y-6 overflow-y-auto">
-                    {/* Premium Metallic Membership Card */}
-                    <div className={`p-5 rounded-xl border relative overflow-hidden shadow-xl text-left ${
-                      currentMember.tier === "Elite" 
-                        ? "bg-gradient-to-br from-amber-600 via-amber-800 to-neutral-900 border-amber-500/40" 
-                        : currentMember.tier === "Gold" 
-                          ? "bg-gradient-to-br from-yellow-600 via-yellow-700 to-neutral-850 border-yellow-500/30" 
-                          : "bg-gradient-to-br from-zinc-700 via-zinc-800 to-neutral-900 border-zinc-500/30"
-                    }`}>
-                      {/* Embedded details */}
-                      <div className="absolute top-4 right-4 text-white opacity-20">
-                        <Landmark className="h-12 w-12" />
-                      </div>
-                      <div className="flex justify-between items-start">
-                        <div>
-                          <span className="text-[10px] text-white/70 uppercase tracking-widest font-mono">MEMBERSHIP CARD</span>
-                          <h4 className="text-xl font-black text-white mt-1 font-mono tracking-tight">{currentMember.name}</h4>
-                        </div>
-                        <span className="text-xs px-2.5 py-1 bg-black/40 text-white font-bold rounded-md uppercase border border-white/10 tracking-widest font-mono">
-                          {currentMember.tier} CLASS
-                        </span>
-                      </div>
-
-                      <div className="mt-8 flex justify-between items-end">
-                        <div>
-                          <span className="text-[9px] text-white/60 block font-mono">MEMBER NUMBER</span>
-                          <span className="text-xs font-mono font-bold text-white tracking-widest">M5-MEM-{currentMember.id.substring(0,6).toUpperCase()}</span>
-                        </div>
-                        <div className="text-right">
-                          <span className="text-[9px] text-white/60 block font-mono">TOTAL BALANCE</span>
-                          <span className="text-base font-bold text-white font-mono">{currentMember.points} PTS</span>
-                        </div>
-                      </div>
-                    </div>
-
-                    {/* Progress to next tier */}
-                    <div className="p-4 bg-neutral-950 border border-neutral-850 rounded-lg text-left space-y-2.5">
-                      <div className="flex justify-between text-xs">
-                        <span className="text-neutral-400 font-medium">ระดับปัจจุบัน: <strong className="text-white font-bold">{currentMember.tier}</strong></span>
-                        <span className="text-neutral-450 text-[10px]">เป้าหมายระดับถัดไป</span>
-                      </div>
-
-                      {/* Progress bar logic */}
-                      {(() => {
-                        let limit = 250;
-                        let nextTier = "Gold";
-                        if (currentMember.tier === "Gold") {
-                          limit = 1000;
-                          nextTier = "Elite";
-                        } else if (currentMember.tier === "Elite") {
-                          return (
-                            <p className="text-[11px] text-amber-400 block font-bold font-mono">👑 ยินดีด้วยครับ! คุณสะสมสิทธิประโยชน์สูงสุดอยู่ในระดับ Elite Class เรียบร้อยแล้ว!</p>
-                          );
-                        }
-                        
-                        const percent = Math.min(100, (currentMember.points / limit) * 100);
-                        return (
-                          <div className="space-y-1.5">
-                            <div className="w-full h-2 bg-neutral-900 rounded-full overflow-hidden border border-neutral-850">
-                              <div className="h-full bg-brick rounded-full transition-all" style={{ width: `${percent}%` }}></div>
-                            </div>
-                            <div className="flex justify-between text-[10px] text-neutral-400 font-mono">
-                              <span>{currentMember.points} pts / {limit} pts</span>
-                              <span>ต้องการอีก {limit - currentMember.points} pts เพื่อเป็น {nextTier} Class</span>
-                            </div>
-                          </div>
-                        );
-                      })()}
-                    </div>
-
-                    {/* Personal Active & Past Bookings List */}
-                    <div className="space-y-3 text-left">
-                      <div className="flex items-center justify-between border-b border-neutral-850 pb-2">
-                        <span className="text-xs font-bold font-mono text-brick tracking-wider">YOUR RESERVATION HISTORY ({bookings.filter(b => b.guestEmail.toLowerCase() === currentMember.email.toLowerCase()).length})</span>
-                        <span className="text-[10px] text-neutral-400 font-light">ข้อมูลเชื่อมตามอีเมล: {currentMember.email}</span>
-                      </div>
-
-                      {(() => {
-                        const myBookings = bookings.filter(b => b.guestEmail.toLowerCase() === currentMember.email.toLowerCase());
-                        if (myBookings.length === 0) {
-                          return (
-                            <div className="py-6 text-center text-neutral-500 text-xs">
-                              <CalendarDays className="h-8 w-8 mx-auto text-neutral-700 mb-2" />
-                              <span>ไม่พบประวัติการเข้าพักในระบบ สามารถเริ่มจองคืนนี้เพื่อสะสมพ้อยท์ได้ครับ!</span>
-                            </div>
-                          );
-                        }
-                        return (
-                          <div className="space-y-3.5 max-h-[250px] overflow-y-auto pr-1">
-                            {myBookings.map((b) => (
-                              <div key={b.id} className="p-3 bg-neutral-950 hover:bg-neutral-900/80 border border-neutral-850 rounded-lg flex justify-between items-center transition-colors">
-                                <div className="space-y-1 text-left">
-                                  <div className="flex items-center space-x-2">
-                                    <span className="text-xs font-bold text-white">ห้อง {b.roomType === "superior" ? "Superior Loft" : b.roomType === "studio" ? "Studio Loft" : "Deluxe Loft"}</span>
-                                    <span className={`text-[9px] px-1.5 py-0.5 rounded font-bold font-mono ${
-                                      b.status === "Pending" ? "bg-yellow-600/20 text-yellow-500 border border-yellow-600/30" :
-                                      b.status === "Paid" || b.status === "Confirmed" ? "bg-emerald-600/20 text-emerald-500 border border-emerald-600/30" :
-                                      b.status === "Cancelled" ? "bg-red-900/20 text-red-500 border border-red-900/30" :
-                                      "bg-neutral-800 text-neutral-400 border border-neutral-700"
-                                    }`}>
-                                      {b.status}
-                                    </span>
-                                  </div>
-                                  <p className="text-[11px] text-neutral-400 font-mono">
-                                    {b.checkIn} ถึง {b.checkOut}
-                                  </p>
-                                  {b.specialRequest && (
-                                    <p className="text-[10px] text-neutral-450 italic mt-0.5">💡 คำขอพิเศษ: "{b.specialRequest}"</p>
-                                  )}
-                                </div>
-                                <div className="text-right font-mono shrink-0">
-                                  <span className="text-[10px] text-neutral-450 block">ยอดจ่ายสุทธิ</span>
-                                  <span className="text-xs font-bold text-white">{(b.totalPrice || 0).toLocaleString()} THB</span>
-                                </div>
-                              </div>
-                            ))}
-                          </div>
-                        );
-                      })()}
-                    </div>
-
-                    {/* Active Tier Perks Card */}
-                    <div className="p-4 bg-neutral-900 border border-neutral-800 rounded-lg text-left space-y-2">
-                      <span className="text-[11px] font-bold text-white block">สิทธิประโยชน์พิเศษประจำคลาสของคุณ:</span>
-                      <ul className="text-xs text-neutral-300 space-y-1.5 pl-4 list-disc font-light leading-relaxed">
-                        {currentMember.tier === "Elite" && (
-                          <>
-                            <li>รับส่วนลดจองพัก 15% ทุกๆ การเข้าพัก</li>
-                            <li>ฟรีบริการ Minibar ขนมและเครื่องดื่มต้อนรับภายในห้องพัก</li>
-                            <li>สิทธิ์ Late Check-out ขยายเวลาเช็คเอาท์ออกสูงสุดได้ถึง 15:00 น.</li>
-                            <li>ฟรีรถตู้รับ-ส่งเข้า IMPACT Arena เมืองทองธานี สบายใจไม่ต้องหารถ</li>
-                          </>
-                        )}
-                        {currentMember.tier === "Gold" && (
-                          <>
-                            <li>รับส่วนลดจองพัก 10% ทุกๆ การเข้าพัก</li>
-                            <li>รับฟรี Welcome Drink ที่คราฟต์บาร์ชั้นล่าง</li>
-                            <li>สิทธิ์ Late Check-out ขยายเวลาเช็คเอาท์ออกสูงสุดได้ถึง 14:00 น.</li>
-                            <li>จองสิทธิ์ที่จอดรถส่วนตัวด้านหน้าโรงแรม</li>
-                          </>
-                        )}
-                        {currentMember.tier === "Silver" && (
-                          <>
-                            <li>รับส่วนลดจองพัก 5% ทุกๆ การเข้าพัก</li>
-                            <li>รับฟรี Welcome Drink ที่คราฟต์บาร์ชั้นล่าง</li>
-                            <li>ฟรีสปีด Wi-Fi ยกระดับความเร็วสูงสุดในโครงการ</li>
-                          </>
-                        )}
-                      </ul>
-                    </div>
-                  </div>
-                ) : (
-                  /* Portal Content: Profile & Security Details */
-                  <div className="p-6 space-y-6 overflow-y-auto text-left">
-                    <div className="flex items-center space-x-3 pb-3 border-b border-neutral-850">
-                      <div className="w-10 h-10 bg-brick/10 border border-brick/40 rounded-full flex items-center justify-center text-brick font-bold text-sm shrink-0">
-                        <User className="h-5 w-5" />
-                      </div>
-                      <div>
-                        <h4 className="text-sm font-bold text-white">แก้ไขข้อมูลส่วนตัวของคุณ (Profile Details)</h4>
-                        <p className="text-[10px] text-neutral-400">แก้ไขเพื่อการประสานงานและรับบริการเข้าพักที่สะดวกราบรื่นยิ่งขึ้น</p>
-                      </div>
-                    </div>
-
-                    {editStatusMsg && (
-                      <div className="p-3 bg-emerald-950/40 border border-emerald-500/30 text-emerald-400 rounded text-xs font-medium flex items-center space-x-2">
-                        <span className="text-sm">✔</span>
-                        <span>{editStatusMsg}</span>
-                      </div>
-                    )}
-
-                    <form
-                      onSubmit={async (e) => {
-                        e.preventDefault();
-                        if (!editName || !editPhone || !editEmail) {
-                          alert("กรุณากรอกข้อมูลสำคัญให้ครบถ้วน");
-                          return;
-                        }
-                        const success = await updateMemberOnServer(currentMember.id, {
-                          name: editName,
-                          phone: editPhone,
-                          email: editEmail,
-                          password: editPassword
-                        });
-                        if (success) {
-                          setEditStatusMsg("บันทึกการเปลี่ยนแปลงบัญชีของคุณสำเร็จแล้ว!");
-                          setTimeout(() => setEditStatusMsg(""), 4000);
-                        } else {
-                          alert("เกิดข้อผิดพลาดในการบันทึกข้อมูลส่วนตัว");
-                        }
-                      }}
-                      className="space-y-4"
-                    >
-                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                        <div className="space-y-1">
-                          <label className="text-[10px] text-neutral-400 font-mono font-bold uppercase tracking-wider block">ชื่อ-นามสกุล (Full Name)</label>
-                          <input
-                            type="text"
-                            required
-                            value={editName}
-                            onChange={(e) => setEditName(e.target.value)}
-                            className="w-full px-3 py-2 bg-neutral-950 border border-neutral-850 rounded text-xs text-white focus:outline-none focus:border-brick/50"
-                          />
-                        </div>
-
-                        <div className="space-y-1">
-                          <label className="text-[10px] text-neutral-400 font-mono font-bold uppercase tracking-wider block">เบอร์โทรศัพท์ (Phone Number)</label>
-                          <input
-                            type="tel"
-                            required
-                            value={editPhone}
-                            onChange={(e) => setEditPhone(e.target.value)}
-                            className="w-full px-3 py-2 bg-neutral-950 border border-neutral-850 rounded text-xs text-white focus:outline-none focus:border-brick/50"
-                          />
-                        </div>
-
-                        <div className="space-y-1 col-span-1 md:col-span-2">
-                          <label className="text-[10px] text-neutral-400 font-mono font-bold uppercase tracking-wider block">อีเมลผู้ใช้งาน (Email Address)</label>
-                          <input
-                            type="email"
-                            required
-                            value={editEmail}
-                            onChange={(e) => setEditEmail(e.target.value)}
-                            className="w-full px-3 py-2 bg-neutral-950 border border-neutral-850 rounded text-xs text-white focus:outline-none focus:border-brick/50"
-                          />
-                        </div>
-
-                        <div className="space-y-1 col-span-1 md:col-span-2">
-                          <label className="text-[10px] text-neutral-400 font-mono font-bold uppercase tracking-wider block">รหัสผ่านบัญชี (Password)</label>
-                          <input
-                            type="password"
-                            required
-                            value={editPassword}
-                            onChange={(e) => setEditPassword(e.target.value)}
-                            placeholder="ตั้งรหัสผ่านใหม่"
-                            className="w-full px-3 py-2 bg-neutral-950 border border-neutral-850 rounded text-xs text-white focus:outline-none focus:border-brick/50"
-                          />
-                        </div>
-                      </div>
-
-                      <div className="pt-2">
-                        <button
-                          type="submit"
-                          className="w-full py-2.5 bg-brick hover:bg-brick-dark text-white text-xs font-bold uppercase tracking-widest rounded transition-colors cursor-pointer"
-                        >
-                          บันทึกการเปลี่ยนแปลง (Save Profile)
-                        </button>
-                      </div>
-                    </form>
-
-                    {/* Detailed Metadata Section */}
-                    <div className="p-4 bg-neutral-950 border border-neutral-850 rounded-lg space-y-3">
-                      <span className="text-[10px] font-mono text-neutral-400 uppercase tracking-widest block font-bold">// ข้อมูลสถิติของสมาชิก (MEMBERSHIP DATA LOGS)</span>
-                      <div className="grid grid-cols-2 md:grid-cols-3 gap-4 text-xs font-mono font-light text-neutral-400">
-                        <div className="space-y-0.5">
-                          <span className="text-[9px] text-neutral-500 uppercase tracking-wider block">ระดับคลาส</span>
-                          <span className="font-bold text-white">{currentMember.tier} Class</span>
-                        </div>
-                        <div className="space-y-0.5">
-                          <span className="text-[9px] text-neutral-500 uppercase tracking-wider block">คะแนนสะสม</span>
-                          <span className="font-bold text-emerald-400">{currentMember.points} PTS</span>
-                        </div>
-                        <div className="space-y-0.5">
-                          <span className="text-[9px] text-neutral-500 uppercase tracking-wider block">จำนวนครั้งที่เข้าพัก</span>
-                          <span className="font-bold text-white">{currentMember.joinedBookingsCount || 0} ครั้ง</span>
-                        </div>
-                        <div className="space-y-0.5 col-span-2">
-                          <span className="text-[9px] text-neutral-500 uppercase tracking-wider block">หมายเลขสมาชิก ID</span>
-                          <span className="text-[10px] text-neutral-300 select-all">{currentMember.id}</span>
-                        </div>
-                        <div className="space-y-0.5">
-                          <span className="text-[9px] text-neutral-500 uppercase tracking-wider block">วันที่เปิดใช้งาน</span>
-                          <span className="text-[10px] text-neutral-300">
-                            {currentMember.createdAt ? new Date(currentMember.createdAt).toLocaleDateString("th-TH") : "พรีเมียมระบบหลัก"}
-                          </span>
-                        </div>
-                      </div>
-                    </div>
-
-                    {/* Quick Access Account Settings */}
-                    <div className="p-4 bg-red-950/10 border border-red-900/20 rounded-lg flex flex-col md:flex-row justify-between items-start md:items-center space-y-3 md:space-y-0 md:space-x-4">
-                      <div className="space-y-0.5">
-                        <span className="text-xs font-bold text-red-400 block font-sans">ลงชื่อออกจากระบบทันที?</span>
-                        <p className="text-[10px] text-neutral-450 leading-relaxed font-sans">หากไม่ใช่คอมพิวเตอร์ส่วนตัว กรุณาออกจากระบบเพื่อรักษาสิทธิ์พ้อยท์และรักษาความลับของประวัติการเข้าพัก</p>
-                      </div>
-                      <button
-                        type="button"
-                        onClick={() => {
-                          logoutMember();
-                          setIsMemberPortalOpen(false);
-                        }}
-                        className="px-4 py-2 bg-red-950/40 hover:bg-red-900/30 border border-red-900/40 text-red-400 rounded text-xs font-bold transition-all cursor-pointer flex items-center space-x-1.5 whitespace-nowrap"
-                      >
-                        <LogOut className="h-3.5 w-3.5 shrink-0" />
-                        <span>ออกจากระบบบัญชี</span>
-                      </button>
-                    </div>
-                  </div>
-                )}
-              </>
-            ) : (
-          /* Portal Content for Guest (Login / Register Form) */
-          <div className="p-6 space-y-5 overflow-y-auto text-left">
-            <div className="flex border-b border-neutral-850 pb-3 justify-center space-x-6">
-              <button
-                type="button"
-                onClick={() => setMemberPortalMode("login")}
-                className={`text-sm font-bold pb-2 transition-all cursor-pointer ${
-                  (memberPortalMode === "login" || settings.general?.allowRegistration === false) ? "text-brick border-b-2 border-brick" : "text-neutral-500 hover:text-neutral-300"
-                }`}
-              >
-                ลงชื่อเข้าใช้งาน
-              </button>
-              {settings.general?.allowRegistration !== false && (
-                <button
-                  type="button"
-                  onClick={() => setMemberPortalMode("register")}
-                  className={`text-sm font-bold pb-2 transition-all cursor-pointer ${
-                    memberPortalMode === "register" ? "text-brick border-b-2 border-brick" : "text-neutral-500 hover:text-neutral-300"
-                  }`}
-                >
-                  สมัครสมาชิกใหม่ (ฟรี)
-                </button>
-              )}
-            </div>
-
-            {(memberPortalMode === "login" || settings.general?.allowRegistration === false) ? (
-              <form
-                onSubmit={async (e) => {
-                  e.preventDefault();
-                  if (!pEmail || !pPassword) {
-                    alert("กรุณากรอกอีเมลและรหัสผ่านให้ครบถ้วน");
-                    return;
-                  }
-                  const success = await loginMember(pEmail, pPassword);
-                  if (success) {
-                    setPEmail("");
-                    setPPassword("");
-                  }
-                }}
-                className="space-y-4 pt-2"
-              >
-                <div className="space-y-1">
-                  <label className="text-xs text-neutral-400 font-mono">อีเมลผู้ใช้งาน (EMAIL ADDRESS)</label>
-                  <input
-                    type="email"
-                    required
-                    value={pEmail}
-                    onChange={(e) => setPEmail(e.target.value)}
-                    placeholder="yourname@example.com"
-                    className="w-full px-3 py-2 bg-neutral-950 border border-neutral-850 rounded text-sm text-white focus:outline-none focus:border-brick/50"
-                  />
-                </div>
-
-                <div className="space-y-1">
-                  <label className="text-xs text-neutral-400 font-mono">รหัสผ่านสมาชิก (PASSWORD)</label>
-                  <input
-                    type="password"
-                    required
-                    value={pPassword}
-                    onChange={(e) => setPPassword(e.target.value)}
-                    placeholder="••••••••"
-                    className="w-full px-3 py-2 bg-neutral-950 border border-neutral-850 rounded text-sm text-white focus:outline-none focus:border-brick/50"
-                  />
-                </div>
-
-                <button
-                  type="submit"
-                  className="w-full py-2.5 bg-brick hover:bg-brick-dark text-white font-bold text-xs uppercase tracking-wider rounded transition-colors cursor-pointer mt-2"
-                >
-                  ลงชื่อเข้าใช้ทันที
-                </button>
-              </form>
-            ) : (
-              <form
-                onSubmit={async (e) => {
-                  e.preventDefault();
-                  if (!pName || !pEmail || !pPassword || !pPhone) {
-                    alert("กรุณากรอกข้อมูลส่วนตัวให้ครบทุกช่อง");
-                    return;
-                  }
-                  const success = await registerMember({
-                    name: pName,
-                    email: pEmail,
-                    phone: pPhone,
-                    password: pPassword
-                  });
-                  if (success) {
-                    setPName("");
-                    setPEmail("");
-                    setPPhone("");
-                    setPPassword("");
-                  }
-                }}
-                className="space-y-4 pt-2"
-              >
-                <div className="space-y-1">
-                  <label className="text-xs text-neutral-400 font-mono">ชื่อ-นามสกุล (FULL NAME)</label>
-                  <input
-                    type="text"
-                    required
-                    value={pName}
-                    onChange={(e) => setPName(e.target.value)}
-                    placeholder="คุณ สมชาย มุ่งมั่น"
-                    className="w-full px-3 py-2 bg-neutral-950 border border-neutral-850 rounded text-sm text-white focus:outline-none focus:border-brick/50"
-                  />
-                </div>
-
-                <div className="space-y-1">
-                  <label className="text-xs text-neutral-400 font-mono">อีเมลแอดเดรส (EMAIL ADDRESS)</label>
-                  <input
-                    type="email"
-                    required
-                    value={pEmail}
-                    onChange={(e) => setPEmail(e.target.value)}
-                    placeholder="somchai@example.com"
-                    className="w-full px-3 py-2 bg-neutral-950 border border-neutral-850 rounded text-sm text-white focus:outline-none focus:border-brick/50"
-                  />
-                </div>
-
-                <div className="space-y-1">
-                  <label className="text-xs text-neutral-400 font-mono">เบอร์โทรศัพท์ (PHONE NUMBER)</label>
-                  <input
-                    type="tel"
-                    required
-                    value={pPhone}
-                    onChange={(e) => setPPhone(e.target.value)}
-                    placeholder="0812345678"
-                    className="w-full px-3 py-2 bg-neutral-950 border border-neutral-850 rounded text-sm text-white focus:outline-none focus:border-brick/50"
-                  />
-                </div>
-
-                <div className="space-y-1">
-                  <label className="text-xs text-neutral-400 font-mono">รหัสผ่านเข้าใช้งาน (PASSWORD)</label>
-                  <input
-                    type="password"
-                    required
-                    value={pPassword}
-                    onChange={(e) => setPPassword(e.target.value)}
-                    placeholder="ตั้งรหัสผ่านสำหรับเข้าสู่ระบบ"
-                    className="w-full px-3 py-2 bg-neutral-950 border border-neutral-850 rounded text-sm text-white focus:outline-none focus:border-brick/50"
-                  />
-                </div>
-
-                <button
-                  type="submit"
-                  className="w-full py-2.5 bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs uppercase tracking-wider rounded transition-colors cursor-pointer mt-2"
-                >
-                  ยืนยันสมัครสมาชิก (รับส่วนลดคืนนี้)
-                </button>
-              </form>
-            )}
-
-            <div className="p-4 bg-neutral-950 border border-neutral-850 rounded-lg space-y-2 mt-4 text-xs font-light text-neutral-400 leading-relaxed">
-              <span className="font-bold text-white block">✨ สิทธิพิเศษพรีเมียมเฉพาะ CLUB M5:</span>
-              <ul className="list-disc pl-4 space-y-1">
-                <li><strong>Silver Class:</strong> สะสมพ้อยท์แลกของรางวัล + ลดเพิ่ม 5% ทุกจองพัก</li>
-                <li><strong>Gold Class (จองครบ 3 ครั้ง):</strong> ฟรี Welcome Drink + เลทเช็คเอาท์ + ลดเพิ่ม 10%</li>
-                <li><strong>Elite Class (จองครบ 8 ครั้ง):</strong> มินิบาร์ฟรี + บริการรถรับส่ง อิมแพ็ค อารีน่า + ลดเพิ่ม 15%</li>
-              </ul>
-            </div>
-          </div>
-        )}
-
-        {/* Footer containing logout */}
-        {currentMember && (
-          <div className="p-4 bg-[#0e0e0e] border-t border-neutral-850 flex justify-between items-center shrink-0">
-            <span className="text-[10px] text-neutral-500 font-mono">CLUB M5 REWARDS ENGINE // EXCLUSIVE COMFORT</span>
-            <button
-              type="button"
-              onClick={() => {
-                logoutMember();
-                setIsMemberPortalOpen(false);
-              }}
-              className="px-3.5 py-1.5 bg-red-950/40 hover:bg-red-900/30 border border-red-900/40 text-red-400 rounded text-xs font-bold transition-all cursor-pointer"
-            >
-              ออกจากระบบสมาชิก
-            </button>
-          </div>
-        )}
-
-      </div>
-    </div>
-  )}
+      {/* CUSTOMER ONLINE QUOTATION REQUEST MODAL */}
+      <CustomerQuotationModal
+        isOpen={isQuotationModalOpen}
+        onClose={() => setIsQuotationModalOpen(false)}
+      />
 
     </div>
   );

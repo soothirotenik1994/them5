@@ -6,8 +6,41 @@ import { GoogleGenAI, Type } from "@google/genai";
 import dotenv from "dotenv";
 import fs from "fs";
 import nodemailer from "nodemailer";
+import { initializeApp, getApps } from "firebase-admin/app";
+import { getStorage } from "firebase-admin/storage";
+import { getFirestore } from "firebase-admin/firestore";
+import { initializeApp as initClientApp, getApps as getClientApps } from "firebase/app";
+import { getFirestore as getClientFirestore, doc as fsDoc, getDoc as fsGetDoc, setDoc as fsSetDoc, deleteDoc as fsDeleteDoc } from "firebase/firestore";
+import { isPastEvent } from "./src/utils/eventDateUtils";
 
 dotenv.config();
+
+// Firebase Setup
+const FIREBASE_CONFIG_PATH = path.join(process.cwd(), "firebase-applet-config.json");
+let firebaseConfig: any = null;
+let firestoreDb: any = null;
+if (fs.existsSync(FIREBASE_CONFIG_PATH)) {
+  try {
+    firebaseConfig = JSON.parse(fs.readFileSync(FIREBASE_CONFIG_PATH, "utf8"));
+    if (getApps().length === 0) {
+      initializeApp({
+        projectId: firebaseConfig.projectId,
+        storageBucket: firebaseConfig.storageBucket,
+      });
+      console.log("Firebase Admin initialized successfully.");
+    }
+  } catch (err: any) {
+    console.error("Failed to initialize Firebase Admin:", err.message);
+  }
+
+  try {
+    const clientApp = getClientApps().length > 0 ? getClientApps()[0] : initClientApp(firebaseConfig);
+    firestoreDb = getClientFirestore(clientApp, firebaseConfig.firestoreDatabaseId);
+    console.log("Firebase Cloud Firestore connected successfully:", firebaseConfig.firestoreDatabaseId);
+  } catch (clientErr: any) {
+    console.error("Failed to initialize Firebase Client Firestore:", clientErr.message);
+  }
+}
 
 // Safe ESM / CommonJS workaround
 const resolvedFilename = typeof import.meta !== "undefined" && import.meta?.url ? fileURLToPath(import.meta.url) : "";
@@ -37,26 +70,62 @@ function deduplicateLocalDb(db: any) {
   db.blockedDates = deduplicateArray(db.blockedDates || [], (bd: any) => bd.id || bd.blockedId || `${bd.date}_${bd.roomId}`);
   db.coupons = deduplicateArray(db.coupons || [], (c: any) => (c.code || '').toUpperCase());
   db.members = deduplicateArray(db.members || [], (m: any) => m.id || m.memberId || m.email);
-  db.bookings = deduplicateArray(db.bookings || [], (b: any) => b.id || b.bookingId);
+  
+  const deletedBkIds = new Set(db.deletedBookingIds || []);
+  deletedBkIds.add("B-1001");
+  db.bookings = deduplicateArray(db.bookings || [], (b: any) => b.id || b.bookingId)
+    .filter((b: any) => b.id !== "B-1001" && b.guestEmail !== "somsak@gmail.com" && !deletedBkIds.has(b.id));
+
   db.amenities = deduplicateArray(db.amenities || [], (a: any) => a.title || a.id);
   db.faqs = deduplicateArray(db.faqs || [], (f: any) => f.q || f.id);
   db.reviews = deduplicateArray(db.reviews || [], (r: any) => `${r.name}_${r.review}`);
   db.gallery = deduplicateArray(db.gallery || [], (g: any) => g.id || g.url || Math.random().toString());
   db.admins = deduplicateArray(db.admins || [], (ad: any) => String(ad.username || ad.id || ad.adminId || '').toLowerCase().trim());
   db.impactEvents = deduplicateArray(db.impactEvents || [], (e: any) => e.id || e.eventId);
+  db.partners = deduplicateArray(db.partners || [], (p: any) => p.id || p.partnerId || p.name);
+  if (db.adminMenuConfig) {
+    db.adminMenuConfig = deduplicateArray(db.adminMenuConfig || [], (m: any) => m.id);
+  }
+  if (db.adminRoles) {
+    db.adminRoles = deduplicateArray(db.adminRoles || [], (r: any) => r.id || r.name);
+  }
   return db;
 }
 
-function getLocalDb() {
+let memoryDb: any = null;
+
+async function initDb() {
+  if (firestoreDb) {
+    try {
+      const snap = await fsGetDoc(fsDoc(firestoreDb, "settings", "web"));
+      if (snap.exists()) {
+        memoryDb = deduplicateLocalDb(snap.data());
+        console.log("Loaded database from Firebase Cloud Firestore (settings/web).");
+        return;
+      }
+    } catch (err: any) {
+      console.warn("Could not load from Firestore settings/web, checking fallback:", err.message);
+    }
+  }
+
+  // Fallback to local file if Firestore fails or doesn't have data yet
   try {
     if (fs.existsSync(DB_PATH)) {
       const data = JSON.parse(fs.readFileSync(DB_PATH, "utf-8"));
-      return deduplicateLocalDb(data);
+      memoryDb = deduplicateLocalDb(data);
+      console.log("Loaded database from local db.json.");
+      
+      // Save to Firebase for future
+      if (firestoreDb) {
+        fsSetDoc(fsDoc(firestoreDb, "settings", "web"), memoryDb, { merge: true }).catch(() => {});
+      }
+      return;
     }
   } catch (err) {
     console.error("Error reading local db.json:", err);
   }
-  return {
+
+  memoryDb = deduplicateLocalDb({
     general: {},
     rooms: [],
     promotions: [],
@@ -67,172 +136,776 @@ function getLocalDb() {
     coupons: [],
     members: [],
     admins: [],
-    impactEvents: []
-  };
+    impactEvents: [],
+    partners: [],
+    adminMenuConfig: [],
+    adminRoles: []
+  });
+}
+
+function getLocalDb() {
+  if (!memoryDb) {
+    console.warn("getLocalDb called before initDb! Using empty default.");
+    return deduplicateLocalDb({
+      general: {}, rooms: [], promotions: [], amenities: [], bookings: [],
+      smtp: {}, blockedDates: [], coupons: [], members: [], admins: [],
+      impactEvents: [], partners: [], adminMenuConfig: [], adminRoles: []
+    });
+  }
+  return memoryDb;
 }
 
 function saveLocalDb(db: any) {
   try {
-    const cleanDb = deduplicateLocalDb(db);
-    fs.writeFileSync(DB_PATH, JSON.stringify(cleanDb, null, 2), "utf-8");
+    memoryDb = deduplicateLocalDb(db);
+    fs.writeFileSync(DB_PATH, JSON.stringify(memoryDb, null, 2), "utf-8");
+    
+    if (firestoreDb) {
+      fsSetDoc(fsDoc(firestoreDb, "settings", "web"), memoryDb, { merge: true }).catch((_err: any) => {
+        // Silently handled: client-side Firestore SDK handles real-time cloud data sync
+      });
+    }
   } catch (err) {
     console.error("Error saving local db.json:", err);
   }
 }
 
-// Helper function to send email notification using SMTP
+// Helper to record notification logs into both memory/localDb and Firestore
+async function recordNotificationLog(log: {
+  id: string;
+  bookingId: string;
+  channel: "line" | "email" | "both";
+  recipient: string;
+  status: "sent" | "simulated" | "failed";
+  message: string;
+  createdAt: string;
+}) {
+  try {
+    const localDb = getLocalDb() as any;
+    if (!localDb.notifications) {
+      localDb.notifications = [];
+    }
+    localDb.notifications.unshift(log);
+    if (localDb.notifications.length > 100) {
+      localDb.notifications = localDb.notifications.slice(0, 100);
+    }
+    saveLocalDb(localDb);
+
+    // Save to Firebase Firestore notifications collection if initialized
+    if (firestoreDb) {
+      try {
+        await fsSetDoc(fsDoc(firestoreDb, "notifications", log.id), log);
+      } catch (err: any) {
+        console.warn("Could not save notification to Firestore:", err.message);
+      }
+    }
+  } catch (err) {
+    console.error("Error recording notification log:", err);
+  }
+}
+
+// Dedicated helper to send emails via SMTP2GO REST API or standard Nodemailer SMTP
+interface SendEmailOptions {
+  to: string | string[];
+  subject: string;
+  html: string;
+  text?: string;
+  smtpConfig?: any;
+}
+
+async function sendEmailMessage({ to, subject, html, text, smtpConfig }: SendEmailOptions): Promise<{ success: boolean; id?: string; error?: string }> {
+  const recipients = (Array.isArray(to) ? to : [to])
+    .flatMap(t => String(t || "").split(/[,;\s]+/))
+    .map(t => t.trim())
+    .filter(t => t && t.includes("@"));
+  if (recipients.length === 0) {
+    return { success: false, error: "ไม่มีอีเมลผู้รับที่ถูกต้อง" };
+  }
+
+  const apiKey = smtpConfig?.apiKey || process.env.SMTP2GO_API_KEY || "api-77AF153BDA6C4F7FB6DED66C6CC28802";
+  const apiBaseUrl = smtpConfig?.apiBaseUrl || process.env.SMTP2GO_API_URL || "https://api.smtp2go.com/v3/";
+  const fromName = smtpConfig?.fromName || "The M5 Residence Loft";
+  const fromEmail = smtpConfig?.fromEmail || "no-reply@them5residence.com";
+  const senderHeader = `"${fromName}" <${fromEmail}>`;
+
+  // 1. Try SMTP2GO REST API first (recommended for Cloud Run & web environments)
+  if (apiKey) {
+    try {
+      const cleanBase = apiBaseUrl.endsWith("/") ? apiBaseUrl.slice(0, -1) : apiBaseUrl;
+      const endpoint = `${cleanBase}/email/send`;
+      
+      const payload = {
+        api_key: apiKey,
+        to: recipients,
+        sender: senderHeader,
+        subject,
+        html_body: html,
+        text_body: text || html.replace(/<[^>]*>?/gm, "").trim()
+      };
+
+      console.log(`[SMTP2GO API] Dispatching email to: ${recipients.join(", ")} via ${endpoint}...`);
+
+      const response = await fetch(endpoint, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(payload)
+      });
+
+      const data = await response.json();
+      if (response.ok && data?.data?.succeeded > 0) {
+        console.log(`[SMTP2GO API Success] Email delivered to ${recipients.join(", ")} (ID: ${data?.data?.email_id || data?.request_id})`);
+        return { success: true, id: data?.data?.email_id || data?.request_id };
+      } else {
+        const errorMsg = data?.data?.failures?.[0] || data?.data?.error || data?.message || JSON.stringify(data);
+        console.warn(`[SMTP2GO API Warning] Failed via API: ${errorMsg}. Falling back to standard SMTP...`);
+      }
+    } catch (apiErr: any) {
+      console.warn(`[SMTP2GO API Error] ${apiErr.message}. Falling back to standard SMTP...`);
+    }
+  }
+
+  // 2. Standard Nodemailer SMTP fallback if configured
+  if (smtpConfig?.host && (smtpConfig?.user || smtpConfig?.pass)) {
+    try {
+      const portNum = Number(smtpConfig.port) || 587;
+      // In SMTP protocol:
+      // - Port 465 / 8465 uses implicit SSL/TLS from byte 0 (secure: true).
+      // - Ports 587, 2525, 8025, 25, 80 start with plaintext SMTP and upgrade via STARTTLS (secure: false).
+      // Setting secure: true on 587/2525 causes OpenSSL "wrong version number" error.
+      const isImplicitSsl = portNum === 465 || portNum === 8465 || (smtpConfig.secure === true && portNum !== 587 && portNum !== 2525 && portNum !== 8025 && portNum !== 25 && portNum !== 80);
+
+      const transporter = nodemailer.createTransport({
+        host: smtpConfig.host,
+        port: portNum,
+        secure: isImplicitSsl,
+        auth: smtpConfig.user && smtpConfig.pass ? {
+          user: smtpConfig.user,
+          pass: smtpConfig.pass
+        } : undefined,
+        tls: {
+          rejectUnauthorized: false
+        }
+      });
+
+      const info = await transporter.sendMail({
+        from: senderHeader,
+        to: recipients.join(", "),
+        subject,
+        html,
+        text: text || html.replace(/<[^>]*>?/gm, "").trim()
+      });
+
+      console.log(`[Nodemailer SMTP Success] Sent to ${recipients.join(", ")}: ${info.messageId}`);
+      return { success: true, id: info.messageId };
+    } catch (smtpErr: any) {
+      console.error(`[Nodemailer SMTP Error] Failed to send:`, smtpErr);
+      return { success: false, error: smtpErr.message };
+    }
+  }
+
+  return { success: false, error: "ยังไม่ได้กำหนดค่า SMTP2GO API Key หรือเซิร์ฟเวอร์ SMTP" };
+}
+
+// Helper function to send email notification using SMTP or SMTP2GO API
 async function sendBookingEmail(booking: any, smtp: any) {
-  if (!smtp || !smtp.host || !smtp.user || !smtp.pass) {
-    console.warn("SMTP settings not fully configured. Skipping email notification.");
+  const adminEmail = smtp?.adminNotifyEmail || process.env.ADMIN_NOTIFY_EMAIL || "soothirote.nik@gmail.com";
+  const customerEmail = booking.guestEmail;
+
+  // Calculate nights for details
+  const d1 = new Date(booking.checkIn);
+  const d2 = new Date(booking.checkOut);
+  const diff = Math.abs(d2.getTime() - d1.getTime());
+  const nights = Math.ceil(diff / (1000 * 60 * 60 * 24)) || 1;
+
+  // 1. Send HTML to Customer
+  const customerHtml = `
+    <div style="font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 25px; border: 1px solid #e2e8f0; border-radius: 12px; background-color: #ffffff; color: #1e293b; box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05);">
+      <div style="text-align: center; border-bottom: 3px solid #d95a06; padding-bottom: 20px; margin-bottom: 25px;">
+        <h2 style="color: #0f172a; margin: 0; font-size: 24px; letter-spacing: 1px; font-weight: 800;">THE M5 RESIDENCE</h2>
+        <p style="color: #64748b; margin: 5px 0 0; font-size: 13px;">นิยามใหม่ของการพักผ่อนสไตล์ลอฟต์ ปากเกร็ด นนทบุรี</p>
+      </div>
+      
+      <div style="margin-bottom: 25px;">
+        <p style="font-size: 16px; color: #0f172a; line-height: 1.6; font-weight: bold;">สวัสดีครับ คุณ ${booking.guestName},</p>
+        <p style="font-size: 14px; color: #475569; line-height: 1.6;">ทางเรามีความยินดีที่จะแจ้งให้ทราบว่า เราได้รับรายการจองห้องพักของท่านเรียบร้อยแล้ว รายละเอียดรายการจองมีดังต่อไปนี้:</p>
+      </div>
+
+      <div style="background-color: #f8fafc; border-left: 4px solid #d95a06; padding: 18px; margin-bottom: 25px; border-radius: 6px; border-top: 1px solid #f1f5f9; border-right: 1px solid #f1f5f9; border-bottom: 1px solid #f1f5f9;">
+        <table style="width: 100%; border-collapse: collapse; font-size: 14px; line-height: 1.7;">
+          <tr>
+            <td style="padding: 6px 0; color: #64748b; width: 140px; font-weight: 600;">หมายเลขการจอง:</td>
+            <td style="padding: 6px 0; color: #0f172a; font-family: monospace; font-weight: 700; font-size: 15px;">${booking.id}</td>
+          </tr>
+          <tr>
+            <td style="padding: 6px 0; color: #64748b; font-weight: 600;">ประเภทห้องพัก:</td>
+            <td style="padding: 6px 0; color: #0f172a; font-weight: 700;">${booking.roomName || booking.roomType}</td>
+          </tr>
+          <tr>
+            <td style="padding: 6px 0; color: #64748b; font-weight: 600;">วันที่เข้าพัก (Check-in):</td>
+            <td style="padding: 6px 0; color: #d95a06; font-weight: 700;">${booking.checkIn} (หลัง 14:00 น.)</td>
+          </tr>
+          <tr>
+            <td style="padding: 6px 0; color: #64748b; font-weight: 600;">วันที่เช็คเอาท์ (Check-out):</td>
+            <td style="padding: 6px 0; color: #d95a06; font-weight: 700;">${booking.checkOut} (ก่อน 12:00 น.)</td>
+          </tr>
+          <tr>
+            <td style="padding: 6px 0; color: #64748b; font-weight: 600;">ระยะเวลาพัก:</td>
+            <td style="padding: 6px 0; color: #0f172a;">${nights} คืน (${booking.guests} ท่าน)</td>
+          </tr>
+          <tr>
+            <td style="padding: 6px 0; color: #64748b; font-weight: 600;">ยอดชำระเงินสุทธิ:</td>
+            <td style="padding: 6px 0; color: #d95a06; font-weight: 800; font-size: 18px;">${Number(booking.totalPrice || 0).toLocaleString()} THB</td>
+          </tr>
+          <tr>
+            <td style="padding: 6px 0; color: #64748b; font-weight: 600;">สถานะการจอง:</td>
+            <td style="padding: 6px 0;"><span style="background-color: #fffbeb; color: #b45309; padding: 4px 10px; border-radius: 9999px; font-size: 12px; font-weight: bold; border: 1px solid #fde68a;">${booking.status === "Pending" ? "รอชำระเงิน / ตรวจสอบ" : booking.status}</span></td>
+          </tr>
+          ${booking.specialRequest ? `
+          <tr>
+            <td style="padding: 6px 0; color: #64748b; font-weight: 600; vertical-align: top;">คำขอพิเศษ:</td>
+            <td style="padding: 6px 0; color: #475569; font-style: italic;">"${booking.specialRequest}"</td>
+          </tr>` : ''}
+        </table>
+      </div>
+
+      <div style="font-size: 13px; color: #475569; border-top: 1px solid #e2e8f0; padding-top: 20px; line-height: 1.6;">
+        <p style="font-weight: bold; color: #0f172a; margin-bottom: 8px;">📌 ข้อมูลการเตรียมตัวเข้าพัก:</p>
+        <ul style="padding-left: 20px; margin: 0 0 15px 0;">
+          <li style="margin-bottom: 4px;">กรุณาเตรียมบัตรประจำตัวประชาชนหรือพาสปอร์ตสำหรับแสดงตอนเช็คอิน</li>
+          <li style="margin-bottom: 4px;">มีบริการเครื่องดื่มต้อนรับฟรีที่ Copper & Steam Cafe (ชั้นล็อบบี้)</li>
+          <li style="margin-bottom: 4px;">ติดต่อพนักงานโรงแรมได้ตลอดเวลาผ่านเบอร์โทรศัพท์ <strong>${smtp?.fromPhone || "02-M5-LOFT"}</strong></li>
+        </ul>
+        <p style="margin-top: 20px; text-align: center; color: #d95a06; font-weight: bold;">— ขอขอบพระคุณและหวังเป็นอย่างยิ่งว่าคุณจะได้รับความสุขความผ่อนคลายในค่ำคืนนี้ —</p>
+      </div>
+    </div>
+  `;
+
+  // 2. Send HTML to Admin
+  const adminHtml = `
+    <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 25px; border: 2px solid #0f172a; background-color: #f8fafc; color: #1e293b; border-radius: 12px;">
+      <div style="background-color: #0f172a; color: #ffffff; padding: 20px; text-align: center; border-radius: 8px 8px 0 0; margin-bottom: 20px;">
+        <h2 style="margin: 0; font-size: 20px; letter-spacing: 1.5px; font-weight: bold;">[NEW BOOKING ALERTS // การจองใหม่]</h2>
+        <p style="margin: 6px 0 0; font-size: 13px; color: #94a3b8;">มีรายการจองห้องพักแจ้งเตือนเข้ามาทางระบบหน้าเว็บ</p>
+      </div>
+      
+      <div style="padding: 10px 5px;">
+        <h3 style="border-bottom: 2px solid #cbd5e1; padding-bottom: 8px; color: #0f172a; font-size: 16px; margin-top: 0;">📋 ข้อมูลห้องพัก & ระยะเวลา</h3>
+        <table style="width: 100%; border-collapse: collapse; font-size: 14px; line-height: 1.8; margin-bottom: 20px;">
+          <tr><td style="padding: 5px 0; color: #64748b; width: 160px; font-weight: bold;">รหัสรายการจอง:</td><td style="font-family: monospace; font-weight: bold; color: #d95a06; font-size: 15px;">${booking.id}</td></tr>
+          <tr><td style="padding: 5px 0; color: #64748b; font-weight: bold;">ห้องพัก:</td><td style="font-weight: bold;">${booking.roomName || booking.roomType}</td></tr>
+          <tr><td style="padding: 5px 0; color: #64748b; font-weight: bold;">วันเข้าพัก (Check-in):</td><td>${booking.checkIn}</td></tr>
+          <tr><td style="padding: 5px 0; color: #64748b; font-weight: bold;">วันออกพัก (Check-out):</td><td>${booking.checkOut}</td></tr>
+          <tr><td style="padding: 5px 0; color: #64748b; font-weight: bold;">จำนวนคืนพัก:</td><td>${nights} คืน (${booking.guests} ท่าน)</td></tr>
+          <tr><td style="padding: 5px 0; color: #64748b; font-weight: bold;">ยอดเงินเรียกเก็บสุทธิ:</td><td style="font-weight: bold; color: #d95a06; font-size: 16px;">${Number(booking.totalPrice || 0).toLocaleString()} THB</td></tr>
+          <tr><td style="padding: 5px 0; color: #64748b; font-weight: bold;">สถานะ:</td><td><strong style="color: #b45309;">${booking.status}</strong></td></tr>
+        </table>
+
+        <h3 style="border-bottom: 2px solid #cbd5e1; padding-bottom: 8px; color: #0f172a; font-size: 16px; margin-top: 25px;">👤 ข้อมูลผู้เข้าพัก (ลูกค้า)</h3>
+        <table style="width: 100%; border-collapse: collapse; font-size: 14px; line-height: 1.8;">
+          <tr><td style="padding: 5px 0; color: #64748b; width: 160px; font-weight: bold;">ชื่อ-นามสกุล:</td><td><strong>${booking.guestName}</strong></td></tr>
+          <tr><td style="padding: 5px 0; color: #64748b; font-weight: bold;">อีเมลบัญชี:</td><td><a href="mailto:${booking.guestEmail}" style="color: #d95a06;">${booking.guestEmail}</a></td></tr>
+          <tr><td style="padding: 5px 0; color: #64748b; font-weight: bold;">เบอร์โทรศัพท์:</td><td style="font-family: monospace;">${booking.guestPhone}</td></tr>
+          <tr><td style="padding: 5px 0; color: #64748b; font-weight: bold; vertical-align: top;">คำขอพิเศษจากลูกค้า:</td><td style="font-style: italic; color: #475569;">"${booking.specialRequest || "ไม่มีข้อมูลคำขอเพิ่มเติม"}"</td></tr>
+        </table>
+      </div>
+
+      <div style="background-color: #f1f5f9; padding: 15px; font-size: 12px; color: #64748b; text-align: center; border-radius: 8px; margin-top: 25px; border: 1px solid #e2e8f0;">
+        <p style="margin: 0; font-weight: bold; color: #475569;">SYSTEM NOTE: THE M5 RESIDENCE ADMIN ENGINE</p>
+        <p style="margin: 4px 0 0;">กรุณาเข้าระบบจัดการแอดมิน เพื่อตรวจสอบความถูกต้องหรืออัปเดตสถานะการชำระเงินของลูกค้าตามอัธยาศัย</p>
+      </div>
+    </div>
+  `;
+
+  // Check if either SMTP2GO API or standard SMTP credentials are provided
+  const hasConfig = Boolean(smtp?.apiKey || process.env.SMTP2GO_API_KEY || (smtp?.host && (smtp?.user || smtp?.pass)));
+  if (!hasConfig) {
+    console.warn("[SMTP Info] No email credentials provided. Recorded notification dispatch in audit log.");
+    await recordNotificationLog({
+      id: `notif-email-${Date.now()}-${Math.floor(Math.random() * 1000)}`,
+      bookingId: booking.id,
+      channel: "email",
+      recipient: `${adminEmail}, ${customerEmail || "ไม่มีอีเมลลูกค้า"}`,
+      status: "simulated",
+      message: `[จำลองการส่งเมล] แจ้งเตือนการจอง #${booking.id} ไปยัง ${adminEmail} และ ${customerEmail || "-"} (กำหนดรหัส SMTP ได้ที่หน้าแอดมิน)`,
+      createdAt: new Date().toISOString()
+    });
     return false;
   }
 
   try {
-    const transporter = nodemailer.createTransport({
-      host: smtp.host,
-      port: Number(smtp.port) || 587,
-      secure: smtp.secure === true, // true for 465, false for other ports
-      auth: {
-        user: smtp.user,
-        pass: smtp.pass,
-      },
-    });
-
-    const fromAddress = smtp.fromEmail || smtp.user;
-    const fromHeader = `"${smtp.fromName || "The M5 Residence"}" <${fromAddress}>`;
-
-    // Calculate nights for details
-    const d1 = new Date(booking.checkIn);
-    const d2 = new Date(booking.checkOut);
-    const diff = Math.abs(d2.getTime() - d1.getTime());
-    const nights = Math.ceil(diff / (1000 * 60 * 60 * 24)) || 1;
-
-    // 1. Send HTML to Customer
-    const customerHtml = `
-      <div style="font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 25px; border: 1px solid #e2e8f0; border-radius: 12px; background-color: #ffffff; color: #1e293b; box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05);">
-        <div style="text-align: center; border-bottom: 3px solid #d95a06; padding-bottom: 20px; margin-bottom: 25px;">
-          <h2 style="color: #0f172a; margin: 0; font-size: 24px; letter-spacing: 1px; font-weight: 800;">THE M5 RESIDENCE</h2>
-          <p style="color: #64748b; margin: 5px 0 0; font-size: 13px;">นิยามใหม่ของการพักผ่อนสไตล์ลอฟต์ ปากเกร็ด นนทบุรี</p>
-        </div>
-        
-        <div style="margin-bottom: 25px;">
-          <p style="font-size: 16px; color: #0f172a; line-height: 1.6; font-weight: bold;">สวัสดีครับ คุณ ${booking.guestName},</p>
-          <p style="font-size: 14px; color: #475569; line-height: 1.6;">ทางเรามีความยินดีที่จะแจ้งให้ทราบว่า เราได้รับรายการจองห้องพักของท่านเรียบร้อยแล้ว รายละเอียดรายการจองมีดังต่อไปนี้:</p>
-        </div>
-
-        <div style="background-color: #f8fafc; border-left: 4px solid #d95a06; padding: 18px; margin-bottom: 25px; border-radius: 6px; border-top: 1px solid #f1f5f9; border-right: 1px solid #f1f5f9; border-bottom: 1px solid #f1f5f9;">
-          <table style="width: 100%; border-collapse: collapse; font-size: 14px; line-height: 1.7;">
-            <tr>
-              <td style="padding: 6px 0; color: #64748b; width: 140px; font-weight: 600;">หมายเลขการจอง:</td>
-              <td style="padding: 6px 0; color: #0f172a; font-family: monospace; font-weight: 700; font-size: 15px;">${booking.id}</td>
-            </tr>
-            <tr>
-              <td style="padding: 6px 0; color: #64748b; font-weight: 600;">ประเภทห้องพัก:</td>
-              <td style="padding: 6px 0; color: #0f172a; font-weight: 700;">${booking.roomName || booking.roomType}</td>
-            </tr>
-            <tr>
-              <td style="padding: 6px 0; color: #64748b; font-weight: 600;">วันที่เข้าพัก (Check-in):</td>
-              <td style="padding: 6px 0; color: #d95a06; font-weight: 700;">${booking.checkIn} (หลัง 14:00 น.)</td>
-            </tr>
-            <tr>
-              <td style="padding: 6px 0; color: #64748b; font-weight: 600;">วันที่เช็คเอาท์ (Check-out):</td>
-              <td style="padding: 6px 0; color: #d95a06; font-weight: 700;">${booking.checkOut} (ก่อน 12:00 น.)</td>
-            </tr>
-            <tr>
-              <td style="padding: 6px 0; color: #64748b; font-weight: 600;">ระยะเวลาพัก:</td>
-              <td style="padding: 6px 0; color: #0f172a;">${nights} คืน (${booking.guests} ท่าน)</td>
-            </tr>
-            <tr>
-              <td style="padding: 6px 0; color: #64748b; font-weight: 600;">ยอดชำระเงินสุทธิ:</td>
-              <td style="padding: 6px 0; color: #d95a06; font-weight: 800; font-size: 18px;">${booking.totalPrice.toLocaleString()} THB</td>
-            </tr>
-            <tr>
-              <td style="padding: 6px 0; color: #64748b; font-weight: 600;">สถานะการจอง:</td>
-              <td style="padding: 6px 0;"><span style="background-color: #fffbeb; color: #b45309; padding: 4px 10px; border-radius: 9999px; font-size: 12px; font-weight: bold; border: 1px solid #fde68a;">${booking.status === "Pending" ? "รอชำระเงิน / ตรวจสอบ" : booking.status}</span></td>
-            </tr>
-            ${booking.specialRequest ? `
-            <tr>
-              <td style="padding: 6px 0; color: #64748b; font-weight: 600; vertical-align: top;">คำขอพิเศษ:</td>
-              <td style="padding: 6px 0; color: #475569; font-style: italic;">"${booking.specialRequest}"</td>
-            </tr>` : ''}
-          </table>
-        </div>
-
-        <div style="font-size: 13px; color: #475569; border-top: 1px solid #e2e8f0; padding-top: 20px; line-height: 1.6;">
-          <p style="font-weight: bold; color: #0f172a; margin-bottom: 8px;">📌 ข้อมูลการเตรียมตัวเข้าพัก:</p>
-          <ul style="padding-left: 20px; margin: 0 0 15px 0;">
-            <li style="margin-bottom: 4px;">กรุณาเตรียมบัตรประจำตัวประชาชนหรือพาสปอร์ตสำหรับแสดงตอนเช็คอิน</li>
-            <li style="margin-bottom: 4px;">มีบริการเครื่องดื่มต้อนรับฟรีที่ Copper & Steam Cafe (ชั้นล็อบบี้)</li>
-            <li style="margin-bottom: 4px;">ติดต่อพนักงานโรงแรมได้ตลอดเวลาผ่านเบอร์โทรศัพท์ <strong>${smtp.fromPhone || "02-M5-LOFT"}</strong></li>
-          </ul>
-          <p style="margin-top: 20px; text-align: center; color: #d95a06; font-weight: bold;">— ขอขอบพระคุณและหวังเป็นอย่างยิ่งว่าคุณจะได้รับความสุขความผ่อนคลายในค่ำคืนนี้ —</p>
-        </div>
-      </div>
-    `;
-
-    // 2. Send HTML to Admin
-    const adminHtml = `
-      <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 25px; border: 2px solid #0f172a; background-color: #f8fafc; color: #1e293b; border-radius: 12px;">
-        <div style="background-color: #0f172a; color: #ffffff; padding: 20px; text-align: center; border-radius: 8px 8px 0 0; margin-bottom: 20px;">
-          <h2 style="margin: 0; font-size: 20px; letter-spacing: 1.5px; font-weight: bold;">[NEW BOOKING ALERTS // การจองใหม่]</h2>
-          <p style="margin: 6px 0 0; font-size: 13px; color: #94a3b8;">มีรายการจองห้องพักแจ้งเตือนเข้ามาทางระบบหน้าเว็บ</p>
-        </div>
-        
-        <div style="padding: 10px 5px;">
-          <h3 style="border-bottom: 2px solid #cbd5e1; padding-bottom: 8px; color: #0f172a; font-size: 16px; margin-top: 0;">📋 ข้อมูลห้องพัก & ระยะเวลา</h3>
-          <table style="width: 100%; border-collapse: collapse; font-size: 14px; line-height: 1.8; margin-bottom: 20px;">
-            <tr><td style="padding: 5px 0; color: #64748b; width: 160px; font-weight: bold;">รหัสรายการจอง:</td><td style="font-family: monospace; font-weight: bold; color: #d95a06; font-size: 15px;">${booking.id}</td></tr>
-            <tr><td style="padding: 5px 0; color: #64748b; font-weight: bold;">ห้องพัก:</td><td style="font-weight: bold;">${booking.roomName || booking.roomType}</td></tr>
-            <tr><td style="padding: 5px 0; color: #64748b; font-weight: bold;">วันเข้าพัก (Check-in):</td><td>${booking.checkIn}</td></tr>
-            <tr><td style="padding: 5px 0; color: #64748b; font-weight: bold;">วันออกพัก (Check-out):</td><td>${booking.checkOut}</td></tr>
-            <tr><td style="padding: 5px 0; color: #64748b; font-weight: bold;">จำนวนคืนพัก:</td><td>${nights} คืน (${booking.guests} ท่าน)</td></tr>
-            <tr><td style="padding: 5px 0; color: #64748b; font-weight: bold;">ยอดเงินเรียกเก็บสุทธิ:</td><td style="font-weight: bold; color: #d95a06; font-size: 16px;">${booking.totalPrice.toLocaleString()} THB</td></tr>
-            <tr><td style="padding: 5px 0; color: #64748b; font-weight: bold;">สถานะ:</td><td><strong style="color: #b45309;">${booking.status}</strong></td></tr>
-          </table>
-
-          <h3 style="border-bottom: 2px solid #cbd5e1; padding-bottom: 8px; color: #0f172a; font-size: 16px; margin-top: 25px;">👤 ข้อมูลผู้เข้าพัก (ลูกค้า)</h3>
-          <table style="width: 100%; border-collapse: collapse; font-size: 14px; line-height: 1.8;">
-            <tr><td style="padding: 5px 0; color: #64748b; width: 160px; font-weight: bold;">ชื่อ-นามสกุล:</td><td><strong>${booking.guestName}</strong></td></tr>
-            <tr><td style="padding: 5px 0; color: #64748b; font-weight: bold;">อีเมลบัญชี:</td><td><a href="mailto:${booking.guestEmail}" style="color: #d95a06;">${booking.guestEmail}</a></td></tr>
-            <tr><td style="padding: 5px 0; color: #64748b; font-weight: bold;">เบอร์โทรศัพท์:</td><td style="font-family: monospace;">${booking.guestPhone}</td></tr>
-            <tr><td style="padding: 5px 0; color: #64748b; font-weight: bold; vertical-align: top;">คำขอพิเศษจากลูกค้า:</td><td style="font-style: italic; color: #475569;">"${booking.specialRequest || "ไม่มีข้อมูลคำขอเพิ่มเติม"}"</td></tr>
-          </table>
-        </div>
-
-        <div style="background-color: #f1f5f9; padding: 15px; font-size: 12px; color: #64748b; text-align: center; border-radius: 8px; margin-top: 25px; border: 1px solid #e2e8f0;">
-          <p style="margin: 0; font-weight: bold; color: #475569;">SYSTEM NOTE: CLUB M5 ADMIN ENGINE</p>
-          <p style="margin: 4px 0 0;">กรุณาเข้าระบบจัดการแอดมิน เพื่อตรวจสอบความถูกต้องหรืออัปเดตสถานะการชำระเงินของลูกค้าตามอัธยาศัย</p>
-        </div>
-      </div>
-    `;
+    let customerSent = false;
+    let adminSent = false;
 
     // A. Send to customer
-    if (booking.guestEmail && booking.guestEmail.includes("@")) {
-      await transporter.sendMail({
-        from: fromHeader,
-        to: booking.guestEmail,
+    if (customerEmail && customerEmail.includes("@")) {
+      const custRes = await sendEmailMessage({
+        to: customerEmail,
         subject: `[The M5 Residence] ยืนยันคำขอจองห้องพักของคุณ หมายเลข #${booking.id}`,
         html: customerHtml,
+        smtpConfig: smtp
       });
-      console.log(`[SMTP] Customer email sent successfully to ${booking.guestEmail}`);
+      if (custRes.success) {
+        customerSent = true;
+        console.log(`[Email Dispatch] Customer email sent successfully to ${customerEmail}`);
+      }
     }
 
-    // B. Send to Admin Notify Email
-    if (smtp.adminNotifyEmail && smtp.adminNotifyEmail.includes("@")) {
-      await transporter.sendMail({
-        from: fromHeader,
-        to: smtp.adminNotifyEmail,
+    // B. Send to Admin Notify Email(s)
+    const adminEmailList = (Array.isArray(adminEmail) ? adminEmail : String(adminEmail).split(/[,;\s]+/))
+      .map((e: string) => e.trim())
+      .filter((e: string) => e && e.includes("@"));
+
+    if (adminEmailList.length > 0) {
+      const adminRes = await sendEmailMessage({
+        to: adminEmailList,
         subject: `[จองใหม่] จองด่วนหมายเลข #${booking.id} - คุณ ${booking.guestName}`,
         html: adminHtml,
+        smtpConfig: smtp
       });
-      console.log(`[SMTP] Admin notification sent successfully to ${smtp.adminNotifyEmail}`);
+      if (adminRes.success) {
+        adminSent = true;
+        console.log(`[Email Dispatch] Admin notification sent successfully to ${adminEmailList.join(", ")}`);
+      }
     }
 
-    return true;
-  } catch (err) {
-    console.error("[SMTP Error] Failed to send booking notification email:", err);
+    await recordNotificationLog({
+      id: `notif-email-${Date.now()}-${Math.floor(Math.random() * 1000)}`,
+      bookingId: booking.id,
+      channel: "email",
+      recipient: `${adminEmailList.join(", ") || adminEmail}, ${customerEmail}`,
+      status: (customerSent || adminSent) ? "sent" : "failed",
+      message: `ส่งอีเมลแจ้งเตือนสำเร็จ (แอดมิน: ${adminEmailList.join(", ") || adminEmail} | ลูกค้า: ${customerEmail})`,
+      createdAt: new Date().toISOString()
+    });
+
+    return customerSent || adminSent;
+  } catch (err: any) {
+    console.error("[Email Error] Failed to send booking notification email:", err);
+    await recordNotificationLog({
+      id: `notif-email-${Date.now()}-${Math.floor(Math.random() * 1000)}`,
+      bookingId: booking.id,
+      channel: "email",
+      recipient: `${adminEmail}, ${customerEmail}`,
+      status: "failed",
+      message: `ส่งอีเมลไม่สำเร็จ: ${err.message}`,
+      createdAt: new Date().toISOString()
+    });
     return false;
   }
+}
+
+// Helper function to send LINE notification (Supports LINE Notify, LINE Messaging API, and Webhooks)
+async function sendBookingLineNotification(booking: any, lineConfig: any) {
+  const token = lineConfig?.token || process.env.LINE_NOTIFY_TOKEN || "";
+  const channelAccessToken = lineConfig?.channelAccessToken || process.env.LINE_CHANNEL_ACCESS_TOKEN || "";
+  const targetId = lineConfig?.targetId || process.env.LINE_TARGET_ID || "";
+  const webhookUrl = lineConfig?.webhookUrl || process.env.LINE_WEBHOOK_URL || "";
+
+  const d1 = new Date(booking.checkIn);
+  const d2 = new Date(booking.checkOut);
+  const diff = Math.abs(d2.getTime() - d1.getTime());
+  const nights = Math.ceil(diff / (1000 * 60 * 60 * 24)) || 1;
+
+  const roomDisplay = booking.roomName || booking.roomType || "ห้องพักสไตล์ลอฟต์";
+  const totalPriceFormatted = Number(booking.totalPrice || 0).toLocaleString();
+
+  const messageText = `
+🏨 [THE M5 RESIDENCE] การจองใหม่!
+────────────────
+🔖 หมายเลขจอง: #${booking.id}
+🛏️ ห้องพัก: ${roomDisplay}
+📅 เช็คอิน: ${booking.checkIn} (หลัง 14:00 น.)
+📅 เช็คเอาท์: ${booking.checkOut} (ก่อน 12:00 น.)
+⏳ ระยะเวลา: ${nights} คืน (${booking.guests} ท่าน)
+💰 ยอดสุทธิ: ฿${totalPriceFormatted} บาท
+🏷️ สถานะ: ${booking.status === "Pending" ? "รอชำระเงิน / ตรวจสอบ" : booking.status}
+────────────────
+👤 ผู้จอง: คุณ ${booking.guestName}
+📞 เบอร์โทร: ${booking.guestPhone}
+✉️ อีเมล: ${booking.guestEmail}
+💬 คำขอพิเศษ: ${booking.specialRequest || "ไม่มี"}
+────────────────
+⏰ เวลาทำรายการ: ${new Date().toLocaleString("th-TH", { timeZone: "Asia/Bangkok" })}`;
+
+  const results: any[] = [];
+
+  // 1. LINE Notify API (Primary & standard for Thai hotels/businesses)
+  if (token) {
+    try {
+      const resp = await fetch("https://notify-api.line.me/api/notify", {
+        method: "POST",
+        headers: {
+          "Authorization": `Bearer ${token.trim()}`,
+          "Content-Type": "application/x-www-form-urlencoded",
+        },
+        body: new URLSearchParams({ message: messageText }).toString(),
+      });
+      const data = await resp.json().catch(() => ({}));
+      if (resp.ok && (data.status === 200 || data.status === "200")) {
+        console.log(`[LINE Notify] Sent successfully for booking #${booking.id}`);
+        results.push({ channel: "line_notify", success: true, message: "ส่งเข้า LINE Notify สำเร็จ" });
+      } else {
+        console.error(`[LINE Notify Error] Response:`, data);
+        results.push({ channel: "line_notify", success: false, message: data.message || `LINE Notify error (${data.status})` });
+      }
+    } catch (err: any) {
+      console.error(`[LINE Notify Network Error]:`, err.message);
+      results.push({ channel: "line_notify", success: false, message: err.message });
+    }
+  }
+
+  // 2. LINE Messaging API (LINE Official Account / Bot)
+  if (channelAccessToken) {
+    try {
+      const pushUrl = targetId ? "https://api.line.me/v2/bot/message/push" : "https://api.line.me/v2/bot/message/broadcast";
+      const bodyPayload = targetId
+        ? { to: targetId.trim(), messages: [{ type: "text", text: messageText.trim() }] }
+        : { messages: [{ type: "text", text: messageText.trim() }] };
+
+      const resp = await fetch(pushUrl, {
+        method: "POST",
+        headers: {
+          "Authorization": `Bearer ${channelAccessToken.trim()}`,
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify(bodyPayload),
+      });
+      const data = await resp.json().catch(() => ({}));
+      if (resp.ok) {
+        console.log(`[LINE Messaging API] Sent successfully for booking #${booking.id}`);
+        results.push({ channel: "line_messaging_api", success: true, message: "ส่งเข้า LINE Messaging API สำเร็จ" });
+      } else {
+        console.error(`[LINE Messaging API Error]:`, data);
+        results.push({ channel: "line_messaging_api", success: false, message: data.message || "Failed" });
+      }
+    } catch (err: any) {
+      console.error(`[LINE Messaging API Network Error]:`, err.message);
+      results.push({ channel: "line_messaging_api", success: false, message: err.message });
+    }
+  }
+
+  // 3. Webhook forwarding (Discord / Slack / Make / Zapier)
+  if (webhookUrl) {
+    try {
+      await fetch(webhookUrl, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          content: messageText,
+          text: messageText,
+          booking,
+        }),
+      });
+      results.push({ channel: "webhook", success: true, message: "ส่งเข้า Webhook สำเร็จ" });
+    } catch (err: any) {
+      results.push({ channel: "webhook", success: false, message: err.message });
+    }
+  }
+
+  // If no LINE credentials configured
+  if (!token && !channelAccessToken && !webhookUrl) {
+    console.log(`[LINE Notification Info] No LINE token configured yet. Message logged:\n${messageText}`);
+    results.push({ channel: "line", success: false, simulated: true, message: "ยังไม่ได้ระบุ LINE Token (สามารถเพิ่ม Token ได้ที่เมนูตั้งค่าการแจ้งเตือน)" });
+  }
+
+  const isSuccess = results.some(r => r.success);
+  const isSimulated = results.some(r => r.simulated);
+
+  await recordNotificationLog({
+    id: `notif-line-${Date.now()}-${Math.floor(Math.random() * 1000)}`,
+    bookingId: booking.id,
+    channel: "line",
+    recipient: token ? "LINE Notify Group/Chat" : (channelAccessToken ? "LINE OA Channel" : "LINE (รอระบุ Token)"),
+    status: isSuccess ? "sent" : (isSimulated ? "simulated" : "failed"),
+    message: messageText.trim(),
+    createdAt: new Date().toISOString()
+  });
+
+  return results;
+}
+
+// Helper function to send official Quotation email to customer and admin
+async function sendQuotationEmail(doc: any, company: any, smtp: any) {
+  const adminEmail = smtp?.adminNotifyEmail || process.env.ADMIN_NOTIFY_EMAIL || "soothirote.nik@gmail.com";
+  const customerEmail = doc.customer?.email;
+  const customerName = doc.customer?.name || "ท่านผู้มีอุปการคุณ";
+  const contactPerson = doc.customer?.contactPerson || customerName;
+  const docNumber = doc.documentNumber || "QT-DOCUMENT";
+  const issueDate = doc.issueDate || new Date().toISOString().split("T")[0];
+  const dueDate = doc.dueDate || "-";
+  const checkIn = doc.checkIn || "-";
+  const checkOut = doc.checkOut || "-";
+  const totalAmountFormatted = Number(doc.totalAmount || 0).toLocaleString("th-TH", { minimumFractionDigits: 2 });
+  const vatAmountFormatted = Number(doc.vatAmount || 0).toLocaleString("th-TH", { minimumFractionDigits: 2 });
+  const netBeforeVatFormatted = Number(doc.netBeforeVat || 0).toLocaleString("th-TH", { minimumFractionDigits: 2 });
+
+  const itemsRowsHtml = (doc.items || []).map((item: any, idx: number) => `
+    <tr style="border-bottom: 1px solid #e2e8f0;">
+      <td style="padding: 10px 8px; text-align: center; color: #64748b; font-size: 13px;">${idx + 1}</td>
+      <td style="padding: 10px 8px; color: #1e293b; font-size: 13px; font-weight: 500;">
+        ${item.description}
+      </td>
+      <td style="padding: 10px 8px; text-align: center; color: #334155; font-size: 13px;">${item.quantity}</td>
+      <td style="padding: 10px 8px; text-align: right; color: #334155; font-size: 13px;">${Number(item.unitPrice || 0).toLocaleString("th-TH", { minimumFractionDigits: 2 })}</td>
+      <td style="padding: 10px 8px; text-align: right; color: #0f172a; font-size: 13px; font-weight: 600;">${Number(item.amount || 0).toLocaleString("th-TH", { minimumFractionDigits: 2 })}</td>
+    </tr>
+  `).join("");
+
+  const quotationHtml = `
+    <div style="font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif; max-width: 680px; margin: 0 auto; padding: 25px; border: 1px solid #e2e8f0; border-radius: 12px; background-color: #ffffff; color: #1e293b; box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05);">
+      <div style="text-align: center; border-bottom: 3px solid #d95a06; padding-bottom: 20px; margin-bottom: 25px;">
+        <h2 style="color: #0f172a; margin: 0; font-size: 24px; letter-spacing: 1px; font-weight: 800;">THE M5 RESIDENCE</h2>
+        <p style="color: #64748b; margin: 5px 0 0; font-size: 13px;">บริษัท เดอะ เฟลิกซ์ พร็อพเพอร์ตี้ จำกัด (สำนักงานใหญ่) | TAX ID: 0125561031626</p>
+        <div style="display: inline-block; margin-top: 12px; background-color: #fef3c7; border: 1px solid #f59e0b; padding: 4px 14px; border-radius: 20px; font-size: 12px; font-weight: bold; color: #b45309;">
+          📄 ใบเสนอราคาทางการ (OFFICIAL QUOTATION)
+        </div>
+      </div>
+
+      <div style="margin-bottom: 20px;">
+        <p style="font-size: 15px; color: #0f172a; font-weight: bold; margin: 0 0 8px 0;">เรียน คุณ ${contactPerson} (${customerName}),</p>
+        <p style="font-size: 13px; color: #475569; line-height: 1.6; margin: 0;">
+          โรงแรม เดอะ เอ็มไฟว์ เรสซิเดนซ์ ขอขอบพระคุณท่านที่ให้ความไว้วางใจ ทางโรงแรมขอส่งเอกสารใบเสนอราคาสำหรับการเข้าพักและการใช้บริการ รายละเอียดดังนี้:
+        </p>
+      </div>
+
+      <!-- Info Box -->
+      <table style="width: 100%; border-collapse: collapse; margin-bottom: 20px; font-size: 13px; background-color: #f8fafc; border-radius: 8px; border: 1px solid #e2e8f0;">
+        <tr>
+          <td style="padding: 10px 14px; width: 50%; vertical-align: top; border-right: 1px solid #e2e8f0;">
+            <p style="margin: 0 0 4px 0; color: #64748b; font-size: 11px; font-weight: bold; text-transform: uppercase;">ข้อมูลลูกค้า / องค์กร</p>
+            <p style="margin: 0; font-weight: 700; color: #0f172a;">${customerName}</p>
+            <p style="margin: 2px 0 0; color: #475569;">ผู้ติดต่อ: ${contactPerson}</p>
+            <p style="margin: 2px 0 0; color: #475569;">โทร: ${doc.customer?.phone || "-"}</p>
+            <p style="margin: 2px 0 0; color: #475569;">อีเมล: ${customerEmail || "-"}</p>
+            ${doc.customer?.taxId && doc.customer.taxId !== "-" ? `<p style="margin: 2px 0 0; color: #64748b; font-size: 12px;">เลขผู้เสียภาษี: ${doc.customer.taxId}</p>` : ""}
+          </td>
+          <td style="padding: 10px 14px; width: 50%; vertical-align: top;">
+            <p style="margin: 0 0 4px 0; color: #64748b; font-size: 11px; font-weight: bold; text-transform: uppercase;">รายละเอียดเอกสาร & วันเข้าพัก</p>
+            <p style="margin: 0; font-weight: 700; color: #d95a06; font-size: 14px;">เลขที่: ${docNumber}</p>
+            <p style="margin: 2px 0 0; color: #475569;">วันที่ออก: ${issueDate}</p>
+            <p style="margin: 2px 0 0; color: #475569;">ยืนยันราคาภายใน: ${dueDate}</p>
+            ${checkIn !== "-" ? `<p style="margin: 4px 0 0; color: #0f172a; font-weight: 600;">📅 วันที่เข้าพัก: ${checkIn} ถึง ${checkOut}</p>` : ""}
+          </td>
+        </tr>
+      </table>
+
+      <!-- Items Table -->
+      <table style="width: 100%; border-collapse: collapse; margin-bottom: 20px; font-size: 13px;">
+        <thead>
+          <tr style="background-color: #0f172a; color: #ffffff;">
+            <th style="padding: 10px 8px; text-align: center; width: 35px; font-size: 12px;">ลำดับ</th>
+            <th style="padding: 10px 8px; text-align: left; font-size: 12px;">รายการ (Description)</th>
+            <th style="padding: 10px 8px; text-align: center; width: 60px; font-size: 12px;">จำนวน</th>
+            <th style="padding: 10px 8px; text-align: right; width: 100px; font-size: 12px;">ราคา/หน่วย</th>
+            <th style="padding: 10px 8px; text-align: right; width: 110px; font-size: 12px;">จำนวนเงิน (บาท)</th>
+          </tr>
+        </thead>
+        <tbody>
+          ${itemsRowsHtml}
+        </tbody>
+        <tfoot>
+          <tr>
+            <td colspan="3" rowspan="3" style="padding: 12px 14px; vertical-align: top; background-color: #f8fafc; border-top: 1px solid #cbd5e1; border-right: 1px solid #cbd5e1;">
+              <span style="font-size: 11px; color: #64748b; font-weight: bold; display: block;">จำนวนเงินตัวอักษร:</span>
+              <span style="font-size: 13px; font-weight: bold; color: #0f172a;">${doc.bahtText || ""}</span>
+            </td>
+            <td style="padding: 8px 10px; text-align: right; color: #64748b; font-size: 12px; border-top: 1px solid #cbd5e1;">ยอดรวมก่อนภาษี:</td>
+            <td style="padding: 8px 10px; text-align: right; font-weight: 600; color: #0f172a; border-top: 1px solid #cbd5e1;">${netBeforeVatFormatted}</td>
+          </tr>
+          <tr>
+            <td style="padding: 8px 10px; text-align: right; color: #64748b; font-size: 12px;">ภาษีมูลค่าเพิ่ม (VAT 7%):</td>
+            <td style="padding: 8px 10px; text-align: right; font-weight: 600; color: #0f172a;">${vatAmountFormatted}</td>
+          </tr>
+          <tr style="background-color: #fef2f2;">
+            <td style="padding: 10px 10px; text-align: right; color: #d95a06; font-size: 13px; font-weight: bold;">ยอดสุทธิทั้งสิ้น:</td>
+            <td style="padding: 10px 10px; text-align: right; font-weight: 800; font-size: 16px; color: #d95a06;">${totalAmountFormatted} บาท</td>
+          </tr>
+        </tfoot>
+      </table>
+
+      <!-- Bank Details -->
+      <div style="background-color: #f8fafc; border: 1px solid #e2e8f0; border-radius: 8px; padding: 14px; margin-bottom: 20px; font-size: 12px;">
+        <p style="margin: 0 0 6px 0; font-weight: bold; color: #0f172a;">💳 ข้อมูลการโอนเงินชำระค่าบริการ / วางมัดจำ:</p>
+        <p style="margin: 2px 0; color: #334155;">ธนาคาร: <strong>${doc.payment?.bankName || company?.bankName || "ธนาคารกสิกรไทย (KBANK)"}</strong></p>
+        <p style="margin: 2px 0; color: #334155;">ชื่อบัญชี: <strong>${company?.bankAccountName || "บริษัท เดอะ เฟลิกซ์ พร็อพเพอร์ตี้ จำกัด"}</strong></p>
+        <p style="margin: 2px 0; color: #334155;">เลขที่บัญชี: <strong style="font-family: monospace; font-size: 14px; color: #0f172a;">${company?.bankAccountNumber || "012-3-45678-9"}</strong></p>
+        <p style="margin: 6px 0 0; color: #64748b; font-size: 11px;">*เมื่อท่านต้องการยืนยันการจอง กรุณาส่งหลักฐานการโอนเงินหรือติดต่อเจ้าหน้าที่ฝ่ายขาย</p>
+      </div>
+
+      <!-- Action note -->
+      <div style="text-align: center; padding: 15px; background: #fff7ed; border: 1px dashed #ea580c; border-radius: 8px; margin-bottom: 20px;">
+        <p style="margin: 0; font-size: 13px; font-weight: bold; color: #c2410c;">
+          ต้องการยืนยันการจองห้องพักตามใบเสนอราคานี้ทันที?
+        </p>
+        <p style="margin: 4px 0 0; font-size: 12px; color: #7c2d12;">
+          ท่านสามารถคลิกปุ่ม "ยืนยันสั่งจอง" ได้ที่หน้าเว็บ หรือโทร 086-379-6761 / LINE: @m5residence
+        </p>
+      </div>
+
+      <div style="text-align: center; border-top: 1px solid #e2e8f0; padding-top: 15px; font-size: 11px; color: #94a3b8;">
+        <p style="margin: 0;">โรงแรมเดอะ เอ็มไฟว์ เรสซิเดนซ์ (The M5 Residence) ปากเกร็ด นนทบุรี</p>
+        <p style="margin: 2px 0 0;">ใกล้ อิมแพ็ค เมืองทองธานี & ศูนย์ราชการแจ้งวัฒนะ</p>
+      </div>
+    </div>
+  `;
+
+  // Check if either SMTP2GO API or standard SMTP credentials are provided
+  const hasConfig = Boolean(smtp?.apiKey || process.env.SMTP2GO_API_KEY || (smtp?.host && (smtp?.user || smtp?.pass)));
+  if (!hasConfig) {
+    console.warn("[Quotation SMTP Info] SMTP credentials not set. Recording simulated notification log.");
+    await recordNotificationLog({
+      id: `notif-email-${Date.now()}-${Math.floor(Math.random() * 1000)}`,
+      bookingId: docNumber,
+      channel: "email",
+      recipient: `${customerEmail || "ไม่มีอีเมลลูกค้า"}, ${adminEmail}`,
+      status: "simulated",
+      message: `[ส่งใบเสนอราคาจำลอง] ส่งใบเสนอราคา #${docNumber} ไปยัง ${customerEmail} และ ${adminEmail}`,
+      createdAt: new Date().toISOString()
+    });
+    return { success: true, simulated: true };
+  }
+
+  try {
+    let customerSent = false;
+    let adminSent = false;
+
+    // A. Send to customer
+    if (customerEmail && customerEmail.includes("@")) {
+      const custRes = await sendEmailMessage({
+        to: customerEmail,
+        subject: `[The M5 Residence] ใบเสนอราคาหมายเลข #${docNumber} สำหรับ ${customerName}`,
+        html: quotationHtml,
+        smtpConfig: smtp
+      });
+      if (custRes.success) customerSent = true;
+    }
+
+    // B. Send to admin(s)
+    const adminEmailList = (Array.isArray(adminEmail) ? adminEmail : String(adminEmail).split(/[,;\s]+/))
+      .map((e: string) => e.trim())
+      .filter((e: string) => e && e.includes("@"));
+
+    if (adminEmailList.length > 0) {
+      const admRes = await sendEmailMessage({
+        to: adminEmailList,
+        subject: `[ใบเสนอราคาใหม่] #${docNumber} - ${customerName} (${contactPerson})`,
+        html: quotationHtml,
+        smtpConfig: smtp
+      });
+      if (admRes.success) adminSent = true;
+    }
+
+    await recordNotificationLog({
+      id: `notif-email-${Date.now()}-${Math.floor(Math.random() * 1000)}`,
+      bookingId: docNumber,
+      channel: "email",
+      recipient: `${customerEmail}, ${adminEmail}`,
+      status: (customerSent || adminSent) ? "sent" : "failed",
+      message: `ส่งอีเมลใบเสนอราคา #${docNumber} สำเร็จ (ลูกค้า: ${customerEmail} | แอดมิน: ${adminEmail})`,
+      createdAt: new Date().toISOString()
+    });
+
+    return { success: true, customerSent, adminSent };
+  } catch (err: any) {
+    console.error("[Email Error] Failed to send quotation email:", err);
+    await recordNotificationLog({
+      id: `notif-email-${Date.now()}-${Math.floor(Math.random() * 1000)}`,
+      bookingId: docNumber,
+      channel: "email",
+      recipient: `${customerEmail}, ${adminEmail}`,
+      status: "failed",
+      message: `ส่งอีเมลใบเสนอราคาไม่สำเร็จ: ${err.message}`,
+      createdAt: new Date().toISOString()
+    });
+    return { success: false, error: err.message };
+  }
+}
+
+// Helper function to send LINE notification for quotation events
+async function sendQuotationLineNotification(doc: any, lineConfig: any, actionType: "new_request" | "customer_approved" = "new_request") {
+  const token = lineConfig?.token || process.env.LINE_NOTIFY_TOKEN || "";
+  const channelAccessToken = lineConfig?.channelAccessToken || process.env.LINE_CHANNEL_ACCESS_TOKEN || "";
+  const webhookUrl = lineConfig?.webhookUrl || process.env.LINE_WEBHOOK_URL || "";
+
+  const docNumber = doc.documentNumber || "QT-DOCUMENT";
+  const customerName = doc.customer?.name || "-";
+  const contactPerson = doc.customer?.contactPerson || customerName;
+  const phone = doc.customer?.phone || "-";
+  const totalAmountFormatted = Number(doc.totalAmount || 0).toLocaleString();
+
+  const titleHeader = actionType === "customer_approved"
+    ? `🎉 [ลูกค้ากดยืนยันสั่งจองจากใบเสนอราคา!]`
+    : `💼 [ขอใบเสนอราคาออนไลน์ใหม่จากหน้าเว็บ!]`;
+
+  const messageText = `
+${titleHeader}
+────────────────
+🔖 เลขที่เอกสาร: #${docNumber}
+🏢 หน่วยงาน/ลูกค้า: ${customerName}
+👤 ผู้ติดต่อ: คุณ ${contactPerson}
+📞 เบอร์โทรศัพท์: ${phone}
+✉️ อีเมล: ${doc.customer?.email || "-"}
+📅 วันที่เข้าพัก: ${doc.checkIn || "-"} ถึง ${doc.checkOut || "-"}
+💰 ยอดรวมทั้งสิ้น: ฿${totalAmountFormatted} บาท
+🏷️ สถานะเอกสาร: ${doc.status === "approved" ? "ยืนยันสั่งจองแล้ว (Approved)" : "รอตรวจสอบ (Draft / Pending)"}
+${doc.remarks ? `💬 หมายเหตุ: ${doc.remarks}` : ""}
+────────────────
+⏰ เวลาทำรายการ: ${new Date().toLocaleString("th-TH", { timeZone: "Asia/Bangkok" })}`;
+
+  const results: any[] = [];
+
+  if (token) {
+    try {
+      const resp = await fetch("https://notify-api.line.me/api/notify", {
+        method: "POST",
+        headers: {
+          "Authorization": `Bearer ${token.trim()}`,
+          "Content-Type": "application/x-www-form-urlencoded",
+        },
+        body: new URLSearchParams({ message: messageText }).toString(),
+      });
+      if (resp.ok) {
+        results.push({ channel: "line_notify", success: true });
+      }
+    } catch (_) {}
+  }
+
+  if (channelAccessToken) {
+    try {
+      await fetch("https://api.line.me/v2/bot/message/broadcast", {
+        method: "POST",
+        headers: {
+          "Authorization": `Bearer ${channelAccessToken.trim()}`,
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ messages: [{ type: "text", text: messageText }] }),
+      });
+      results.push({ channel: "line_messaging_api", success: true });
+    } catch (_) {}
+  }
+
+  if (webhookUrl) {
+    try {
+      await fetch(webhookUrl, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ content: messageText, text: messageText, document: doc }),
+      });
+      results.push({ channel: "webhook", success: true });
+    } catch (_) {}
+  }
+
+  await recordNotificationLog({
+    id: `notif-line-${Date.now()}-${Math.floor(Math.random() * 1000)}`,
+    bookingId: docNumber,
+    channel: "line",
+    recipient: token ? "LINE Notify Group" : "LINE",
+    status: results.some(r => r.success) ? "sent" : "simulated",
+    message: messageText.trim(),
+    createdAt: new Date().toISOString()
+  });
+
+  return results;
 }
 
 let isInternalUrlHealthy = true;
@@ -322,7 +995,8 @@ async function getSettingsFromDirectus() {
       gallery,
       blockedDates,
       coupons,
-      impactEvents
+      impactEvents,
+      partners
     ] = await Promise.all([
       directusFetch("/items/m5_general"),
       directusFetch("/items/m5_smtp"),
@@ -336,6 +1010,10 @@ async function getSettingsFromDirectus() {
       directusFetch("/items/m5_coupons"),
       directusFetch("/items/m5_impact_events").catch((err) => {
         console.warn("m5_impact_events collection not found or failed in Directus:", err.message);
+        return [];
+      }),
+      directusFetch("/items/m5_partners").catch((err) => {
+        // Suppress forbidden warning for m5_partners on boot to avoid confusing users
         return [];
       })
     ]);
@@ -395,6 +1073,14 @@ async function getSettingsFromDirectus() {
       active: e.active !== false
     }));
 
+    const mappedPartners = (partners || []).map((p: any) => ({
+      id: p.partnerId || p.id,
+      name: p.name,
+      logoUrl: p.logoUrl || p.logo_url || "",
+      link: p.link || "",
+      active: p.active !== false
+    }));
+
     const result = deduplicateLocalDb({
       general,
       rooms: mappedRooms,
@@ -406,7 +1092,8 @@ async function getSettingsFromDirectus() {
       blockedDates: mappedBlockedDates,
       coupons: coupons || [],
       smtp,
-      impactEvents: mappedImpactEvents
+      impactEvents: mappedImpactEvents,
+      partners: mappedPartners
     });
 
     // Keep local db.json in sync with what is fetched, but merging intelligently to never lose local edits/images
@@ -416,7 +1103,7 @@ async function getSettingsFromDirectus() {
     // Strictly trust Directus as the single source of truth when connected. 
     // This allows the admin dashboard to perform deletes/updates/inserts and have them respected, with no mock overrides.
     localDb.general = result.general || {};
-    localDb.smtp = result.smtp || {};
+    localDb.smtp = (result.smtp && result.smtp.host) ? result.smtp : (localDb.smtp || {});
     localDb.rooms = result.rooms || [];
     localDb.promotions = result.promotions || [];
     localDb.amenities = result.amenities || [];
@@ -426,6 +1113,7 @@ async function getSettingsFromDirectus() {
     localDb.blockedDates = result.blockedDates || [];
     localDb.coupons = result.coupons || [];
     localDb.impactEvents = result.impactEvents || [];
+    localDb.partners = result.partners || [];
 
     // Keep slides as local only
     if (!localDb.slides) {
@@ -460,7 +1148,10 @@ async function getSettingsFromDirectus() {
       slides: db.slides || [],
       googlePlaceId: db.googlePlaceId !== undefined ? db.googlePlaceId : "ChIJXWlJMC-e4jARLqX9OidpWjY",
       googleReviewsEnabled: db.googleReviewsEnabled !== undefined ? db.googleReviewsEnabled : true,
-      impactEvents: db.impactEvents || []
+      impactEvents: db.impactEvents || [],
+      partners: db.partners || [],
+      adminMenuConfig: db.adminMenuConfig || [],
+      adminRoles: db.adminRoles || []
     };
   }
 }
@@ -533,6 +1224,10 @@ async function addBookingToDirectus(booking: any) {
     localDb.bookings = [result, ...(localDb.bookings || []).filter((b: any) => b.id !== result.id)];
     saveLocalDb(localDb);
 
+    if (firestoreDb) {
+      fsSetDoc(fsDoc(firestoreDb, "bookings", result.id), result, { merge: true }).catch(() => {});
+    }
+
     return result;
   } catch (err) {
     console.warn("Directus add booking failed. Saving locally to db.json.", err);
@@ -554,6 +1249,11 @@ async function addBookingToDirectus(booking: any) {
     const localDb = getLocalDb();
     localDb.bookings = [result, ...(localDb.bookings || []).filter((b: any) => b.id !== result.id)];
     saveLocalDb(localDb);
+
+    if (firestoreDb) {
+      fsSetDoc(fsDoc(firestoreDb, "bookings", result.id), result, { merge: true }).catch(() => {});
+    }
+
     return result;
   }
 }
@@ -581,6 +1281,11 @@ async function updateBookingStatusInDirectus(bookingId: string, status: string) 
     (b.id === bookingId || b.bookingId === bookingId) ? { ...b, status } : b
   );
   saveLocalDb(localDb);
+
+  if (firestoreDb) {
+    fsSetDoc(fsDoc(firestoreDb, "bookings", bookingId), { status }, { merge: true }).catch(() => {});
+  }
+
   return true;
 }
 
@@ -612,6 +1317,11 @@ async function updateBookingInDirectus(bookingId: string, updatedFields: any) {
     (b.id === bookingId || b.bookingId === bookingId) ? { ...b, ...updatedFields } : b
   );
   saveLocalDb(localDb);
+
+  if (firestoreDb) {
+    fsSetDoc(fsDoc(firestoreDb, "bookings", bookingId), updatedFields, { merge: true }).catch(() => {});
+  }
+
   return true;
 }
 
@@ -640,6 +1350,11 @@ async function deleteBookingFromDirectus(bookingId: string) {
 
   localDb.bookings = (localDb.bookings || []).filter((b: any) => b.id !== bookingId && b.bookingId !== bookingId);
   saveLocalDb(localDb);
+
+  if (firestoreDb) {
+    fsDeleteDoc(fsDoc(firestoreDb, "bookings", bookingId)).catch(() => {});
+  }
+
   return true;
 }
 
@@ -1182,41 +1897,44 @@ async function updateSingleton(collection: string, data: any) {
 }
 
 async function syncCollection(collection: string, items: any[], mapItemFn: (item: any) => any) {
-  const current = await directusFetch(`/items/${collection}`) || [];
-  if (current && current.length > 0) {
-    const idsToDelete = current.map((item: any) => item.id);
-    try {
-      // Try Directus standard array delete
-      await directusFetch(`/items/${collection}`, {
-        method: "DELETE",
-        body: JSON.stringify(idsToDelete)
-      });
-      console.log(`[Sync] Successfully bulk deleted ${idsToDelete.length} items from ${collection}`);
-    } catch (bulkErr: any) {
-      console.warn(`[Sync] Bulk array delete failed for ${collection}, trying { keys: ... } wrapper:`, bulkErr.message || bulkErr);
-      try {
-        // Try Directus keys-wrapped delete
-        await directusFetch(`/items/${collection}`, {
-          method: "DELETE",
-          body: JSON.stringify({ keys: idsToDelete })
-        });
-        console.log(`[Sync] Successfully bulk deleted ${idsToDelete.length} items from ${collection} using keys wrapper`);
-      } catch (wrapperErr: any) {
-        console.warn(`[Sync] Bulk wrapper delete failed for ${collection}, falling back to individual deletes:`, wrapperErr.message || wrapperErr);
-        // Fallback: individual delete
-        for (const id of idsToDelete) {
+  try {
+    const current = await directusFetch(`/items/${collection}?limit=-1&fields=id`) || [];
+    if (current && current.length > 0) {
+      const idsToDelete = current.map((item: any) => item.id);
+      for (let i = 0; i < idsToDelete.length; i += 100) {
+        const chunk = idsToDelete.slice(i, i + 100);
+        try {
+          // Try Directus standard array delete
+          await directusFetch(`/items/${collection}`, {
+            method: "DELETE",
+            body: JSON.stringify(chunk)
+          });
+          console.log(`[Sync] Successfully bulk deleted ${chunk.length} items from ${collection}`);
+        } catch (bulkErr: any) {
+          console.warn(`[Sync] Bulk array delete failed for ${collection}, trying { keys: ... } wrapper:`, bulkErr.message || bulkErr);
           try {
-            await directusFetch(`/items/${collection}/${id}`, {
-              method: "DELETE"
+            await directusFetch(`/items/${collection}`, {
+              method: "DELETE",
+              body: JSON.stringify({ keys: chunk })
             });
-            console.log(`[Sync] Individually deleted item ${id} from ${collection}`);
-          } catch (indErr: any) {
-            console.error(`[Sync] Failed to individually delete item ${id} from ${collection}:`, indErr.message || indErr);
+            console.log(`[Sync] Successfully bulk deleted ${chunk.length} items from ${collection} using keys wrapper`);
+          } catch (wrapperErr: any) {
+            console.warn(`[Sync] Bulk wrapper delete failed for ${collection}, falling back to individual deletes:`, wrapperErr.message || wrapperErr);
+            for (const id of chunk) {
+              try {
+                await directusFetch(`/items/${collection}/${id}`, {
+                  method: "DELETE"
+                });
+              } catch (_) {}
+            }
           }
         }
       }
     }
+  } catch (err: any) {
+    console.warn(`[Sync] Error during cleanup phase of ${collection}:`, err.message || err);
   }
+
   for (const item of items) {
     try {
       const mapped = mapItemFn(item);
@@ -1385,6 +2103,59 @@ async function ensureImpactEventsCollection() {
   }
 }
 
+async function ensurePartnersCollection() {
+  try {
+    try {
+      await directusFetch("/collections/m5_partners");
+      return; // Already exists!
+    } catch (err: any) {
+      // 404 or forbidden error means we should attempt to create it
+    }
+
+    console.log("[Directus] Attempting to create m5_partners collection...");
+    await directusFetch("/collections", {
+      method: "POST",
+      body: JSON.stringify({
+        collection: "m5_partners",
+        schema: {},
+        meta: {
+          singleton: false,
+          note: "Collection for website partners"
+        }
+      })
+    });
+
+    const fields = [
+      { name: "partnerId", type: "string", interface: "input" },
+      { name: "name", type: "string", interface: "input" },
+      { name: "logoUrl", type: "string", interface: "input" },
+      { name: "link", type: "string", interface: "input" },
+      { name: "active", type: "boolean", interface: "boolean" }
+    ];
+
+    for (const field of fields) {
+      try {
+        await directusFetch("/fields/m5_partners", {
+          method: "POST",
+          body: JSON.stringify({
+            field: field.name,
+            type: field.type,
+            meta: {
+              interface: field.interface,
+              width: "full"
+            }
+          })
+        });
+        console.log(`[Directus] Created field ${field.name} in m5_partners`);
+      } catch (fErr: any) {
+        console.log(`[Directus] Note on field ${field.name}:`, fErr.message);
+      }
+    }
+  } catch (err: any) {
+    console.log("[Directus] ensure m5_partners collection note:", err.message);
+  }
+}
+
 async function syncImpactEventsToDirectus(events: any[]) {
   try {
     await ensureImpactEventsCollection();
@@ -1417,11 +2188,13 @@ async function reseedDirectus(force = false) {
 }
 
 async function startServer() {
+  await initDb();
+  
   const app = express();
   const PORT = 3000;
 
-  app.use(express.json({ limit: "20mb" }));
-  app.use(express.urlencoded({ limit: "20mb", extended: true }));
+  app.use(express.json({ limit: "50mb" }));
+  app.use(express.urlencoded({ limit: "50mb", extended: true }));
 
   // Create uploads directory if not exists
   const uploadsDir = path.join(process.cwd(), "uploads");
@@ -1447,7 +2220,57 @@ async function startServer() {
     }
   }
 
+  const publicImagesDir = path.join(process.cwd(), "public", "images");
+  if (!fs.existsSync(publicImagesDir)) {
+    try {
+      fs.mkdirSync(publicImagesDir, { recursive: true });
+    } catch (_) {}
+  }
+  app.use("/images", express.static(publicImagesDir));
   app.use("/uploads", express.static(uploadsDir));
+  app.use("/uploads", express.static(publicImagesDir));
+
+  // Dynamic resilient uploads handler: guarantees images never 404 or return text/html
+  app.get("/uploads/:filename", async (req, res, next) => {
+    try {
+      const { filename } = req.params;
+      const cleanName = path.basename(filename);
+
+      // 1. Check local uploads directory
+      const filePath = path.join(uploadsDir, cleanName);
+      if (fs.existsSync(filePath)) {
+        return res.sendFile(filePath);
+      }
+
+      // 2. Check public/images directory
+      const pubPath = path.join(publicImagesDir, cleanName);
+      if (fs.existsSync(pubPath)) {
+        return res.sendFile(pubPath);
+      }
+
+      // 3. Smart fallback based on filename keywords so images never break
+      const lower = cleanName.toLowerCase();
+      let fallback = "bedroom_superior_m5_1782203272229.jpg";
+      if (lower.includes("lobby") || lower.includes("hero") || lower.includes("6219") || lower.includes("5850") || lower.includes("favicon") || lower.includes("logo")) {
+        fallback = "lobby_loft_m5_1782203250164.jpg";
+      } else if (lower.includes("deluxe") || lower.includes("6028") || lower.includes("6459") || lower.includes("5912")) {
+        fallback = "bedroom_deluxe_m5_1782203318372.jpg";
+      } else if (lower.includes("studio") || lower.includes("standard") || lower.includes("twin") || lower.includes("5884")) {
+        fallback = "bedroom_studio_m5_1782203293730.jpg";
+      }
+
+      const fallbackFile = path.join(publicImagesDir, fallback);
+      if (fs.existsSync(fallbackFile)) {
+        res.setHeader("Content-Type", lower.endsWith(".png") ? "image/png" : "image/jpeg");
+        res.setHeader("Cache-Control", "public, max-age=86400");
+        return res.sendFile(fallbackFile);
+      }
+
+      return next();
+    } catch (err) {
+      return next(err);
+    }
+  });
 
   // Initialize Gemini client lazily/safely
   let ai: GoogleGenAI | null = null;
@@ -2117,6 +2940,31 @@ Generate a short personalized friendly recommendation in Thai for visitors or co
   }
 
   // 1. GET: Fetch list of IMPACT events
+  
+  // GET: Fetch LIVE impact events (cached for 1 hour)
+  let liveEventsCache: any[] = [];
+  let lastLiveFetch = 0;
+  
+  app.get("/api/impact-events/live", async (req, res) => {
+    try {
+      const now = Date.now();
+      if (liveEventsCache.length === 0 || now - lastLiveFetch > 3600000) {
+        console.log("Fetching fresh LIVE events from IMPACT...");
+        const scraped = await scrapeImpactEventCalendar();
+        if (scraped && scraped.length > 0) {
+          const nowDate = new Date();
+          // Filter out past events - keep only upcoming events
+          liveEventsCache = scraped.filter((e: any) => !isPastEvent(e.date, nowDate));
+          lastLiveFetch = now;
+        }
+      }
+      return res.json({ success: true, events: liveEventsCache });
+    } catch (err: any) {
+      console.error("Error fetching live impact events:", err);
+      return res.status(500).json({ success: false, error: err.message, events: liveEventsCache });
+    }
+  });
+
   app.get("/api/impact-events", async (req, res) => {
     try {
       const localDb = getLocalDb();
@@ -2154,6 +3002,10 @@ Generate a short personalized friendly recommendation in Thai for visitors or co
           mergedEvents = [];
         }
       }
+
+      // Filter out past events: Keep only upcoming events!
+      const nowDate = new Date();
+      mergedEvents = mergedEvents.filter((e: any) => !isPastEvent(e.date, nowDate));
 
       localDb.impactEvents = mergedEvents;
       if (!localDb.general) localDb.general = {};
@@ -2533,6 +3385,30 @@ Generate a short personalized friendly recommendation in Thai for visitors or co
     }
   });
 
+  // 6. POST: Clean up past events manually from DB
+  app.post("/api/impact-events/cleanup-past", async (req, res) => {
+    try {
+      const localDb = getLocalDb();
+      const nowDate = new Date();
+      const initialCount = (localDb.impactEvents || []).length;
+      localDb.impactEvents = (localDb.impactEvents || []).filter((e: any) => !isPastEvent(e.date, nowDate));
+      saveLocalDb(localDb);
+      liveEventsCache = (liveEventsCache || []).filter((e: any) => !isPastEvent(e.date, nowDate));
+      
+      const removedCount = initialCount - localDb.impactEvents.length;
+      syncImpactEventsToDirectus(localDb.impactEvents).catch((err) => console.warn("Background Directus sync failed:", err));
+      
+      return res.json({
+        success: true,
+        message: `ล้างงานเก่าที่ผ่านไปแล้วเรียบร้อย (${removedCount} งาน)`,
+        events: localDb.impactEvents
+      });
+    } catch (err: any) {
+      console.error("Error cleaning past events:", err);
+      return res.status(500).json({ success: false, error: err.message });
+    }
+  });
+
   // API: Get Directus connection status
   app.get("/api/db-status", async (req, res) => {
     const { url, internalUrl, token } = getDirectusConfig();
@@ -2724,6 +3600,7 @@ Generate a short personalized friendly recommendation in Thai for visitors or co
       const localDb = getLocalDb();
       if (settings.general) localDb.general = settings.general;
       if (settings.smtp) localDb.smtp = settings.smtp;
+      if (settings.line) localDb.line = settings.line;
       if (settings.rooms) localDb.rooms = settings.rooms;
       if (settings.promotions) localDb.promotions = settings.promotions;
       if (settings.amenities) localDb.amenities = settings.amenities;
@@ -2736,6 +3613,9 @@ Generate a short personalized friendly recommendation in Thai for visitors or co
       if (settings.googlePlaceId !== undefined) localDb.googlePlaceId = settings.googlePlaceId;
       if (settings.googleReviewsEnabled !== undefined) localDb.googleReviewsEnabled = settings.googleReviewsEnabled;
       if (settings.impactEvents !== undefined) localDb.impactEvents = settings.impactEvents;
+      if (settings.partners !== undefined) localDb.partners = settings.partners;
+      if (settings.adminMenuConfig !== undefined) localDb.adminMenuConfig = settings.adminMenuConfig;
+      if (settings.adminRoles !== undefined) localDb.adminRoles = settings.adminRoles;
       saveLocalDb(localDb);
 
       // Now attempt to sync with Directus in a try/catch block so that if Directus fails, the user request STILL succeeds!
@@ -2852,6 +3732,17 @@ Generate a short personalized friendly recommendation in Thai for visitors or co
             active: e.active !== false
           }));
         }
+
+        if (settings.partners) {
+          await ensurePartnersCollection();
+          await syncCollection("m5_partners", settings.partners, (p: any) => ({
+            partnerId: p.id,
+            name: p.name,
+            logoUrl: p.logoUrl,
+            link: p.link || "",
+            active: p.active !== false
+          }));
+        }
       } catch (directusErr) {
         console.warn("Directus settings sync failed, saved locally inside db.json:", directusErr);
       }
@@ -2883,12 +3774,23 @@ Generate a short personalized friendly recommendation in Thai for visitors or co
       
       const savedBooking = await addBookingToDirectus(booking);
 
-      getSettingsFromDirectus().then(settings => {
-        sendBookingEmail(savedBooking, settings.smtp).catch(err => {
+      // Trigger BOTH LINE and Email notifications concurrently
+      getSettingsFromDirectus().then(async (settings) => {
+        const localDb = getLocalDb() as any;
+        const smtpConfig = settings?.smtp || localDb?.smtp || {};
+        const lineConfig = (settings as any)?.line || localDb?.line || {};
+
+        // 1. Email Notification (Admin + Guest)
+        sendBookingEmail(savedBooking, smtpConfig).catch(err => {
           console.error("Async sendBookingEmail error:", err);
         });
+
+        // 2. LINE Notification (LINE Notify / Messaging API / Webhook)
+        sendBookingLineNotification(savedBooking, lineConfig).catch(err => {
+          console.error("Async sendBookingLineNotification error:", err);
+        });
       }).catch(err => {
-        console.error("Async getSettingsFromDirectus for email error:", err);
+        console.error("Async getSettingsFromDirectus for notifications error:", err);
       });
 
       return res.json({ success: true, booking: savedBooking });
@@ -2920,6 +3822,62 @@ Generate a short personalized friendly recommendation in Thai for visitors or co
     }
   });
 
+  // 8.1 API: Clear all bookings and remove mock data
+  app.post("/api/bookings/clear-all", async (_req, res) => {
+    try {
+      const localDb = getLocalDb();
+      localDb.bookings = [];
+      localDb.deletedBookingIds = localDb.deletedBookingIds || [];
+      if (!localDb.deletedBookingIds.includes("B-1001")) localDb.deletedBookingIds.push("B-1001");
+      saveLocalDb(localDb);
+
+      if (firestoreDb) {
+        fsSetDoc(fsDoc(firestoreDb, "settings", "web"), { 
+          bookings: [], 
+          deletedBookingIds: localDb.deletedBookingIds 
+        }, { merge: true }).catch(() => {});
+        fsDeleteDoc(fsDoc(firestoreDb, "bookings", "B-1001")).catch(() => {});
+      }
+      return res.json({ success: true, message: "Cleared all bookings successfully" });
+    } catch (err: any) {
+      return res.status(500).json({ error: err.message });
+    }
+  });
+
+  // 8.2 API: Clear all gallery images completely
+  app.post("/api/gallery/clear-all", async (_req, res) => {
+    try {
+      const localDb = getLocalDb() as any;
+      localDb.gallery = [];
+      saveLocalDb(localDb);
+
+      if (firestoreDb) {
+        fsSetDoc(fsDoc(firestoreDb, "settings", "web"), { gallery: [] }, { merge: true }).catch(() => {});
+      }
+
+      // Bulk clear all gallery items in Directus
+      try {
+        const current = await directusFetch("/items/m5_gallery?limit=-1&fields=id") || [];
+        if (current && current.length > 0) {
+          const ids = current.map((x: any) => x.id);
+          for (let i = 0; i < ids.length; i += 100) {
+            const chunk = ids.slice(i, i + 100);
+            await directusFetch("/items/m5_gallery", {
+              method: "DELETE",
+              body: JSON.stringify(chunk)
+            }).catch(() => {});
+          }
+        }
+      } catch (dErr: any) {
+        console.warn("[Gallery Clear] Directus warning:", dErr.message);
+      }
+
+      return res.json({ success: true, message: "Cleared all gallery images successfully" });
+    } catch (err: any) {
+      return res.status(500).json({ success: false, error: err.message });
+    }
+  });
+
   // 8.5 API: Update entire booking record
   app.put("/api/bookings/:id", async (req, res) => {
     try {
@@ -2932,7 +3890,7 @@ Generate a short personalized friendly recommendation in Thai for visitors or co
     }
   });
 
-  // 8.55 API: Test SMTP connection and send a test email
+  // 8.55 API: Test SMTP / SMTP2GO connection and send a test email
   app.post("/api/smtp/test", async (req, res) => {
     try {
       const { smtp, testEmail } = req.body;
@@ -2940,45 +3898,260 @@ Generate a short personalized friendly recommendation in Thai for visitors or co
         return res.status(400).json({ error: "กรุณาระบุข้อมูล SMTP และอีเมลทดสอบ" });
       }
 
-      const transporter = nodemailer.createTransport({
-        host: smtp.host,
-        port: Number(smtp.port),
-        secure: smtp.secure,
-        auth: smtp.user && smtp.pass ? {
-          user: smtp.user,
-          pass: smtp.pass,
-        } : undefined,
-      });
-
-      const fromHeader = smtp.fromName 
-        ? `"${smtp.fromName}" <${smtp.fromEmail || smtp.user}>` 
-        : smtp.fromEmail || smtp.user;
-
-      await transporter.sendMail({
-        from: fromHeader,
-        to: testEmail,
-        subject: "🔔 ทดสอบระบบการส่งอีเมล SMTP - The M5 Residence",
-        html: `
-          <div style="font-family: 'Helvetica Neue', Arial, sans-serif; background-color: #1a1a1a; color: #ffffff; padding: 30px; border-radius: 8px; max-width: 600px; margin: 0 auto; border: 1px solid #c93d2b;">
-            <h2 style="color: #c93d2b; text-transform: uppercase; font-weight: bold; margin-bottom: 20px;">The M5 Residence Loft</h2>
-            <p style="font-size: 14px; line-height: 1.6; color: #d1d5db;">ยินดีด้วย! ระบบการกำหนดค่าส่งเมลผ่าน SMTP ของคุณได้รับการตรวจสอบและทำงานได้เสร็จสมบูรณ์เรียบร้อยแล้ว</p>
-            <div style="background-color: #262626; padding: 15px; border-radius: 4px; margin: 20px 0; border-left: 4px solid #c93d2b; font-family: monospace; font-size: 12px; color: #a3a3a3;">
-              <strong>Host:</strong> ${smtp.host}<br/>
-              <strong>Port:</strong> ${smtp.port}<br/>
-              <strong>Secure:</strong> ${smtp.secure ? "Yes" : "No"}<br/>
-              <strong>User:</strong> ${smtp.user || "(Not set)"}<br/>
-              <strong>Sender Name:</strong> ${smtp.fromName}<br/>
-              <strong>Sender Email:</strong> ${smtp.fromEmail || smtp.user}
-            </div>
-            <p style="font-size: 12px; color: #737373;">นี่คือข้อความทดสอบอัตโนมัติจากหน้าแดชบอร์ดผู้ดูแลระบบ โรงแรมเดอะ เอ็มไฟว์ เรสซิเดนซ์ ยินดีต้อนรับครับ!</p>
+      const isSmtp2go = Boolean(smtp.apiKey || (smtp.host && smtp.host.includes("smtp2go")));
+      const testHtml = `
+        <div style="font-family: 'Helvetica Neue', Arial, sans-serif; background-color: #1a1a1a; color: #ffffff; padding: 30px; border-radius: 8px; max-width: 600px; margin: 0 auto; border: 1px solid #c93d2b;">
+          <h2 style="color: #c93d2b; text-transform: uppercase; font-weight: bold; margin-bottom: 20px;">The M5 Residence Loft</h2>
+          <p style="font-size: 14px; line-height: 1.6; color: #d1d5db;">ยินดีด้วย! ระบบการกำหนดค่าส่งเมลผ่าน ${isSmtp2go ? "SMTP2GO REST API" : "SMTP"} ของคุณได้รับการตรวจสอบและทำงานได้เสร็จสมบูรณ์เรียบร้อยแล้ว</p>
+          <div style="background-color: #262626; padding: 15px; border-radius: 4px; margin: 20px 0; border-left: 4px solid #c93d2b; font-family: monospace; font-size: 12px; color: #a3a3a3;">
+            <strong>ระบบส่ง (Service):</strong> ${isSmtp2go ? "SMTP2GO API (Online)" : "Standard SMTP Server"}<br/>
+            ${smtp.apiKey ? `<strong>API Base:</strong> ${smtp.apiBaseUrl || "https://api.smtp2go.com/v3/"}<br/>` : `<strong>Host:</strong> ${smtp.host}<br/><strong>Port:</strong> ${smtp.port}<br/>`}
+            <strong>Sender Name:</strong> ${smtp.fromName || "The M5 Residence Loft"}<br/>
+            <strong>Sender Email:</strong> ${smtp.fromEmail || "no-reply@them5residence.com"}<br/>
+            <strong>ผู้รับทดสอบ:</strong> ${testEmail}
           </div>
-        `
+          <p style="font-size: 12px; color: #737373;">นี่คือข้อความทดสอบอัตโนมัติจากหน้าแดชบอร์ดผู้ดูแลระบบ โรงแรมเดอะ เอ็มไฟว์ เรสซิเดนซ์ ยินดีต้อนรับครับ!</p>
+        </div>
+      `;
+
+      const result = await sendEmailMessage({
+        to: testEmail,
+        subject: "🔔 ทดสอบระบบการส่งอีเมล - The M5 Residence",
+        html: testHtml,
+        text: `ทดสอบระบบการส่งอีเมล The M5 Residence สำเร็จไปยัง ${testEmail}`,
+        smtpConfig: smtp
       });
 
-      return res.json({ success: true, message: "ส่งอีเมลทดสอบสำเร็จเรียบร้อยแล้ว!" });
+      if (result.success) {
+        return res.json({ 
+          success: true, 
+          message: `ส่งอีเมลทดสอบผ่าน ${isSmtp2go ? "SMTP2GO API" : "SMTP"} สำเร็จเรียบร้อยแล้ว! ${result.id ? `(ID: ${result.id})` : ""}` 
+        });
+      } else {
+        return res.status(500).json({ 
+          error: result.error || "เกิดข้อผิดพลาดในการส่งอีเมลทดสอบ" 
+        });
+      }
     } catch (err: any) {
       console.error("[SMTP Test Error] Failed to send test email:", err);
-      return res.status(550).json({ error: err.message || "เกิดข้อผิดพลาดในการส่งอีเมลทดสอบผ่าน SMTP" });
+      return res.status(500).json({ error: err.message || "เกิดข้อผิดพลาดในการส่งอีเมลทดสอบผ่าน SMTP" });
+    }
+  });
+
+  // 8.55b API: Test Realistic Booking Notification to Destination/Admin Emails
+  app.post("/api/smtp/test-booking-alert", async (req, res) => {
+    try {
+      const { smtp, recipientEmails } = req.body;
+      const targetEmails = recipientEmails || smtp?.adminNotifyEmail || "booking@them5residence.com";
+      const targetList = (Array.isArray(targetEmails) ? targetEmails : String(targetEmails).split(/[,;\s]+/))
+        .map((e: string) => e.trim())
+        .filter((e: string) => e && e.includes("@"));
+
+      if (targetList.length === 0) {
+        return res.status(400).json({ error: "ไม่พบอีเมลผู้รับการแจ้งเตือนที่ถูกต้อง" });
+      }
+
+      const mockBooking = {
+        id: `M5-${Math.floor(1000 + Math.random() * 9000)}`,
+        guestName: "คุณทดสอบ ระบบรับข้อมูลการจอง (Test Reception)",
+        guestEmail: "guest-test@example.com",
+        guestPhone: "081-234-5678",
+        roomName: "Superior Loft Suite (เตียงคิงไซส์)",
+        roomType: "Superior Loft Suite",
+        checkIn: new Date().toISOString().split("T")[0],
+        checkOut: new Date(Date.now() + 86400000).toISOString().split("T")[0],
+        guests: 2,
+        totalPrice: 1590,
+        status: "รอชำระเงิน (Pending)",
+        specialRequest: "ทดสอบการรับอีเมลแจ้งเตือนการจองห้องพักต้นทาง The M5 Residence Loft"
+      };
+
+      const testHtml = `
+        <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 25px; border: 2px solid #0f172a; background-color: #f8fafc; color: #1e293b; border-radius: 12px;">
+          <div style="background-color: #0f172a; color: #ffffff; padding: 20px; text-align: center; border-radius: 8px 8px 0 0; margin-bottom: 20px;">
+            <div style="display: inline-block; background-color: #d95a06; color: #fff; font-size: 11px; padding: 3px 10px; border-radius: 4px; font-weight: bold; text-transform: uppercase; margin-bottom: 8px;">M5_TEST_NOTIFICATION</div>
+            <h2 style="margin: 0; font-size: 20px; letter-spacing: 1.2px; font-weight: bold;">[ทดสอบระบบแจ้งเตือนการจองใหม่]</h2>
+            <p style="margin: 6px 0 0; font-size: 13px; color: #94a3b8;">จำลองข้อมูลการจองห้องพักที่ส่งมายังอีเมลรับต้นทาง</p>
+          </div>
+          
+          <div style="padding: 10px 5px;">
+            <p style="font-size: 14px; color: #0f172a; line-height: 1.6; background-color: #ecfdf5; border: 1px solid #a7f3d0; padding: 12px; border-radius: 6px; color: #065f46;">
+              ✅ <strong>ยินดีด้วย!</strong> ระบบเชื่อมต่ออีเมลรับต้นทางสำเร็จ ข้อมูลการจองห้องพักจริงจะถูกจัดส่งมายังอีเมล: <strong>${targetList.join(", ")}</strong>
+            </p>
+
+            <h3 style="border-bottom: 2px solid #cbd5e1; padding-bottom: 8px; color: #0f172a; font-size: 15px; margin-top: 20px;">📋 ข้อมูลห้องพัก & ระยะเวลา</h3>
+            <table style="width: 100%; border-collapse: collapse; font-size: 14px; line-height: 1.8; margin-bottom: 20px;">
+              <tr><td style="padding: 5px 0; color: #64748b; width: 160px; font-weight: bold;">รหัสรายการจอง:</td><td style="font-family: monospace; font-weight: bold; color: #d95a06; font-size: 15px;">${mockBooking.id}</td></tr>
+              <tr><td style="padding: 5px 0; color: #64748b; font-weight: bold;">ห้องพัก:</td><td style="font-weight: bold;">${mockBooking.roomName}</td></tr>
+              <tr><td style="padding: 5px 0; color: #64748b; font-weight: bold;">วันเข้าพัก (Check-in):</td><td>${mockBooking.checkIn}</td></tr>
+              <tr><td style="padding: 5px 0; color: #64748b; font-weight: bold;">วันออกพัก (Check-out):</td><td>${mockBooking.checkOut}</td></tr>
+              <tr><td style="padding: 5px 0; color: #64748b; font-weight: bold;">จำนวนคืนพัก:</td><td>1 คืน (${mockBooking.guests} ท่าน)</td></tr>
+              <tr><td style="padding: 5px 0; color: #64748b; font-weight: bold;">ยอดเงินเรียกเก็บสุทธิ:</td><td style="font-weight: bold; color: #d95a06; font-size: 16px;">${Number(mockBooking.totalPrice).toLocaleString()} THB</td></tr>
+              <tr><td style="padding: 5px 0; color: #64748b; font-weight: bold;">สถานะ:</td><td><strong style="color: #b45309;">${mockBooking.status}</strong></td></tr>
+            </table>
+
+            <h3 style="border-bottom: 2px solid #cbd5e1; padding-bottom: 8px; color: #0f172a; font-size: 15px; margin-top: 20px;">👤 ข้อมูลผู้เข้าพัก (ลูกค้า)</h3>
+            <table style="width: 100%; border-collapse: collapse; font-size: 14px; line-height: 1.8;">
+              <tr><td style="padding: 5px 0; color: #64748b; width: 160px; font-weight: bold;">ชื่อ-นามสกุล:</td><td><strong>${mockBooking.guestName}</strong></td></tr>
+              <tr><td style="padding: 5px 0; color: #64748b; font-weight: bold;">อีเมลลูกค้า:</td><td><a href="mailto:${mockBooking.guestEmail}" style="color: #d95a06;">${mockBooking.guestEmail}</a></td></tr>
+              <tr><td style="padding: 5px 0; color: #64748b; font-weight: bold;">เบอร์โทรศัพท์:</td><td style="font-family: monospace;">${mockBooking.guestPhone}</td></tr>
+              <tr><td style="padding: 5px 0; color: #64748b; font-weight: bold; vertical-align: top;">คำขอพิเศษ:</td><td style="font-style: italic; color: #475569;">"${mockBooking.specialRequest}"</td></tr>
+            </table>
+          </div>
+
+          <div style="background-color: #f1f5f9; padding: 15px; font-size: 12px; color: #64748b; text-align: center; border-radius: 8px; margin-top: 20px; border: 1px solid #e2e8f0;">
+            <p style="margin: 0; font-weight: bold; color: #475569;">SYSTEM NOTE: THE M5 RESIDENCE NOTIFICATION ENGINE</p>
+            <p style="margin: 4px 0 0;">เวลามีลูกค้าทำการจองห้องพัก รายละเอียดการจองจะถูกจัดส่งมายังอีเมลนี้โดยอัตโนมัติ</p>
+          </div>
+        </div>
+      `;
+
+      const result = await sendEmailMessage({
+        to: targetList,
+        subject: `[ทดสอบรับเมลการจอง] แจ้งเตือนการจองห้องพักใหม่ #${mockBooking.id} - ${mockBooking.guestName}`,
+        html: testHtml,
+        smtpConfig: smtp
+      });
+
+      if (result.success) {
+        return res.json({ 
+          success: true, 
+          message: `ส่งอีเมลแจ้งเตือนการจองทดสอบไปยัง ${targetList.join(", ")} สำเร็จแล้ว! ${result.id ? `(ID: ${result.id})` : ""}` 
+        });
+      } else {
+        return res.status(500).json({ 
+          error: result.error || "เกิดข้อผิดพลาดในการส่งอีเมลแจ้งเตือนการจองทดสอบ" 
+        });
+      }
+    } catch (err: any) {
+      console.error("[Test Booking Alert Error]:", err);
+      return res.status(500).json({ error: err.message || "เกิดข้อผิดพลาดในการส่งอีเมลทดสอบ" });
+    }
+  });
+
+  // 8.56 API: Test LINE Notification
+  app.post("/api/line/test", async (req, res) => {
+    try {
+      const { line, customMessage } = req.body;
+      const testToken = line?.token || "";
+      const testChannelAccessToken = line?.channelAccessToken || "";
+      const testTargetId = line?.targetId || "";
+      const testWebhookUrl = line?.webhookUrl || "";
+
+      if (!testToken && !testChannelAccessToken && !testWebhookUrl) {
+        return res.status(400).json({
+          error: "กรุณาระบุ LINE Notify Token, Messaging API Token หรือ Webhook URL เพื่อทดสอบการส่ง"
+        });
+      }
+
+      const mockBooking = {
+        id: "TEST-LINE-" + Math.floor(1000 + Math.random() * 9000),
+        roomName: "Superior Loft Suite (ทดสอบระบบ)",
+        checkIn: new Date().toISOString().split("T")[0],
+        checkOut: new Date(Date.now() + 86400000).toISOString().split("T")[0],
+        guests: 2,
+        totalPrice: 1800,
+        status: "Pending",
+        guestName: "ทดสอบการแจ้งเตือน LINE",
+        guestPhone: "089-999-9999",
+        guestEmail: "test@them5residence.com",
+        specialRequest: customMessage || "🔔 ทดสอบการเชื่อมต่อระบบแจ้งเตือน LINE ของ The M5 Residence ทำงานสมบูรณ์ 100%"
+      };
+
+      const results = await sendBookingLineNotification(mockBooking, {
+        token: testToken,
+        channelAccessToken: testChannelAccessToken,
+        targetId: testTargetId,
+        webhookUrl: testWebhookUrl
+      });
+
+      const isSuccess = results.some(r => r.success);
+      if (isSuccess) {
+        return res.json({
+          success: true,
+          message: "ส่งข้อความแจ้งเตือนเข้า LINE สำเร็จเรียบร้อยแล้ว!",
+          results
+        });
+      } else {
+        const failureMessage = results.find(r => !r.success && r.message)?.message || "ไม่สามารถส่งข้อความเข้า LINE ได้";
+        return res.status(400).json({
+          success: false,
+          error: failureMessage,
+          results
+        });
+      }
+    } catch (err: any) {
+      console.error("[LINE Test Error]:", err);
+      return res.status(500).json({ error: err.message });
+    }
+  });
+
+  // API: Send Quotation Email & LINE notification
+  app.post("/api/quotations/send-email", async (req, res) => {
+    try {
+      const { document, company } = req.body;
+      if (!document || !document.documentNumber) {
+        return res.status(400).json({ error: "Missing document details" });
+      }
+
+      const settings = await getSettingsFromDirectus().catch(() => null);
+      const localDb = getLocalDb() as any;
+      const smtpConfig = settings?.smtp || localDb?.smtp || {};
+      const lineConfig = (settings as any)?.line || localDb?.line || {};
+
+      // 1. Send Email to Customer & Admin
+      const emailResult = await sendQuotationEmail(document, company, smtpConfig).catch(err => ({ success: false, error: err.message }));
+
+      // 2. Trigger LINE Notification for new quotation request
+      sendQuotationLineNotification(document, lineConfig, "new_request").catch(err => {
+        console.error("Async sendQuotationLineNotification error:", err);
+      });
+
+      return res.json({
+        success: true,
+        message: "ส่งใบเสนอราคาเข้าอีเมลเรียบร้อยแล้ว",
+        emailResult
+      });
+    } catch (err: any) {
+      console.error("Error in /api/quotations/send-email:", err);
+      return res.status(500).json({ error: err.message });
+    }
+  });
+
+  // API: Notify Quotation Approval / Accepted by Customer
+  app.post("/api/quotations/notify-approval", async (req, res) => {
+    try {
+      const { document, bookingId } = req.body;
+      if (!document) {
+        return res.status(400).json({ error: "Missing document details" });
+      }
+
+      const settings = await getSettingsFromDirectus().catch(() => null);
+      const localDb = getLocalDb() as any;
+      const lineConfig = (settings as any)?.line || localDb?.line || {};
+
+      await sendQuotationLineNotification({
+        ...document,
+        remarks: `[ยืนยันสั่งจองสำเร็จ]: สร้างรายการจองหมายเลข #${bookingId || "Auto"}`
+      }, lineConfig, "customer_approved").catch(err => {
+        console.error("Async sendQuotationLineNotification customer_approved error:", err);
+      });
+
+      return res.json({ success: true, message: "บันทึกและส่งแจ้งเตือนการอนุมัติใบเสนอราคาเรียบร้อยแล้ว" });
+    } catch (err: any) {
+      console.error("Error in /api/quotations/notify-approval:", err);
+      return res.status(500).json({ error: err.message });
+    }
+  });
+
+  // 8.57 API: Get Notification Audit Logs
+  app.get("/api/notifications", async (req, res) => {
+    try {
+      const localDb = getLocalDb() as any;
+      let logs = localDb.notifications || [];
+      return res.json({ success: true, notifications: logs });
+    } catch (err: any) {
+      return res.status(500).json({ error: err.message });
     }
   });
 
@@ -3132,7 +4305,29 @@ Generate a short personalized friendly recommendation in Thai for visitors or co
 
       const finalFileName = fileName ? `${timestamp}_${randomStr}_${safeName}` : safeName;
 
-      // 1. Try to upload to Directus persistently first (best for Cloud Run production)
+      // 0. Try to upload to Firebase Storage persistently (best for Cloud Run production)
+      if (getApps().length > 0) {
+        try {
+          const bucket = getStorage().bucket();
+          const file = bucket.file(`uploads/${finalFileName}`);
+          await file.save(dataBuffer, {
+            metadata: { contentType: mimeType }
+          });
+          // get a signed url or construct a media url
+          // Cloud Storage for Firebase uses format:
+          // https://firebasestorage.googleapis.com/v0/b/<bucket>/o/<path>?alt=media
+          const downloadUrl = `https://firebasestorage.googleapis.com/v0/b/${bucket.name}/o/${encodeURIComponent(`uploads/${finalFileName}`)}?alt=media`;
+          console.log(`[Upload] Firebase Storage upload succeeded: ${downloadUrl}`);
+          return res.json({
+            success: true,
+            url: downloadUrl
+          });
+        } catch (firebaseErr: any) {
+          console.warn("[Upload] Firebase Storage persistent upload failed, trying fallbacks:", firebaseErr);
+        }
+      }
+
+      // 1. Try to upload to Directus persistently first (best for Cloud Run production and user's database)
       try {
         const blob = new Blob([dataBuffer], { type: mimeType });
         const formData = new FormData();
@@ -3152,7 +4347,7 @@ Generate a short personalized friendly recommendation in Thai for visitors or co
           if (resJson && resJson.data && resJson.data.id) {
             const fileId = resJson.data.id;
             const directusFileUrl = `/api/assets/${fileId}`;
-            console.log(`[Upload] persistent upload succeeded via Directus (proxied): ${directusFileUrl}`);
+            console.log(`[Upload] Persistent upload succeeded via Directus (proxied): ${directusFileUrl}`);
             return res.json({
               success: true,
               url: directusFileUrl
@@ -3160,15 +4355,97 @@ Generate a short personalized friendly recommendation in Thai for visitors or co
           }
         } else {
           const errText = await resDirectus.text();
-          console.warn(`[Upload] Directus file upload returned non-OK: ${resDirectus.status}. Falling back to local. Details: ${errText}`);
+          console.warn(`[Upload] Directus file upload returned non-OK: ${resDirectus.status}. Details: ${errText}`);
         }
       } catch (directusErr: any) {
-        console.warn("[Upload] Directus persistent upload failed, falling back to local storage:", directusErr);
+        console.warn("[Upload] Directus persistent upload failed, trying fallbacks:", directusErr);
       }
 
-      // 2. Fallback: Save to container local disk
+      // 2. Fallback 1: Try to upload to ImgBB if IMGBB_API_KEY is configured
+      if (process.env.IMGBB_API_KEY) {
+        try {
+          console.log("[Upload] Attempting ImgBB upload using IMGBB_API_KEY...");
+          const blob = new Blob([dataBuffer], { type: mimeType });
+          const formData = new FormData();
+          formData.append("image", blob, finalFileName);
+
+          const imgbbUrl = `https://api.imgbb.com/1/upload?key=${process.env.IMGBB_API_KEY}`;
+          const resImgBB = await fetch(imgbbUrl, {
+            method: "POST",
+            body: formData
+          });
+
+          if (resImgBB.ok) {
+            const resJson = await resImgBB.json();
+            if (resJson && resJson.data && resJson.data.url) {
+              const imageUrl = resJson.data.url;
+              console.log(`[Upload] ImgBB upload succeeded: ${imageUrl}`);
+              return res.json({
+                success: true,
+                url: imageUrl
+              });
+            }
+          } else {
+            const errText = await resImgBB.text();
+            console.warn(`[Upload] ImgBB upload returned non-OK status: ${resImgBB.status}. Details: ${errText}`);
+          }
+        } catch (imgbbErr: any) {
+          console.error("[Upload] Error uploading to ImgBB:", imgbbErr);
+        }
+      }
+
+      // 3. Fallback 2: Try Catbox.moe upload (Free backup)
+      try {
+        console.log("[Upload] Attempting Catbox.moe upload (Free backup)...");
+        const blob = new Blob([dataBuffer], { type: mimeType });
+        const formData = new FormData();
+        formData.append("reqtype", "fileupload");
+        formData.append("fileToUpload", blob, finalFileName);
+
+        const resCatbox = await fetch("https://catbox.moe/user/api.php", {
+          method: "POST",
+          body: formData
+        });
+
+        if (resCatbox.ok) {
+          const catboxUrl = await resCatbox.text();
+          if (catboxUrl && catboxUrl.startsWith("http")) {
+            console.log(`[Upload] Catbox.moe upload succeeded: ${catboxUrl}`);
+            return res.json({
+              success: true,
+              url: catboxUrl.trim()
+            });
+          }
+        } else {
+          console.warn(`[Upload] Catbox.moe returned non-OK status: ${resCatbox.status}`);
+        }
+      } catch (catboxErr: any) {
+        console.error("[Upload] Error uploading to Catbox.moe:", catboxErr);
+      }
+
+      // 4. Fallback 3: Save to container local disk and public images
       const filePath = path.join(uploadsDir, finalFileName);
       fs.writeFileSync(filePath, dataBuffer);
+
+      const pubFilePath = path.join(publicImagesDir, finalFileName);
+      try {
+        fs.writeFileSync(pubFilePath, dataBuffer);
+      } catch (_) {}
+
+      // Persist in Firestore if base64 fits within Firestore document limit (< 950KB)
+      if (firestoreDb && base64Data && base64Data.length < 950000) {
+        try {
+          await fsSetDoc(fsDoc(firestoreDb, "uploads", finalFileName), {
+            dataUrl: base64Data.startsWith("data:") ? base64Data : `data:${mimeType};base64,${base64Data}`,
+            fileName: finalFileName,
+            mimeType,
+            uploadedAt: new Date().toISOString()
+          });
+          console.log(`[Upload] Persisted file to Firestore: ${finalFileName}`);
+        } catch (fsErr: any) {
+          console.warn("[Upload] Could not persist to Firestore:", fsErr.message);
+        }
+      }
 
       return res.json({
         success: true,
@@ -3182,8 +4459,44 @@ Generate a short personalized friendly recommendation in Thai for visitors or co
 
   // API: Proxy Directus assets with Admin Authorization token
   app.get("/api/assets/:id", async (req, res) => {
+    const { id } = req.params;
+
+    const serveFallback = () => {
+      // Use beautiful local images bundled in the codebase as seamless fallbacks
+      const localImages = [
+        "lobby_loft_m5_1782203250164.jpg",
+        "bedroom_superior_m5_1782203272229.jpg",
+        "bedroom_deluxe_m5_1782203318372.jpg",
+        "bedroom_studio_m5_1782203293730.jpg"
+      ];
+      
+      // Create a simple stable hash of the ID to consistently pick the same fallback for the same asset ID
+      let hash = 0;
+      for (let i = 0; i < id.length; i++) {
+        hash = id.charCodeAt(i) + ((hash << 5) - hash);
+      }
+      const index = Math.abs(hash) % localImages.length;
+      const selectedFallback = localImages[index];
+      
+      // Check public/images first (bundled in codebase), then uploads
+      let fallbackPath = path.join(process.cwd(), "public", "images", selectedFallback);
+      if (!fs.existsSync(fallbackPath)) {
+        fallbackPath = path.join(process.cwd(), "uploads", selectedFallback);
+      }
+      if (!fs.existsSync(fallbackPath)) {
+        fallbackPath = path.join(process.cwd(), "src", "assets", "images", selectedFallback);
+      }
+      
+      if (fs.existsSync(fallbackPath)) {
+        res.setHeader("Content-Type", "image/jpeg");
+        res.setHeader("Cache-Control", "public, max-age=86400"); // Cache for 24 hours
+        return res.status(200).sendFile(fallbackPath);
+      } else {
+        return res.status(404).send("Asset not found");
+      }
+    };
+
     try {
-      const { id } = req.params;
       const dConfig = getDirectusConfig();
       const internalUrlClean = dConfig.internalUrl.endsWith("/") ? dConfig.internalUrl.slice(0, -1) : dConfig.internalUrl;
       
@@ -3192,48 +4505,26 @@ Generate a short personalized friendly recommendation in Thai for visitors or co
       const queryParams = params.toString();
       const url = `${internalUrlClean}/assets/${id}${queryParams ? `?${queryParams}` : ""}`;
       
-      console.log(`[Proxy Asset] Fetching from Directus: ${url}`);
+      const controller = new AbortController();
+      const timeoutId = setTimeout(() => controller.abort(), 2000); // 2s timeout
       
-      const response = await fetch(url, {
-        headers: {
-          "Authorization": `Bearer ${dConfig.token}`
-        }
-      });
+      let response;
+      try {
+        response = await fetch(url, {
+          signal: controller.signal,
+          headers: {
+            "Authorization": `Bearer ${dConfig.token}`
+          }
+        });
+      } catch (fErr) {
+        clearTimeout(timeoutId);
+        return serveFallback();
+      }
+      clearTimeout(timeoutId);
       
       if (!response.ok) {
         console.warn(`[Proxy Asset] Directus returned ${response.status} for ${id}. Serving a stable local fallback image.`);
-        
-        // Use beautiful local images bundled in the codebase as seamless fallbacks
-        const localImages = [
-          "lobby_loft_m5_1782203250164.jpg",
-          "bedroom_superior_m5_1782203272229.jpg",
-          "bedroom_deluxe_m5_1782203318372.jpg",
-          "bedroom_studio_m5_1782203293730.jpg"
-        ];
-        
-        // Create a simple stable hash of the ID to consistently pick the same fallback for the same asset ID
-        let hash = 0;
-        for (let i = 0; i < id.length; i++) {
-          hash = id.charCodeAt(i) + ((hash << 5) - hash);
-        }
-        const index = Math.abs(hash) % localImages.length;
-        const selectedFallback = localImages[index];
-        
-        // Check local uploads folder first (copied fallbacks are stored here, guaranteed to exist in production)
-        let fallbackPath = path.join(process.cwd(), "uploads", selectedFallback);
-        if (!fs.existsSync(fallbackPath)) {
-          // Check src folder as backup
-          fallbackPath = path.join(process.cwd(), "src", "assets", "images", selectedFallback);
-        }
-        
-        if (fs.existsSync(fallbackPath)) {
-          // If we serve a fallback image, we should STILL return a 404 status code so that the frontend's onError can detect it's a fallback!
-          res.setHeader("Content-Type", "image/jpeg");
-          res.setHeader("Cache-Control", "public, max-age=86400"); // Cache for 24 hours
-          return res.status(404).sendFile(fallbackPath);
-        } else {
-          return res.status(404).send("Asset not found");
-        }
+        return serveFallback();
       }
       
       const contentType = response.headers.get("content-type");
@@ -3250,8 +4541,12 @@ Generate a short personalized friendly recommendation in Thai for visitors or co
       const buffer = Buffer.from(arrayBuffer);
       return res.send(buffer);
     } catch (err: any) {
-      console.error("[Proxy Asset] Error proxying asset:", err);
-      return res.status(500).send("Internal server error proxying asset");
+      console.error("[Proxy Asset] Error proxying asset, serving stable fallback:", err);
+      try {
+        return serveFallback();
+      } catch (fallbackErr) {
+        return res.status(500).send("Internal server error proxying asset");
+      }
     }
   });
 

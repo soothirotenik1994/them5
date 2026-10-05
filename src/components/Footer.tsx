@@ -10,6 +10,11 @@ export default function Footer({ onAdminClick }: FooterProps) {
   const { settings } = useSettings();
   const gen = settings.general;
 
+  const activePartners = (settings.partners || []).filter(p => p.active !== false);
+  const logoSpan = activePartners.length > 0 ? "md:col-span-4" : "md:col-span-5";
+  const linksSpan = activePartners.length > 0 ? "md:col-span-2" : "md:col-span-3";
+  const contactSpan = activePartners.length > 0 ? "md:col-span-3" : "md:col-span-4";
+
   return (
     <footer id="footer" className="bg-[#050505] text-neutral-400 py-16 border-t border-neutral-900 relative">
       {/* Rivet layout lines */}
@@ -19,7 +24,7 @@ export default function Footer({ onAdminClick }: FooterProps) {
         <div className="grid grid-cols-1 md:grid-cols-12 gap-12">
           
           {/* Logo brand */}
-          <div className="md:col-span-5 space-y-5">
+          <div className={`${logoSpan} space-y-5`}>
             <div className="flex items-center space-x-3">
               {gen.logoUrl ? (
                 <div className="h-10 flex items-center justify-center p-1 bg-neutral-900 border border-neutral-800 rounded shadow-md overflow-hidden min-w-[40px]">
@@ -50,7 +55,7 @@ export default function Footer({ onAdminClick }: FooterProps) {
           </div>
 
           {/* Quick links */}
-          <div className="md:col-span-3 space-y-4">
+          <div className={`${linksSpan} space-y-4`}>
             <h4 className="text-white text-xs font-mono font-bold tracking-widest uppercase">// QUICK_LINKS</h4>
             <ul className="space-y-2 text-xs font-light">
               <li>
@@ -71,8 +76,54 @@ export default function Footer({ onAdminClick }: FooterProps) {
             </ul>
           </div>
 
+          {/* Partners column */}
+          {activePartners.length > 0 && (
+            <div className="md:col-span-3 space-y-4">
+              <h4 className="text-white text-xs font-mono font-bold tracking-widest uppercase">// PARTNERS</h4>
+              <div className="grid grid-cols-2 gap-2">
+                {activePartners.map((p) => {
+                  const content = (
+                    <div className="flex flex-col items-center justify-center p-1.5 rounded bg-neutral-950/80 border border-neutral-900 hover:border-neutral-850 hover:bg-neutral-900/40 transition-all duration-200 text-center h-12 w-full select-none">
+                      {p.logoUrl ? (
+                        <img 
+                          src={p.logoUrl} 
+                          alt={p.name} 
+                          className="h-7 object-contain max-w-full opacity-65 hover:opacity-100 transition-opacity duration-200" 
+                          referrerPolicy="no-referrer"
+                        />
+                      ) : (
+                        <span className="text-[10px] font-mono text-neutral-400 block line-clamp-1 truncate w-full px-1">{p.name}</span>
+                      )}
+                    </div>
+                  );
+
+                  if (p.link) {
+                    return (
+                      <a 
+                        key={p.id} 
+                        href={p.link} 
+                        target="_blank" 
+                        rel="noreferrer"
+                        title={p.name}
+                        className="block w-full"
+                      >
+                        {content}
+                      </a>
+                    );
+                  }
+
+                  return (
+                    <div key={p.id} title={p.name} className="w-full">
+                      {content}
+                    </div>
+                  );
+                })}
+              </div>
+            </div>
+          )}
+
           {/* Contact Details */}
-          <div className="md:col-span-4 space-y-4">
+          <div className={`${contactSpan} space-y-4`}>
             <h4 className="text-white text-xs font-mono font-bold tracking-widest uppercase">// CONTACT_INFO</h4>
             <ul className="space-y-3.5 text-xs font-light">
               <li className="flex items-start space-x-2.5">

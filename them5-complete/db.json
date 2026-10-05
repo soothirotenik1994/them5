@@ -1,0 +1,201 @@
+{
+  "general": {
+    "id": 1,
+    "hotelName": "The M5 Residence",
+    "thaiName": "เดอะ เอ็มไฟว์ เรสซิเดนซ์",
+    "heroTitle": "นิยามใหม่ของการพักผ่อน",
+    "heroSubtitle": "ดื่มด่ำกับดีไซน์ปูนเปลือยขัดมัน และงานไม้โครงเหล็กดำสุดเท่ ยกระดับสุนทรียภาพแห่งชีวิตสมัยใหม่ย่านปากเกร็ด นนทบุรี ใกล้ชิดทุกคอนเสิร์ตและอีเว้นท์ดัง",
+    "gps": "13.91230, 100.54321",
+    "contactAddress": "ปากเกร็ด นนทบุรี เลียบคลองประปา ใกล้ป๊อปปูล่าคาร์ดอร์",
+    "contactPhone": "0996178695",
+    "facebook": "The M5 Residence",
+    "lineId": "@the_m5",
+    "logoUrl": "/uploads/lobby_loft_m5_1782203250164.jpg",
+    "coverImg1": "/uploads/lobby_loft_m5_1782203250164.jpg",
+    "coverImg2": "/uploads/lobby_loft_m5_1782203250164.jpg",
+    "coverImg3": "/uploads/lobby_loft_m5_1782203250164.jpg",
+    "heroCardImg": "https://images.unsplash.com/photo-1554118811-1e0d58224f24?auto=format&fit=crop&w=1200&q=80",
+    "heroBgImg": "https://images.unsplash.com/photo-1590490360182-c33d57733427?auto=format&fit=crop&w=1200&q=80",
+    "seoTitle": "The M5 Residence | ที่พักสไตล์ลอฟท์ ปากเกร็ด นนทบุรี ใกล้อิมแพ็ค อารีน่า",
+    "seoDescription": "เดอะ เอ็มไฟว์ เรสซิเดนซ์ (The M5 Residence) นิยามใหม่ของการพักผ่อนสไตล์อินดัสเทรียลลอฟท์ ปากเกร็ด นนทบุรี เลียบคลองประปา ใกล้ป๊อปปูล่าคาร์ดอน และเมืองทองธานี ห้องพักหรูราคาประหยัด",
+    "seoKeywords": "The M5 Residence, เดอะ เอ็มไฟว์ เรสซิเดนซ์, ที่พักปากเกร็ด, โรงแรมปากเกร็ด, ที่พักใกล้อิมแพ็ค, ที่พักใกล้เมืองทอง, โรงแรมสไตล์ลอฟท์, โรงแรมนนทบุรี, จองห้องพักนนทบุรี",
+    "allowRegistration": true,
+    "bookingEnabled": true,
+    "bookingDisabledMessage": "ขออภัย ระบบจองห้องพักออนไลน์ของทางโรงแรมปิดทำการชั่วคราวเพื่อปรับปรุงระบบ",
+    "eventPopupEnabled": true,
+    "eventPopupMode": null,
+    "eventPopupSelectedId": null,
+    "eventPopupCustomTitle": null,
+    "eventPopupCustomDesc": null,
+    "eventPopupCustomImg": null,
+    "eventPopupTimeout": 10,
+    "lineLink": "https://page.line.me/871ctwom",
+    "facebookUrl": "https://www.facebook.com/them5muangthong",
+    "adminPath": "/admin123",
+    "googleReviewsApiKey": "",
+    "impactSyncInterval": "manual",
+    "googleReviewsSyncInterval": "manual"
+  },
+  "rooms": [
+    {
+      "id": "std_twin_01",
+      "name": "Standard Twin Bed Room",
+      "thaiName": "ห้องสแตนดาร์ด เตียงคู่",
+      "price": 1290,
+      "size": 20,
+      "capacity": 2,
+      "bedType": "เตียงเดี่ยว 3 ฟุต (2 Single Beds)",
+      "description": "ห้องพักเตียงคู่กะทัดรัด ดีไซน์เรียบง่าย ลงตัวสำหรับเพื่อนร่วมทางหรือการเดินทางเพื่อธุรกิจที่เน้นความคล่องตัว",
+      "longDescription": "สัมผัสความสะดวกสบายในพื้นที่ที่ออกแบบมาเพื่อการพักผ่อนอย่างเต็มประสิทธิภาพ มาพร้อมเตียงเดี่ยว 3 ฟุต จำนวน 2 เตียง ที่จัดวางอย่างลงตัวในบรรยากาศ Industrial Chic ให้คุณรู้สึกผ่อนคลายเหมือนอยู่บ้าน ท่านจะพบความเรียบร้อยและการตกแต่งที่เน้นความโปร่งสบาย พร้อมระเบียงส่วนตัวสำหรับชมบรรยากาศ",
+      "imageUrl": "/uploads/bedroom_superior_m5_1782203272229.jpg",
+      "amenities": [
+        "Wi-Fi ความเร็วสูง",
+        "เครื่องปรับอากาศ",
+        "ทีวีจอแบน",
+        "ตู้เย็น",
+        "เครื่องทำน้ำอุ่น",
+        "ระเบียง"
+      ],
+      "matterportUrl": "https://discover.matterport.com/space/4orBgFGSMJp",
+      "active": true,
+      "inventory": 1
+    }
+  ],
+  "promotions": [],
+  "amenities": [],
+  "bookings": [],
+  "smtp": {
+    "host": "",
+    "port": 587,
+    "secure": false,
+    "user": "",
+    "pass": "",
+    "fromName": "The M5 Residence",
+    "fromEmail": "",
+    "adminNotifyEmail": ""
+  },
+  "blockedDates": [],
+  "coupons": [],
+  "members": [],
+  "admins": [],
+  "impactEvents": [
+    {
+      "id": "scraped-1qism06",
+      "title": "บางกอกแพ็ค แอนด์ ลาเบล เอ็กซ์โป 2026",
+      "date": "05-08 พฤศจิกายน 2569",
+      "time": "",
+      "venue": "ศูนย์แสดงสินค้า อิมแพ็ค เมืองทองธานี",
+      "description": "กิจกรรมและงานแสดงระดับแนวหน้า ณ ศูนย์แสดงสินค้า อิมแพ็ค เมืองทองธานี แนะนำผู้เข้าร่วมงานจองห้องพักล่วงหน้าเพื่อหลีกเลี่ยงการจราจรหนาแน่นและเข้าพักผ่อนใกล้สถานที่จัดงานอย่างสะดวกสบาย",
+      "imageUrl": "https://www.impact.co.th/media/com_eventbooking/images/thumbs/0527-bangkok-pack--label-expo-2026.webp",
+      "category": "Exhibition",
+      "active": true
+    },
+    {
+      "id": "scraped-5s75si1",
+      "title": "บางกอกดิจิทัล เท็กซ์ไทล์ พริ้นท์ เอ็กซ์โป 2026",
+      "date": "05-08 พฤศจิกายน 2569",
+      "time": "",
+      "venue": "ศูนย์แสดงสินค้า อิมแพ็ค เมืองทองธานี",
+      "description": "กิจกรรมและงานแสดงระดับแนวหน้า ณ ศูนย์แสดงสินค้า อิมแพ็ค เมืองทองธานี แนะนำผู้เข้าร่วมงานจองห้องพักล่วงหน้าเพื่อหลีกเลี่ยงการจราจรหนาแน่นและเข้าพักผ่อนใกล้สถานที่จัดงานอย่างสะดวกสบาย",
+      "imageUrl": "https://www.impact.co.th/media/com_eventbooking/images/thumbs/0527-bangkok-digital-textile-print-expo-2026.webp",
+      "category": "Exhibition",
+      "active": true
+    },
+    {
+      "id": "scraped-8yers3k",
+      "title": "บางกอก แอด แอนด์ ไซน์ เอ็กซ์โป 2026",
+      "date": "05-08 พฤศจิกายน 2569",
+      "time": "",
+      "venue": "ศูนย์แสดงสินค้า อิมแพ็ค เมืองทองธานี",
+      "description": "กิจกรรมและงานแสดงระดับแนวหน้า ณ ศูนย์แสดงสินค้า อิมแพ็ค เมืองทองธานี แนะนำผู้เข้าร่วมงานจองห้องพักล่วงหน้าเพื่อหลีกเลี่ยงการจราจรหนาแน่นและเข้าพักผ่อนใกล้สถานที่จัดงานอย่างสะดวกสบาย",
+      "imageUrl": "https://www.impact.co.th/media/com_eventbooking/images/thumbs/0527-bangkok-ad--sign-expo-2026.webp",
+      "category": "Exhibition",
+      "active": true
+    },
+    {
+      "id": "scraped-cedoko7",
+      "title": "การประชุมสหพันธ์สมาคมเภสัชกรรมแห่งเอเชีย ครั้งที่ 31",
+      "date": "03-07 พฤศจิกายน 2569",
+      "time": "",
+      "venue": "อิมแพ็ค ฟอรั่ม",
+      "description": "กิจกรรมและงานแสดงระดับแนวหน้า ณ อิมแพ็ค ฟอรั่ม แนะนำผู้เข้าร่วมงานจองห้องพักล่วงหน้าเพื่อหลีกเลี่ยงการจราจรหนาแน่นและเข้าพักผ่อนใกล้สถานที่จัดงานอย่างสะดวกสบาย",
+      "imageUrl": "https://www.impact.co.th/media/com_eventbooking/images/thumbs/0216-fapa2026.webp",
+      "category": "Other",
+      "active": true
+    },
+    {
+      "id": "scraped-vwkkgjq",
+      "title": "Thailand Billiards Expo (TBE 2026)",
+      "date": "29-31 ตุลาคม 2569",
+      "time": "",
+      "venue": "ศูนย์แสดงสินค้า อิมแพ็ค เมืองทองธานี",
+      "description": "กิจกรรมและงานแสดงระดับแนวหน้า ณ ศูนย์แสดงสินค้า อิมแพ็ค เมืองทองธานี แนะนำผู้เข้าร่วมงานจองห้องพักล่วงหน้าเพื่อหลีกเลี่ยงการจราจรหนาแน่นและเข้าพักผ่อนใกล้สถานที่จัดงานอย่างสะดวกสบาย",
+      "imageUrl": "https://www.impact.co.th/media/com_eventbooking/images/thumbs/0428-tbe-2026.webp",
+      "category": "Exhibition",
+      "active": true
+    },
+    {
+      "id": "scraped-si0wepb",
+      "title": "งานแสดงสินค้าเครื่องเล่นสวนสนุก และแหล่งท่องเที่ยว ประเทศไทยประจำปี 2569",
+      "date": "29-31 ตุลาคม 2569",
+      "time": "",
+      "venue": "ศูนย์แสดงสินค้า อิมแพ็ค เมืองทองธานี",
+      "description": "กิจกรรมและงานแสดงระดับแนวหน้า ณ ศูนย์แสดงสินค้า อิมแพ็ค เมืองทองธานี แนะนำผู้เข้าร่วมงานจองห้องพักล่วงหน้าเพื่อหลีกเลี่ยงการจราจรหนาแน่นและเข้าพักผ่อนใกล้สถานที่จัดงานอย่างสะดวกสบาย",
+      "imageUrl": "https://www.impact.co.th/media/com_eventbooking/images/thumbs/0402-taape-2026.webp",
+      "category": "Exhibition",
+      "active": true
+    },
+    {
+      "id": "scraped-w9jcwrk",
+      "title": "งานแสดงสินค้านานาชาติด้านแว่นตาระดับอาเซียน",
+      "date": "09-11 ตุลาคม 2569",
+      "time": "",
+      "venue": "ศูนย์แสดงสินค้า อิมแพ็ค เมืองทองธานี",
+      "description": "กิจกรรมและงานแสดงระดับแนวหน้า ณ ศูนย์แสดงสินค้า อิมแพ็ค เมืองทองธานี แนะนำผู้เข้าร่วมงานจองห้องพักล่วงหน้าเพื่อหลีกเลี่ยงการจราจรหนาแน่นและเข้าพักผ่อนใกล้สถานที่จัดงานอย่างสะดวกสบาย",
+      "imageUrl": "https://www.impact.co.th/media/com_eventbooking/images/thumbs/0630 optics expo.webp",
+      "category": "Exhibition",
+      "active": true
+    }
+  ],
+  "faqs": [],
+  "reviews": [],
+  "gallery": [
+    {
+      "url": "/uploads/lobby_loft_m5_1782203250164.jpg",
+      "title": "ล็อบบี้",
+      "cat": "ส่วนกลาง"
+    },
+    {
+      "url": "/uploads/bedroom_superior_m5_1782203272229.jpg",
+      "title": "ห้องพัก",
+      "cat": "ห้องพัก"
+    },
+    {
+      "url": "/uploads/bedroom_deluxe_m5_1782203318372.jpg",
+      "title": "บรรยากาศห้องพัก",
+      "cat": "ห้องพัก"
+    },
+    {
+      "url": "/uploads/bedroom_studio_m5_1782203293730.jpg",
+      "title": "พื้นที่พักผ่อน",
+      "cat": "ห้องพัก"
+    }
+  ],
+  "slides": [
+    {
+      "url": "/uploads/lobby_loft_m5_1782203250164.jpg",
+      "label": "โรงแรม them5residence",
+      "desc": ""
+    }
+  ],
+  "googlePlaceId": "ChIJXWlJMC-e4jARLqX9OidpWjY",
+  "googleReviewsEnabled": true,
+  "initialized": true,
+  "deletedBookingIds": [],
+  "deletedMemberIds": [
+    "M5-MEM-1001",
+    "M5-MEM-1002",
+    "M5-MEM-1003"
+  ],
+  "directus": {}
+}

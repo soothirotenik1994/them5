@@ -4,12 +4,23 @@ import {
   CalendarDays, MapPin, Clock, Sparkles, AlertCircle, HelpCircle
 } from "lucide-react";
 import { useSettings } from "../context/SettingsContext";
+import { 
+  getUpcomingEvents, 
+  getPastEvents, 
+  isPastEvent, 
+  isUpcomingEvent, 
+  isEventInCurrentWeek, 
+  isEventInNextWeek, 
+  getEventTimingBadge 
+} from "../utils/eventDateUtils";
 
 export default function ImpactEventsTab() {
   const { settings, updateSettings, refreshSettings } = useSettings();
   const [events, setEvents] = useState<any[]>([]);
   const [search, setSearch] = useState("");
   const [categoryFilter, setCategoryFilter] = useState("ทั้งหมด");
+  const [periodFilter, setPeriodFilter] = useState<"upcoming" | "this_week" | "next_week" | "past" | "all">("upcoming");
+  const [isCleaning, setIsCleaning] = useState(false);
   
   // Loading & Action States
   const [isSyncing, setIsSyncing] = useState(false);
@@ -245,8 +256,49 @@ export default function ImpactEventsTab() {
     }
   };
 
+  // Cleanup past events
+  const handleCleanupPast = async () => {
+    if (!window.confirm("คุณต้องการล้างงานเก่าที่หมดเวลาแล้วออกจากฐานข้อมูลใช่หรือไม่?")) {
+      return;
+    }
+    setIsCleaning(true);
+    try {
+      const res = await fetch("/api/impact-events/cleanup-past", { method: "POST" });
+      if (res.ok) {
+        const data = await res.json();
+        if (data.success) {
+          setEvents(data.events);
+          await refreshSettings();
+          showToast(data.message || "ล้างงานเก่าเรียบร้อยแล้ว", "success");
+        }
+      }
+    } catch (err) {
+      showToast("เกิดข้อผิดพลาดในการล้างงานเก่า", "error");
+    } finally {
+      setIsCleaning(false);
+    }
+  };
+
+  // Date period calculations
+  const now = new Date();
+  const allUpcoming = getUpcomingEvents(events, now);
+  const thisWeekEvents = allUpcoming.filter((e: any) => isEventInCurrentWeek(e.date, now));
+  const nextWeekEvents = allUpcoming.filter((e: any) => isEventInNextWeek(e.date, now));
+  const allPast = getPastEvents(events, now);
+
+  let baseList = events;
+  if (periodFilter === "upcoming") {
+    baseList = allUpcoming;
+  } else if (periodFilter === "this_week") {
+    baseList = thisWeekEvents;
+  } else if (periodFilter === "next_week") {
+    baseList = nextWeekEvents;
+  } else if (periodFilter === "past") {
+    baseList = allPast;
+  }
+
   // Filters
-  const filteredEvents = events.filter((evt) => {
+  const filteredEvents = baseList.filter((evt) => {
     const matchesSearch = String(evt.title).toLowerCase().includes(search.toLowerCase()) ||
                           String(evt.venue || "").toLowerCase().includes(search.toLowerCase()) ||
                           String(evt.description || "").toLowerCase().includes(search.toLowerCase());
@@ -370,32 +422,128 @@ export default function ImpactEventsTab() {
       </div>
 
       {/* Filter and Search controls */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-3.5 pt-1">
-        <div className="md:col-span-2 relative">
-          <Search className="absolute left-3 top-3 h-4 w-4 text-neutral-500" />
-          <input
-            type="text"
-            placeholder="ค้นหาตามชื่อกิจกรรม สถานที่จัดงาน หรือรายละเอียด..."
-            value={search}
-            onChange={(e) => setSearch(e.target.value)}
-            className="w-full bg-neutral-900 border border-neutral-850 hover:border-neutral-800 rounded px-10 py-2.5 text-xs text-white placeholder-neutral-500 focus:outline-none focus:border-brick/50 duration-200"
-          />
+      <div className="space-y-3 pt-1">
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-3.5">
+          <div className="md:col-span-2 relative">
+            <Search className="absolute left-3 top-3 h-4 w-4 text-neutral-500" />
+            <input
+              type="text"
+              placeholder="ค้นหาตามชื่อกิจกรรม สถานที่จัดงาน หรือรายละเอียด..."
+              value={search}
+              onChange={(e) => setSearch(e.target.value)}
+              className="w-full bg-neutral-900 border border-neutral-850 hover:border-neutral-800 rounded px-10 py-2.5 text-xs text-white placeholder-neutral-500 focus:outline-none focus:border-brick/50 duration-200"
+            />
+          </div>
+
+          <div className="flex gap-1 overflow-x-auto scrollbar-none">
+            {["ทั้งหมด", "Concert", "Exhibition", "Other"].map((cat) => (
+              <button
+                key={cat}
+                onClick={() => setCategoryFilter(cat)}
+                className={`flex-1 px-3 py-1.5 rounded text-xs transition-colors cursor-pointer ${
+                  categoryFilter === cat 
+                    ? "bg-brick text-white font-semibold" 
+                    : "bg-neutral-900 text-neutral-450 border border-neutral-850 hover:text-white"
+                }`}
+              >
+                {cat === "ทั้งหมด" ? "ทั้งหมด" : cat === "Concert" ? "คอนเสิร์ต" : cat === "Exhibition" ? "นิทรรศการ" : "อื่นๆ"}
+              </button>
+            ))}
+          </div>
         </div>
 
-        <div className="flex gap-1 overflow-x-auto scrollbar-none">
-          {["ทั้งหมด", "Concert", "Exhibition", "Other"].map((cat) => (
+        {/* Schedule & Period Filter Sub-bar */}
+        <div className="flex flex-wrap items-center justify-between gap-2 p-2 bg-neutral-950 border border-neutral-850 rounded-lg">
+          <div className="flex flex-wrap gap-1.5 items-center">
             <button
-              key={cat}
-              onClick={() => setCategoryFilter(cat)}
-              className={`flex-1 px-3 py-1.5 rounded text-xs transition-colors cursor-pointer ${
-                categoryFilter === cat 
-                  ? "bg-brick text-white font-semibold" 
-                  : "bg-neutral-900 text-neutral-450 border border-neutral-850 hover:text-white"
+              type="button"
+              onClick={() => setPeriodFilter("upcoming")}
+              className={`px-3 py-1.5 rounded text-xs font-mono font-medium transition-all cursor-pointer flex items-center gap-1.5 ${
+                periodFilter === "upcoming"
+                  ? "bg-brick text-white font-semibold shadow-sm"
+                  : "bg-neutral-900 text-neutral-400 hover:text-white"
               }`}
             >
-              {cat === "ทั้งหมด" ? "ทั้งหมด" : cat === "Concert" ? "คอนเสิร์ต" : cat === "Exhibition" ? "นิทรรศการ" : "อื่นๆ"}
+              <span>🔥 กำลังจะมาถึง</span>
+              <span className="text-[10px] px-1.5 py-0.2 rounded bg-black/40 text-neutral-200 font-bold">
+                {allUpcoming.length}
+              </span>
             </button>
-          ))}
+
+            <button
+              type="button"
+              onClick={() => setPeriodFilter("this_week")}
+              className={`px-3 py-1.5 rounded text-xs font-mono font-medium transition-all cursor-pointer flex items-center gap-1.5 ${
+                periodFilter === "this_week"
+                  ? "bg-amber-600 text-white font-semibold shadow-sm"
+                  : "bg-neutral-900 text-neutral-400 hover:text-white"
+              }`}
+            >
+              <span>⚡ สัปดาห์นี้</span>
+              <span className="text-[10px] px-1.5 py-0.2 rounded bg-black/40 text-neutral-200 font-bold">
+                {thisWeekEvents.length}
+              </span>
+            </button>
+
+            <button
+              type="button"
+              onClick={() => setPeriodFilter("next_week")}
+              className={`px-3 py-1.5 rounded text-xs font-mono font-medium transition-all cursor-pointer flex items-center gap-1.5 ${
+                periodFilter === "next_week"
+                  ? "bg-cyan-600 text-white font-semibold shadow-sm"
+                  : "bg-neutral-900 text-neutral-400 hover:text-white"
+              }`}
+            >
+              <span>📅 สัปดาห์หน้า</span>
+              <span className="text-[10px] px-1.5 py-0.2 rounded bg-black/40 text-neutral-200 font-bold">
+                {nextWeekEvents.length}
+              </span>
+            </button>
+
+            <button
+              type="button"
+              onClick={() => setPeriodFilter("past")}
+              className={`px-3 py-1.5 rounded text-xs font-mono font-medium transition-all cursor-pointer flex items-center gap-1.5 ${
+                periodFilter === "past"
+                  ? "bg-neutral-800 text-white font-semibold shadow-sm"
+                  : "bg-neutral-900 text-neutral-450 hover:text-white"
+              }`}
+            >
+              <span>⏳ งานที่ผ่านมาแล้ว</span>
+              <span className="text-[10px] px-1.5 py-0.2 rounded bg-black/40 text-neutral-400 font-bold">
+                {allPast.length}
+              </span>
+            </button>
+
+            <button
+              type="button"
+              onClick={() => setPeriodFilter("all")}
+              className={`px-3 py-1.5 rounded text-xs font-mono font-medium transition-all cursor-pointer flex items-center gap-1.5 ${
+                periodFilter === "all"
+                  ? "bg-neutral-800 text-white font-semibold shadow-sm"
+                  : "bg-neutral-900 text-neutral-450 hover:text-white"
+              }`}
+            >
+              <span>📋 ทั้งหมด</span>
+              <span className="text-[10px] px-1.5 py-0.2 rounded bg-black/40 text-neutral-400 font-bold">
+                {events.length}
+              </span>
+            </button>
+          </div>
+
+          {/* Quick action: Clean past events */}
+          {allPast.length > 0 && (
+            <button
+              type="button"
+              onClick={handleCleanupPast}
+              disabled={isCleaning}
+              className="px-3 py-1.5 bg-rose-950/60 hover:bg-rose-900 border border-rose-800/60 text-rose-300 rounded text-xs font-medium flex items-center gap-1.5 transition-all cursor-pointer disabled:opacity-50"
+              title="ลบกิจกรรมที่หมดเวลาจัดงานแล้วออกจากฐานข้อมูล"
+            >
+              <Trash2 className="h-3.5 w-3.5 text-rose-400" />
+              <span>{isCleaning ? "กำลังล้าง..." : `ล้างงานเก่าที่หมดเวลา (${allPast.length})`}</span>
+            </button>
+          )}
         </div>
       </div>
 
@@ -406,13 +554,15 @@ export default function ImpactEventsTab() {
           <div className="space-y-1">
             <h4 className="text-xs font-bold text-white">ไม่พบข้อมูลตารางงาน</h4>
             <p className="text-[11px] text-neutral-500 max-w-md mx-auto">
-              ยังไม่มีกิจกรรมที่สอดคล้องกับคีย์เวิร์ดในขณะนี้ กดปุ่ม **\"ซิงค์ตารางงานจากเว็บ IMPACT\"** ด้านบนเพื่ออัปเดตข้อมูลอัตโนมัติ
+              {periodFilter === "this_week" ? "ไม่มีกิจกรรมที่จัดขึ้นในสัปดาห์นี้" : "ยังไม่มีกิจกรรมที่สอดคล้องกับคีย์เวิร์ดในขณะนี้ กดปุ่ม \"ซิงค์ตารางงานจากเว็บ IMPACT\" ด้านบนเพื่ออัปเดตข้อมูลอัตโนมัติ"}
             </p>
           </div>
         </div>
       ) : (
         <div className="grid grid-cols-1 xl:grid-cols-2 gap-4">
-          {filteredEvents.map((evt) => (
+          {filteredEvents.map((evt) => {
+            const timing = getEventTimingBadge(evt.date, now);
+            return (
             <div 
               key={evt.id} 
               className={`p-4 bg-neutral-900 border rounded-xl flex gap-4 transition-all duration-300 relative ${
@@ -437,9 +587,14 @@ export default function ImpactEventsTab() {
               <div className="flex-1 min-w-0 flex flex-col justify-between space-y-2">
                 <div className="space-y-1">
                   <div className="flex justify-between items-start gap-1">
-                    <h4 className="text-xs font-bold text-white truncate pr-4" title={evt.title}>
-                      {evt.title}
-                    </h4>
+                    <div className="flex items-center gap-1.5 truncate pr-2">
+                      <h4 className="text-xs font-bold text-white truncate" title={evt.title}>
+                        {evt.title}
+                      </h4>
+                      <span className={`text-[9px] font-mono px-1.5 py-0.2 rounded font-semibold shrink-0 ${timing.color}`}>
+                        {timing.text}
+                      </span>
+                    </div>
 
                     {/* Active/Inactive Switch instantly saved into database */}
                     <div className="flex items-center space-x-1.5 shrink-0">
@@ -504,7 +659,8 @@ export default function ImpactEventsTab() {
                 </div>
               </div>
             </div>
-          ))}
+            );
+          })}
         </div>
       )}
 

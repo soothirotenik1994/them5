@@ -5,12 +5,14 @@ import { RoomType } from "../types";
 import { useSettings } from "../context/SettingsContext";
 
 const imageMap: Record<string, string> = {
-  superior: "https://images.unsplash.com/photo-1590490360182-c33d57733427?auto=format&fit=crop&w=800&q=80",
-  deluxe: "https://images.unsplash.com/photo-1582719508461-905c673771fd?auto=format&fit=crop&w=800&q=80",
-  studio: "https://images.unsplash.com/photo-1566665797739-1674de7a421a?auto=format&fit=crop&w=800&q=80"
+  superior: "/images/bedroom_superior_m5_1782203272229.jpg",
+  sup_queen_01: "/images/bedroom_superior_m5_1782203272229.jpg",
+  deluxe: "/images/bedroom_deluxe_m5_1782203318372.jpg",
+  dlx_queen_01: "/images/bedroom_deluxe_m5_1782203318372.jpg",
+  studio: "/images/bedroom_studio_m5_1782203293730.jpg"
 };
 
-const defaultRoomImg = "https://images.unsplash.com/photo-1582719508461-905c673771fd?auto=format&fit=crop&w=800&q=80";
+const defaultRoomImg = "/images/bedroom_superior_m5_1782203272229.jpg";
 
 interface RoomsSectionProps {
   onSelectRoom: (roomId: string) => void;

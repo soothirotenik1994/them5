@@ -1,27 +1,887 @@
 {
+  "deletedMemberIds": [
+    "M5-MEM-9168",
+    "M5-MEM-6143",
+    "M5-MEM-1003",
+    "M5-MEM-1002",
+    "M5-MEM-1001"
+  ],
+  "members": [],
+  "amenities": [
+    {
+      "id": 229,
+      "iconName": "Wifi",
+      "title": "อินเตอร์เน็ต WIFI",
+      "desc": "โรงแรมเราให้บริการอินเตอร์ WIFI ตลอด 24 ชั่วโมง "
+    },
+    {
+      "id": 230,
+      "iconName": "users",
+      "title": "Service Mild",
+      "desc": "โรงแรมเราบริการลูกค้าทุกท่านด้วยความใส่ใจ พร้อมให้บริการตลอด 24 ชั่วโมง "
+    },
+    {
+      "id": 231,
+      "iconName": "ShieldCheck",
+      "title": "ความปลอดภัย",
+      "desc": "โรงแรมเรามีกล้องวงจรปิดตลอด 24 ชั่วโมง ตรวจเช็คสภาพพร้อมใช้งานสม่ำเสมอ "
+    },
+    {
+      "id": 232,
+      "iconName": "Car",
+      "title": "บริการรับส่ง IMPACT",
+      "desc": "โรงแรมเรามีบริการรับส่งลูกค้าไปที่ IMPACT เมืองทองธานี ตามช่วงเวลา"
+    },
+    {
+      "id": 233,
+      "iconName": "Coffee",
+      "title": "ร้านกาแฟ",
+      "desc": "โรงแรมเรามีร้านกาแฟให้บริการ ให้ลูกค้าสามารถดื่มด่ำรับความสดชื่นในยามเช้าได้ทุกวัน "
+    }
+  ],
+  "promotions": [],
+  "slides": [
+    {
+      "desc": "โถงต้อนรับบรรยากาศอบอุ่น ตกแต่งสไตล์อินดัสเทรียลลอฟท์ด้วยผนังอิฐมอญธรรมชาติและโครงสร้างเหล็กดำสุดเท่ พร้อมเจ้าหน้าที่ดูแลต้อนรับอย่างเป็นกันเอง",
+      "label": "LOBBY & RECEPTION",
+      "url": "/uploads/1790672183536_ammjyn_DSC06028.jpg"
+    },
+    {
+      "label": "LOBBY & RECEPTION",
+      "url": "/uploads/1790672200403_4y1ttq_DSC06459.jpg",
+      "desc": "โถงต้อนรับบรรยากาศอบอุ่น ตกแต่งสไตล์อินดัสเทรียลลอฟท์ด้วยผนังอิฐมอญธรรมชาติและโครงสร้างเหล็กดำสุดเท่ พร้อมเจ้าหน้าที่ดูแลต้อนรับอย่างเป็นกันเอง"
+    },
+    {
+      "label": "LOBBY & RECEPTION",
+      "url": "/uploads/1790672220712_1p8rst_DSC06219.jpg",
+      "desc": "โถงต้อนรับบรรยากาศอบอุ่น ตกแต่งสไตล์อินดัสเทรียลลอฟท์ด้วยผนังอิฐมอญธรรมชาติและโครงสร้างเหล็กดำสุดเท่ พร้อมเจ้าหน้าที่ดูแลต้อนรับอย่างเป็นกันเอง"
+    },
+    {
+      "desc": "โถงต้อนรับบรรยากาศอบอุ่น ตกแต่งสไตล์อินดัสเทรียลลอฟท์ด้วยผนังอิฐมอญธรรมชาติและโครงสร้างเหล็กดำสุดเท่ พร้อมเจ้าหน้าที่ดูแลต้อนรับอย่างเป็นกันเอง",
+      "url": "/uploads/1790672232709_wjjq1h_DSC05861.jpg",
+      "label": "LOBBY & RECEPTION"
+    }
+  ],
+  "adminMenuConfig": [
+    {
+      "visible": true,
+      "iconName": "LayoutDashboard",
+      "allowedRoles": [
+        "*"
+      ],
+      "isSystem": true,
+      "order": 1,
+      "label": "แดชบอร์ดสรุป (Summary)",
+      "id": "dashboard",
+      "badgeType": "none"
+    },
+    {
+      "badgeType": "none",
+      "allowedRoles": [
+        "Super Admin",
+        "Loft Admin"
+      ],
+      "id": "general",
+      "visible": true,
+      "iconName": "Hotel",
+      "label": "ตั้งค่าโรงแรมหลัก",
+      "order": 2,
+      "isSystem": true
+    },
+    {
+      "label": "จัดการประเภทห้องพัก",
+      "order": 3,
+      "badgeType": "none",
+      "id": "rooms",
+      "iconName": "Bed",
+      "visible": true,
+      "allowedRoles": [
+        "Super Admin",
+        "Loft Admin"
+      ],
+      "isSystem": true
+    },
+    {
+      "iconName": "Gift",
+      "label": "แคมเปญโปรโมชั่น",
+      "order": 4,
+      "isSystem": true,
+      "id": "promotions",
+      "visible": true,
+      "allowedRoles": [
+        "Super Admin",
+        "Loft Admin",
+        "Marketing"
+      ],
+      "badgeType": "none"
+    },
+    {
+      "badgeType": "pendingBookings",
+      "id": "bookings",
+      "visible": true,
+      "order": 5,
+      "label": "รายการจองห้องพัก",
+      "allowedRoles": [
+        "Super Admin",
+        "Loft Admin",
+        "General Admin",
+        "Front Desk"
+      ],
+      "isSystem": true,
+      "iconName": "Calendar"
+    },
+    {
+      "badgeType": "none",
+      "id": "billing",
+      "isSystem": true,
+      "visible": true,
+      "iconName": "FileText",
+      "order": 6,
+      "label": "ใบกำกับภาษี & ใบเสนอราคา",
+      "allowedRoles": [
+        "*"
+      ]
+    },
+    {
+      "isSystem": true,
+      "visible": true,
+      "iconName": "Coffee",
+      "allowedRoles": [
+        "Super Admin",
+        "Loft Admin"
+      ],
+      "badgeType": "none",
+      "label": "สิ่งอำนวยความสะดวก",
+      "order": 7,
+      "id": "amenities"
+    },
+    {
+      "allowedRoles": [
+        "Super Admin",
+        "General Admin"
+      ],
+      "badgeType": "none",
+      "isSystem": true,
+      "iconName": "HelpCircle",
+      "visible": true,
+      "label": "คำถามที่พบบ่อย (FAQs)",
+      "order": 8,
+      "id": "faqs"
+    },
+    {
+      "badgeType": "none",
+      "id": "reviews",
+      "order": 9,
+      "label": "รีวิวจำลองคุณลูกค้า",
+      "allowedRoles": [
+        "Super Admin",
+        "General Admin",
+        "Marketing"
+      ],
+      "iconName": "MessageSquare",
+      "isSystem": true,
+      "visible": true
+    },
+    {
+      "isSystem": true,
+      "badgeType": "none",
+      "iconName": "Images",
+      "order": 10,
+      "label": "รูปภาพแกลเลอรี",
+      "visible": true,
+      "allowedRoles": [
+        "Super Admin",
+        "Loft Admin",
+        "Marketing"
+      ],
+      "id": "gallery"
+    },
+    {
+      "badgeType": "membersCount",
+      "id": "members",
+      "allowedRoles": [
+        "Super Admin",
+        "General Admin",
+        "Front Desk"
+      ],
+      "isSystem": true,
+      "iconName": "User",
+      "visible": true,
+      "order": 11,
+      "label": "จัดการระบบสมาชิก"
+    },
+    {
+      "visible": true,
+      "isSystem": true,
+      "iconName": "ShieldCheck",
+      "id": "admins",
+      "badgeType": "adminsCount",
+      "order": 12,
+      "label": "จัดการสิทธิ์แอดมิน",
+      "allowedRoles": [
+        "Super Admin"
+      ]
+    },
+    {
+      "iconName": "Calendar",
+      "isSystem": true,
+      "visible": true,
+      "allowedRoles": [
+        "Super Admin",
+        "Loft Admin",
+        "General Admin",
+        "Front Desk"
+      ],
+      "id": "calendar",
+      "badgeType": "none",
+      "order": 13,
+      "label": "ปฏิทินการจองห้อง"
+    },
+    {
+      "iconName": "Sparkles",
+      "id": "impact",
+      "isSystem": true,
+      "visible": true,
+      "badgeType": "text",
+      "order": 14,
+      "badgeText": "API",
+      "allowedRoles": [
+        "*"
+      ],
+      "label": "ตารางงาน IMPACT"
+    },
+    {
+      "iconName": "ShieldAlert",
+      "isSystem": true,
+      "allowedRoles": [
+        "Super Admin",
+        "Loft Admin",
+        "Front Desk"
+      ],
+      "visible": true,
+      "badgeType": "none",
+      "id": "blocked",
+      "order": 15,
+      "label": "กำหนดวันปิดรับจอง"
+    },
+    {
+      "badgeType": "none",
+      "label": "จัดการส่วนลดคูปอง",
+      "order": 16,
+      "visible": true,
+      "iconName": "Ticket",
+      "isSystem": true,
+      "allowedRoles": [
+        "Super Admin",
+        "Marketing"
+      ],
+      "id": "coupons"
+    },
+    {
+      "badgeType": "none",
+      "visible": true,
+      "label": "จัดการพื้นหลังเว็บ",
+      "order": 17,
+      "allowedRoles": [
+        "Super Admin"
+      ],
+      "iconName": "Wallpaper",
+      "isSystem": true,
+      "id": "backgrounds"
+    },
+    {
+      "id": "seo",
+      "order": 18,
+      "label": "ตั้งค่า SEO / คีย์เวิร์ด",
+      "visible": true,
+      "allowedRoles": [
+        "Super Admin",
+        "Marketing"
+      ],
+      "badgeType": "none",
+      "iconName": "Sparkles",
+      "isSystem": true
+    },
+    {
+      "iconName": "Handshake",
+      "isSystem": true,
+      "visible": true,
+      "badgeType": "partnersCount",
+      "allowedRoles": [
+        "Super Admin",
+        "Marketing"
+      ],
+      "id": "partners",
+      "label": "จัดการเมนูพาร์ทเนอร์",
+      "order": 19
+    },
+    {
+      "visible": true,
+      "order": 20,
+      "label": "ตั้งค่าเชื่อมต่อ Directus",
+      "id": "directus",
+      "allowedRoles": [
+        "Super Admin"
+      ],
+      "isSystem": true,
+      "badgeType": "none",
+      "iconName": "Database"
+    },
+    {
+      "label": "แจ้งเตือน LINE & อีเมล",
+      "order": 21,
+      "iconName": "Bell",
+      "isSystem": true,
+      "id": "smtp",
+      "allowedRoles": [
+        "Super Admin"
+      ],
+      "badgeType": "none",
+      "visible": true
+    },
+    {
+      "isSystem": true,
+      "visible": true,
+      "iconName": "SlidersHorizontal",
+      "order": 22,
+      "label": "จัดลำดับเมนู & สิทธิ์",
+      "badgeType": "none",
+      "allowedRoles": [
+        "Super Admin"
+      ],
+      "id": "menu_management"
+    }
+  ],
+  "smtp": {
+    "id": 1,
+    "host": "smtp.mailersend.net",
+    "port": 587,
+    "secure": true,
+    "user": "MS_WwD9aB@test-65qngkdq938lwr12.mlsender.net",
+    "pass": "mssp.qnbN07P.0r83ql3znqz4zw1j.tGsVamZ",
+    "fromName": "The M5 Residence Loft",
+    "fromEmail": "no-reply@them5residence.com",
+    "adminNotifyEmail": "booking@them5residence.com, soothirote.nik@gmail.com"
+  },
+  "coupons": [],
+  "adminRoles": [
+    {
+      "name": "Super Admin",
+      "id": "role_super_admin",
+      "badgeColor": "amber",
+      "description": "ผู้ดูแลระบบสูงสุด (เข้าถึงได้ทุกเมนู)",
+      "isSystem": true
+    },
+    {
+      "description": "ผู้ดูแลห้อง M5 Loft และระบบโปรโมชั่น",
+      "badgeColor": "cyan",
+      "id": "role_loft_admin",
+      "name": "Loft Admin"
+    },
+    {
+      "id": "role_general_admin",
+      "description": "เจ้าหน้าที่ต้อนรับและงานบริการทั่วไป",
+      "badgeColor": "zinc",
+      "name": "General Admin"
+    },
+    {
+      "id": "role_front_desk",
+      "badgeColor": "emerald",
+      "name": "Front Desk",
+      "description": "ฝ่ายต้อนรับส่วนหน้า ดูรายการจองและปฏิทิน"
+    },
+    {
+      "badgeColor": "purple",
+      "name": "Marketing",
+      "id": "role_marketing",
+      "description": "ฝ่ายการตลาด แคมเปญ โปรโมชั่น และ SEO"
+    }
+  ],
+  "line": {
+    "channelAccessToken": "",
+    "targetId": "",
+    "enabled": true,
+    "webhookUrl": "",
+    "token": ""
+  },
+  "initialized": true,
+  "reviews": [],
+  "gallery": [
+    {
+      "id": 10626,
+      "url": "",
+      "title": "ภาพแกลเลอรีใหม่",
+      "cat": "ทั่วไป"
+    },
+    {
+      "id": 10627,
+      "url": "/uploads/1790674036199_qolwzt_DSC05849.jpg",
+      "title": "DSC05849",
+      "cat": "ทั่วไป"
+    },
+    {
+      "id": 10628,
+      "url": "/uploads/1790674039234_osii1h_DSC05850.jpg",
+      "title": "DSC05850",
+      "cat": "ทั่วไป"
+    },
+    {
+      "id": 10629,
+      "url": "/uploads/1790674045180_pdd1fk_DSC05866.jpg",
+      "title": "DSC05866",
+      "cat": "ทั่วไป"
+    },
+    {
+      "id": 10630,
+      "url": "/uploads/1790674046939_hr4yqo_DSC05868.jpg",
+      "title": "DSC05868",
+      "cat": "ทั่วไป"
+    },
+    {
+      "id": 10631,
+      "url": "/uploads/1790674053186_6pbhq0_DSC05874.jpg",
+      "title": "DSC05874",
+      "cat": "ทั่วไป"
+    },
+    {
+      "id": 10632,
+      "url": "/uploads/1790674054829_8nec9i_DSC05884.jpg",
+      "title": "DSC05884",
+      "cat": "ทั่วไป"
+    },
+    {
+      "id": 10633,
+      "url": "/uploads/1790674061674_4cu225_DSC05898.jpg",
+      "title": "DSC05898",
+      "cat": "ทั่วไป"
+    },
+    {
+      "id": 10634,
+      "url": "/uploads/1790674063645_9d13bn_DSC05900.jpg",
+      "title": "DSC05900",
+      "cat": "ทั่วไป"
+    },
+    {
+      "id": 10635,
+      "url": "/uploads/1790674070104_i2yzbe_DSC05906.jpg",
+      "title": "DSC05906",
+      "cat": "ทั่วไป"
+    },
+    {
+      "id": 10636,
+      "url": "/uploads/1790674071602_s32obj_DSC05908.jpg",
+      "title": "DSC05908",
+      "cat": "ทั่วไป"
+    },
+    {
+      "id": 10637,
+      "url": "/uploads/1790674078272_72wr3m_DSC05912.jpg",
+      "title": "DSC05912",
+      "cat": "ทั่วไป"
+    },
+    {
+      "id": 10638,
+      "url": "/uploads/1790674080491_v9n07n_DSC05931.jpg",
+      "title": "DSC05931",
+      "cat": "ทั่วไป"
+    },
+    {
+      "id": 10639,
+      "url": "/uploads/1790674083326_s1uqd6_DSC05946.jpg",
+      "title": "DSC05946",
+      "cat": "ทั่วไป"
+    },
+    {
+      "id": 10640,
+      "url": "/uploads/1790674088573_v5wsvs_DSC05958.jpg",
+      "title": "DSC05958",
+      "cat": "ทั่วไป"
+    },
+    {
+      "id": 10641,
+      "url": "/uploads/1790674091250_r5wz7w_DSC05959.jpg",
+      "title": "DSC05959",
+      "cat": "ทั่วไป"
+    },
+    {
+      "id": 10642,
+      "url": "/uploads/1790674096649_0hscmh_DSC05968.jpg",
+      "title": "DSC05968",
+      "cat": "ทั่วไป"
+    },
+    {
+      "id": 10643,
+      "url": "/uploads/1790674098051_1utju3_DSC05978.jpg",
+      "title": "DSC05978",
+      "cat": "ทั่วไป"
+    },
+    {
+      "id": 10644,
+      "url": "/uploads/1790674099430_e5h879_DSC05991.jpg",
+      "title": "DSC05991",
+      "cat": "ทั่วไป"
+    },
+    {
+      "id": 10645,
+      "url": "/uploads/1790674105877_dk28me_DSC05994.jpg",
+      "title": "DSC05994",
+      "cat": "ทั่วไป"
+    },
+    {
+      "id": 10646,
+      "url": "/uploads/1790674107497_9aufpi_DSC06004.jpg",
+      "title": "DSC06004",
+      "cat": "ทั่วไป"
+    },
+    {
+      "id": 10647,
+      "url": "/uploads/1790674114699_u5n5wn_DSC06007.jpg",
+      "title": "DSC06007",
+      "cat": "ทั่วไป"
+    },
+    {
+      "id": 10648,
+      "url": "/uploads/1790674117649_4tb12h_DSC06014.jpg",
+      "title": "DSC06014",
+      "cat": "ทั่วไป"
+    },
+    {
+      "id": 10649,
+      "url": "/uploads/1790674122993_o1mbq8_DSC06021.jpg",
+      "title": "DSC06021",
+      "cat": "ทั่วไป"
+    },
+    {
+      "id": 10650,
+      "url": "/uploads/1790674124682_egdxb2_DSC06028.jpg",
+      "title": "DSC06028",
+      "cat": "ทั่วไป"
+    },
+    {
+      "id": 10651,
+      "url": "/uploads/1790674131578_zlwoft_DSC06034.jpg",
+      "title": "DSC06034",
+      "cat": "ทั่วไป"
+    },
+    {
+      "id": 10652,
+      "url": "/uploads/1790674134352_m8wjb3_DSC06054.jpg",
+      "title": "DSC06054",
+      "cat": "ทั่วไป"
+    },
+    {
+      "id": 10653,
+      "url": "/uploads/1790674140038_ttn446_DSC06055.jpg",
+      "title": "DSC06055",
+      "cat": "ทั่วไป"
+    },
+    {
+      "id": 10654,
+      "url": "/uploads/1790674141921_izo23i_DSC06064.jpg",
+      "title": "DSC06064",
+      "cat": "ทั่วไป"
+    },
+    {
+      "id": 10655,
+      "url": "/uploads/1790674148369_s5ziw7_DSC06066.jpg",
+      "title": "DSC06066",
+      "cat": "ทั่วไป"
+    },
+    {
+      "id": 10656,
+      "url": "/uploads/1790674149799_6pv0es_DSC06080.jpg",
+      "title": "DSC06080",
+      "cat": "ทั่วไป"
+    },
+    {
+      "id": 10657,
+      "url": "/uploads/1790674156345_nguxlt_DSC06084.jpg",
+      "title": "DSC06084",
+      "cat": "ทั่วไป"
+    },
+    {
+      "id": 10658,
+      "url": "/uploads/1790674158019_hlkz46_DSC06089.jpg",
+      "title": "DSC06089",
+      "cat": "ทั่วไป"
+    },
+    {
+      "id": 10659,
+      "url": "/uploads/1790674164453_od0w2c_DSC06094.jpg",
+      "title": "DSC06094",
+      "cat": "ทั่วไป"
+    },
+    {
+      "id": 10660,
+      "url": "/uploads/1790674166095_ba7rvl_DSC06096.jpg",
+      "title": "DSC06096",
+      "cat": "ทั่วไป"
+    },
+    {
+      "id": 10661,
+      "url": "/uploads/1790674172662_k6w0lr_DSC06098.jpg",
+      "title": "DSC06098",
+      "cat": "ทั่วไป"
+    },
+    {
+      "id": 10662,
+      "url": "/uploads/1790674174452_2ky2f8_DSC06102.jpg",
+      "title": "DSC06102",
+      "cat": "ทั่วไป"
+    },
+    {
+      "id": 10663,
+      "url": "/uploads/1790674180868_3pu0qg_DSC06106.jpg",
+      "title": "DSC06106",
+      "cat": "ทั่วไป"
+    },
+    {
+      "id": 10664,
+      "url": "/uploads/1790674182605_jr2j3f_DSC06112.jpg",
+      "title": "DSC06112",
+      "cat": "ทั่วไป"
+    },
+    {
+      "id": 10665,
+      "url": "/uploads/1790674189016_wxysno_DSC06116.jpg",
+      "title": "DSC06116",
+      "cat": "ทั่วไป"
+    },
+    {
+      "id": 10666,
+      "url": "/uploads/1790674190589_gog73v_DSC06125.jpg",
+      "title": "DSC06125",
+      "cat": "ทั่วไป"
+    },
+    {
+      "id": 10667,
+      "url": "/uploads/1790674197076_qngj3e_DSC06143.jpg",
+      "title": "DSC06143",
+      "cat": "ทั่วไป"
+    },
+    {
+      "id": 10668,
+      "url": "/uploads/1790674198899_8vj9nx_DSC06149.jpg",
+      "title": "DSC06149",
+      "cat": "ทั่วไป"
+    },
+    {
+      "id": 10669,
+      "url": "/uploads/1790674205355_45od3z_DSC06156.jpg",
+      "title": "DSC06156",
+      "cat": "ทั่วไป"
+    },
+    {
+      "id": 10670,
+      "url": "/uploads/1790674207219_n92423_DSC06187.jpg",
+      "title": "DSC06187",
+      "cat": "ทั่วไป"
+    },
+    {
+      "id": 10671,
+      "url": "/uploads/1790674213751_diveg0_DSC06192.jpg",
+      "title": "DSC06192",
+      "cat": "ทั่วไป"
+    },
+    {
+      "id": 10672,
+      "url": "/uploads/1790674215641_bwbyti_DSC06204.jpg",
+      "title": "DSC06204",
+      "cat": "ทั่วไป"
+    },
+    {
+      "id": 10673,
+      "url": "/uploads/1790674221824_agsqh4_DSC06208.jpg",
+      "title": "DSC06208",
+      "cat": "ทั่วไป"
+    },
+    {
+      "id": 10674,
+      "url": "/uploads/1790674223372_h03uew_DSC06219.jpg",
+      "title": "DSC06219",
+      "cat": "ทั่วไป"
+    },
+    {
+      "id": 10675,
+      "url": "/uploads/1790674229874_9hcbmz_DSC06229.jpg",
+      "title": "DSC06229",
+      "cat": "ทั่วไป"
+    },
+    {
+      "id": 10676,
+      "url": "/uploads/1790674231961_yq03bo_DSC06230.jpg",
+      "title": "DSC06230",
+      "cat": "ทั่วไป"
+    },
+    {
+      "id": 10677,
+      "url": "/uploads/1790674238093_eiaufd_DSC06237.jpg",
+      "title": "DSC06237",
+      "cat": "ทั่วไป"
+    },
+    {
+      "id": 10678,
+      "url": "/uploads/1790674240079_v6c57m_DSC06245.jpg",
+      "title": "DSC06245",
+      "cat": "ทั่วไป"
+    },
+    {
+      "id": 10679,
+      "url": "/uploads/1790674241985_j8aiky_DSC06263.jpg",
+      "title": "DSC06263",
+      "cat": "ทั่วไป"
+    },
+    {
+      "id": 10680,
+      "url": "/uploads/1790674248139_f9ays1_DSC06273.jpg",
+      "title": "DSC06273",
+      "cat": "ทั่วไป"
+    },
+    {
+      "id": 10681,
+      "url": "/uploads/1790674249813_esuqeb_DSC06278.jpg",
+      "title": "DSC06278",
+      "cat": "ทั่วไป"
+    },
+    {
+      "id": 10682,
+      "url": "/uploads/1790674251625_lz9hby_DSC06287.jpg",
+      "title": "DSC06287",
+      "cat": "ทั่วไป"
+    },
+    {
+      "id": 10683,
+      "url": "/uploads/1790674257858_2pkwez_DSC06304.jpg",
+      "title": "DSC06304",
+      "cat": "ทั่วไป"
+    },
+    {
+      "id": 10684,
+      "url": "/uploads/1790674260062_494dc2_DSC06314.jpg",
+      "title": "DSC06314",
+      "cat": "ทั่วไป"
+    },
+    {
+      "id": 10685,
+      "url": "/uploads/1790674266713_ki22ho_DSC06323.jpg",
+      "title": "DSC06323",
+      "cat": "ทั่วไป"
+    },
+    {
+      "id": 10686,
+      "url": "/uploads/1790674268182_84gg0p_DSC06326.jpg",
+      "title": "DSC06326",
+      "cat": "ทั่วไป"
+    },
+    {
+      "id": 10687,
+      "url": "/uploads/1790674274637_nu7g9l_DSC06333.jpg",
+      "title": "DSC06333",
+      "cat": "ทั่วไป"
+    },
+    {
+      "id": 10688,
+      "url": "/uploads/1790674276212_hrclji_DSC06336.jpg",
+      "title": "DSC06336",
+      "cat": "ทั่วไป"
+    },
+    {
+      "id": 10689,
+      "url": "/uploads/1790674277683_tif9za_DSC06369.jpg",
+      "title": "DSC06369",
+      "cat": "ทั่วไป"
+    },
+    {
+      "id": 10690,
+      "url": "/uploads/1790674284157_5suxsu_DSC06396.jpg",
+      "title": "DSC06396",
+      "cat": "ทั่วไป"
+    },
+    {
+      "id": 10691,
+      "url": "/uploads/1790674285820_4vc1gm_DSC06421.jpg",
+      "title": "DSC06421",
+      "cat": "ทั่วไป"
+    },
+    {
+      "id": 10692,
+      "url": "/uploads/1790674292101_x4pgzm_DSC06422.jpg",
+      "title": "DSC06422",
+      "cat": "ทั่วไป"
+    },
+    {
+      "id": 10693,
+      "url": "/uploads/1790674293617_i1f6qh_DSC06425.jpg",
+      "title": "DSC06425",
+      "cat": "ทั่วไป"
+    },
+    {
+      "id": 10694,
+      "url": "/uploads/1790674300281_liq917_DSC06429.jpg",
+      "title": "DSC06429",
+      "cat": "ทั่วไป"
+    },
+    {
+      "id": 10695,
+      "url": "/uploads/1790674301684_h6mmqt_DSC06430.jpg",
+      "title": "DSC06430",
+      "cat": "ทั่วไป"
+    },
+    {
+      "id": 10696,
+      "url": "/uploads/1790674308225_jy28aq_DSC06454.jpg",
+      "title": "DSC06454",
+      "cat": "ทั่วไป"
+    },
+    {
+      "id": 10697,
+      "url": "/uploads/1790674309871_u7ibva_DSC06459.jpg",
+      "title": "DSC06459",
+      "cat": "ทั่วไป"
+    },
+    {
+      "id": 10698,
+      "url": "/uploads/1790674316300_xf8lju_DSC06464.jpg",
+      "title": "DSC06464",
+      "cat": "ทั่วไป"
+    },
+    {
+      "id": 10699,
+      "url": "/uploads/1790674317838_xxpprt_DSC06469.jpg",
+      "title": "DSC06469",
+      "cat": "ทั่วไป"
+    },
+    {
+      "id": 10700,
+      "url": "/uploads/1790674324395_rcwcml_DSC06473.jpg",
+      "title": "DSC06473",
+      "cat": "ทั่วไป"
+    }
+  ],
+  "googleReviewsEnabled": true,
   "general": {
     "id": 1,
     "hotelName": "The M5 Residence",
     "thaiName": "เดอะ เอ็มไฟว์ เรสซิเดนซ์",
     "heroTitle": "นิยามใหม่ของการพักผ่อน",
-    "heroSubtitle": "ดื่มด่ำกับดีไซน์ปูนเปลือยขัดมัน และงานไม้โครงเหล็กดำสุดเท่ ยกระดับสุนทรียภาพแห่งชีวิตสมัยใหม่ย่านปากเกร็ด นนทบุรี ใกล้ชิดทุกคอนเสิร์ตและอีเว้นท์ดัง",
+    "heroSubtitle": "ดื่มด่ำกับดีไซน์ปูนเปลือยขัดมัน อิฐมอญธรรมชาติ และงานไม้โครงเหล็กดำสุดเท่ ยกระดับสุนทรียภาพแห่งชีวิตสมัยใหม่ย่านปากเกร็ด นนทบุรี ใกล้ชิดทุกคอนเสิร์ตและอีเว้นท์ดัง",
     "gps": "13.91230, 100.54321",
     "contactAddress": "ปากเกร็ด นนทบุรี เลียบคลองประปา ใกล้ป๊อปปูล่าคาร์ดอร์",
-    "contactPhone": "0996178695",
-    "facebook": "The M5 Residence",
-    "lineId": "@the_m5",
-    "logoUrl": "/api/assets/15087aa7-004e-487e-82f2-379148cb68de",
-    "coverImg1": "/api/assets/34715a7b-dad3-4036-836a-7acc53744d0f",
-    "coverImg2": "/api/assets/e21cbc96-e5a1-4e72-ad8e-ae713d4b5b4b",
-    "coverImg3": "/api/assets/b83991a8-794d-443e-bbe5-b91c9112aa62",
-    "heroCardImg": "https://images.unsplash.com/photo-1554118811-1e0d58224f24?auto=format&fit=crop&w=1200&q=80",
-    "heroBgImg": "https://images.unsplash.com/photo-1590490360182-c33d57733427?auto=format&fit=crop&w=1200&q=80",
+    "contactPhone": "086379676",
+    "facebook": "The M5 Residence Loft",
+    "lineId": "@m5residence",
+    "logoUrl": "/uploads/1790666846887_vm7c4c_favicon-2048x2048-1-1024x1024.png",
+    "coverImg1": "/uploads/1790672183536_ammjyn_DSC06028.jpg",
+    "coverImg2": "/uploads/1790672200403_4y1ttq_DSC06459.jpg",
+    "coverImg3": "/uploads/1790672220712_1p8rst_DSC06219.jpg",
+    "heroCardImg": "/uploads/1790672241439_mx3mqb_DSC05850.jpg",
+    "heroBgImg": "/images/lobby_loft_m5_1782203250164.jpg",
     "seoTitle": "The M5 Residence | ที่พักสไตล์ลอฟท์ ปากเกร็ด นนทบุรี ใกล้อิมแพ็ค อารีน่า",
     "seoDescription": "เดอะ เอ็มไฟว์ เรสซิเดนซ์ (The M5 Residence) นิยามใหม่ของการพักผ่อนสไตล์อินดัสเทรียลลอฟท์ ปากเกร็ด นนทบุรี เลียบคลองประปา ใกล้ป๊อปปูล่าคาร์ดอน และเมืองทองธานี ห้องพักหรูราคาประหยัด",
     "seoKeywords": "The M5 Residence, เดอะ เอ็มไฟว์ เรสซิเดนซ์, ที่พักปากเกร็ด, โรงแรมปากเกร็ด, ที่พักใกล้อิมแพ็ค, ที่พักใกล้เมืองทอง, โรงแรมสไตล์ลอฟท์, โรงแรมนนทบุรี, จองห้องพักนนทบุรี",
     "allowRegistration": false,
-    "bookingEnabled": false,
-    "bookingDisabledMessage": "ขออภัย ระบบจองห้องพักออนไลน์ของทางโรงแรมปิดทำการชั่วคราวเพื่อปรับปรุงระบบ",
+    "bookingEnabled": true,
+    "bookingDisabledMessage": "ขออภัย ระบบจองห้องพักออนไลน์ของทางโรงแรมปิดทำการชั่วคราวเพื่อปรับปรุงระบบ หากมีข้อสงสัยหรือต้องการจองด่วน สามารถติดต่อผ่าน Line ID หรือเบอร์โทรศัพท์ได้โดยตรง",
     "eventPopupEnabled": true,
     "eventPopupMode": null,
     "eventPopupSelectedId": null,
@@ -33,66 +893,23 @@
     "facebookUrl": "https://www.facebook.com/them5muangthong",
     "adminPath": "/admin123"
   },
-  "rooms": [
-    {
-      "id": "std_twin_01",
-      "name": "Standard Twin Bed Room",
-      "thaiName": "ห้องสแตนดาร์ด เตียงคู่",
-      "price": 1290,
-      "size": 20,
-      "capacity": 2,
-      "bedType": "เตียงเดี่ยว 3 ฟุต (2 Single Beds)",
-      "description": "ห้องพักเตียงคู่กะทัดรัด ดีไซน์เรียบง่าย ลงตัวสำหรับเพื่อนร่วมทางหรือการเดินทางเพื่อธุรกิจที่เน้นความคล่องตัว",
-      "longDescription": "สัมผัสความสะดวกสบายในพื้นที่ที่ออกแบบมาเพื่อการพักผ่อนอย่างเต็มประสิทธิภาพ มาพร้อมเตียงเดี่ยว 3 ฟุต จำนวน 2 เตียง ที่จัดวางอย่างลงตัวในบรรยากาศ Industrial Chic ให้คุณรู้สึกผ่อนคลายเหมือนอยู่บ้าน ท่านจะพบความเรียบร้อยและการตกแต่งที่เน้นความโปร่งสบาย พร้อมระเบียงส่วนตัวสำหรับชมบรรยากาศ",
-      "imageUrl": "/api/assets/03a1264c-3fb0-44e1-a8cd-a2185224bd06",
-      "amenities": [
-        "Wi-Fi ความเร็วสูง",
-        "เครื่องปรับอากาศ",
-        "ทีวีจอแบน",
-        "ตู้เย็น",
-        "เครื่องทำน้ำอุ่น",
-        "ระเบียง"
-      ],
-      "matterportUrl": "https://discover.matterport.com/space/4orBgFGSMJp",
-      "active": true
-    }
-  ],
-  "promotions": [],
-  "amenities": [],
-  "bookings": [],
-  "smtp": {
-    "id": 1,
-    "host": "smtp.gmail.com",
-    "port": 587,
-    "secure": false,
-    "user": "notification@them5residence.com",
-    "pass": "m5residence2026",
-    "fromName": "The M5 Residence Loft",
-    "fromEmail": "no-reply@them5residence.com",
-    "adminNotifyEmail": "booking@them5residence.com"
-  },
-  "blockedDates": [],
-  "coupons": [],
-  "members": [],
-  "admins": [
-    {
-      "id": "admin-2",
-      "adminId": "admin-2",
-      "username": "soothirotenik",
-      "password": "asd024865",
-      "name": "soothirotenik",
-      "role": "Super Admin"
-    },
-    {
-      "id": "admin-1",
-      "adminId": "admin-1",
-      "username": "admin",
-      "password": "password123",
-      "name": "System Chief Manager",
-      "role": "Super Admin"
-    }
+  "deletedBookingIds": [
+    "B-4172",
+    "B-2636",
+    "B-1001"
   ],
   "impactEvents": [
+    {
+      "id": "scraped-02ayaq6",
+      "title": "INTELLIGENT MANUFACTURING EXPO SOUTHEAST ASIA 2026 (IME)",
+      "date": "22-24 กรกฎาคม 2569",
+      "time": "",
+      "venue": "ศูนย์แสดงสินค้า อิมแพ็ค เมืองทองธานี",
+      "description": "กิจกรรมและงานแสดงระดับแนวหน้า ณ ศูนย์แสดงสินค้า อิมแพ็ค เมืองทองธานี แนะนำผู้เข้าร่วมงานจองห้องพักล่วงหน้าเพื่อหลีกเลี่ยงการจราจรหนาแน่นและเข้าพักผ่อนใกล้สถานที่จัดงานอย่างสะดวกสบาย",
+      "imageUrl": "https://www.impact.co.th/media/com_eventbooking/images/thumbs/0702-intelligent-manufacturing-expo.webp",
+      "category": "Exhibition",
+      "active": true
+    },
     {
       "id": "scraped-1qism06",
       "title": "บางกอกแพ็ค แอนด์ ลาเบล เอ็กซ์โป 2026",
@@ -105,68 +922,46 @@
       "active": true
     },
     {
-      "id": "scraped-5s75si1",
-      "title": "บางกอกดิจิทัล เท็กซ์ไทล์ พริ้นท์ เอ็กซ์โป 2026",
-      "date": "05-08 พฤศจิกายน 2569",
+      "id": "scraped-2b8dpws",
+      "title": "ฝั่งธนร็อก เฟสติวัล 2026",
+      "date": "03 ตุลาคม 2569",
       "time": "",
       "venue": "ศูนย์แสดงสินค้า อิมแพ็ค เมืองทองธานี",
       "description": "กิจกรรมและงานแสดงระดับแนวหน้า ณ ศูนย์แสดงสินค้า อิมแพ็ค เมืองทองธานี แนะนำผู้เข้าร่วมงานจองห้องพักล่วงหน้าเพื่อหลีกเลี่ยงการจราจรหนาแน่นและเข้าพักผ่อนใกล้สถานที่จัดงานอย่างสะดวกสบาย",
-      "imageUrl": "https://www.impact.co.th/media/com_eventbooking/images/thumbs/0527-bangkok-digital-textile-print-expo-2026.webp",
-      "category": "Exhibition",
+      "imageUrl": "https://www.impact.co.th/media/com_eventbooking/images/thumbs/0730 fungthon 2026.webp",
+      "category": "Concert",
       "active": true
     },
     {
-      "id": "scraped-8yers3k",
-      "title": "บางกอก แอด แอนด์ ไซน์ เอ็กซ์โป 2026",
-      "date": "05-08 พฤศจิกายน 2569",
+      "id": "scraped-3q3j2yz",
+      "title": "2026 JAY B tape: roots bangkok",
+      "date": "11-12 กรกฎาคม 2569",
+      "time": "",
+      "venue": "อิมแพ็ค อารีน่า",
+      "description": "กิจกรรมและงานแสดงระดับแนวหน้า ณ อิมแพ็ค อารีน่า แนะนำผู้เข้าร่วมงานจองห้องพักล่วงหน้าเพื่อหลีกเลี่ยงการจราจรหนาแน่นและเข้าพักผ่อนใกล้สถานที่จัดงานอย่างสะดวกสบาย",
+      "imageUrl": "https://www.impact.co.th/media/com_eventbooking/images/thumbs/0622-2026-jay-b.webp",
+      "category": "Concert",
+      "active": true
+    },
+    {
+      "id": "scraped-3rmcyba",
+      "title": "FLURE Life",
+      "date": "22 สิงหาคม 2569",
+      "time": "",
+      "venue": "ธันเดอร์โดม",
+      "description": "กิจกรรมและงานแสดงระดับแนวหน้า ณ ธันเดอร์โดม แนะนำผู้เข้าร่วมงานจองห้องพักล่วงหน้าเพื่อหลีกเลี่ยงการจราจรหนาแน่นและเข้าพักผ่อนใกล้สถานที่จัดงานอย่างสะดวกสบาย",
+      "imageUrl": "https://www.impact.co.th/media/com_eventbooking/images/thumbs/0325-flure-life-2026.webp",
+      "category": "Concert",
+      "active": true
+    },
+    {
+      "id": "scraped-405b8lq",
+      "title": "เดอะ ฟู้ดดิซึ่ม ไทยแลนด์ X ไทยแลนด์ เฮลท์ แอนด์ เวลเนส 2026",
+      "date": "27-29 สิงหาคม 2569",
       "time": "",
       "venue": "ศูนย์แสดงสินค้า อิมแพ็ค เมืองทองธานี",
       "description": "กิจกรรมและงานแสดงระดับแนวหน้า ณ ศูนย์แสดงสินค้า อิมแพ็ค เมืองทองธานี แนะนำผู้เข้าร่วมงานจองห้องพักล่วงหน้าเพื่อหลีกเลี่ยงการจราจรหนาแน่นและเข้าพักผ่อนใกล้สถานที่จัดงานอย่างสะดวกสบาย",
-      "imageUrl": "https://www.impact.co.th/media/com_eventbooking/images/thumbs/0527-bangkok-ad--sign-expo-2026.webp",
-      "category": "Exhibition",
-      "active": true
-    },
-    {
-      "id": "scraped-cedoko7",
-      "title": "การประชุมสหพันธ์สมาคมเภสัชกรรมแห่งเอเชีย ครั้งที่ 31",
-      "date": "03-07 พฤศจิกายน 2569",
-      "time": "",
-      "venue": "อิมแพ็ค ฟอรั่ม",
-      "description": "กิจกรรมและงานแสดงระดับแนวหน้า ณ อิมแพ็ค ฟอรั่ม แนะนำผู้เข้าร่วมงานจองห้องพักล่วงหน้าเพื่อหลีกเลี่ยงการจราจรหนาแน่นและเข้าพักผ่อนใกล้สถานที่จัดงานอย่างสะดวกสบาย",
-      "imageUrl": "https://www.impact.co.th/media/com_eventbooking/images/thumbs/0216-fapa2026.webp",
-      "category": "Other",
-      "active": true
-    },
-    {
-      "id": "scraped-vwkkgjq",
-      "title": "Thailand Billiards Expo (TBE 2026)",
-      "date": "29-31 ตุลาคม 2569",
-      "time": "",
-      "venue": "ศูนย์แสดงสินค้า อิมแพ็ค เมืองทองธานี",
-      "description": "กิจกรรมและงานแสดงระดับแนวหน้า ณ ศูนย์แสดงสินค้า อิมแพ็ค เมืองทองธานี แนะนำผู้เข้าร่วมงานจองห้องพักล่วงหน้าเพื่อหลีกเลี่ยงการจราจรหนาแน่นและเข้าพักผ่อนใกล้สถานที่จัดงานอย่างสะดวกสบาย",
-      "imageUrl": "https://www.impact.co.th/media/com_eventbooking/images/thumbs/0428-tbe-2026.webp",
-      "category": "Exhibition",
-      "active": true
-    },
-    {
-      "id": "scraped-si0wepb",
-      "title": "งานแสดงสินค้าเครื่องเล่นสวนสนุก และแหล่งท่องเที่ยว ประเทศไทยประจำปี 2569",
-      "date": "29-31 ตุลาคม 2569",
-      "time": "",
-      "venue": "ศูนย์แสดงสินค้า อิมแพ็ค เมืองทองธานี",
-      "description": "กิจกรรมและงานแสดงระดับแนวหน้า ณ ศูนย์แสดงสินค้า อิมแพ็ค เมืองทองธานี แนะนำผู้เข้าร่วมงานจองห้องพักล่วงหน้าเพื่อหลีกเลี่ยงการจราจรหนาแน่นและเข้าพักผ่อนใกล้สถานที่จัดงานอย่างสะดวกสบาย",
-      "imageUrl": "https://www.impact.co.th/media/com_eventbooking/images/thumbs/0402-taape-2026.webp",
-      "category": "Exhibition",
-      "active": true
-    },
-    {
-      "id": "scraped-w9jcwrk",
-      "title": "งานแสดงสินค้านานาชาติด้านแว่นตาระดับอาเซียน",
-      "date": "09-11 ตุลาคม 2569",
-      "time": "",
-      "venue": "ศูนย์แสดงสินค้า อิมแพ็ค เมืองทองธานี",
-      "description": "กิจกรรมและงานแสดงระดับแนวหน้า ณ ศูนย์แสดงสินค้า อิมแพ็ค เมืองทองธานี แนะนำผู้เข้าร่วมงานจองห้องพักล่วงหน้าเพื่อหลีกเลี่ยงการจราจรหนาแน่นและเข้าพักผ่อนใกล้สถานที่จัดงานอย่างสะดวกสบาย",
-      "imageUrl": "https://www.impact.co.th/media/com_eventbooking/images/thumbs/0630 optics expo.webp",
+      "imageUrl": "https://www.impact.co.th/media/com_eventbooking/images/thumbs/0526-foodism.webp",
       "category": "Exhibition",
       "active": true
     },
@@ -182,17 +977,6 @@
       "active": true
     },
     {
-      "id": "scraped-p3h451z",
-      "title": "งานแสดงสินค้าและเจรจาธุรกิจสำหรับอุตสาหกรรมอาคาร การก่อสร้าง และเหมืองแร่",
-      "date": "16-18 กันยายน 2569",
-      "time": "",
-      "venue": "ศูนย์แสดงสินค้า อิมแพ็ค เมืองทองธานี",
-      "description": "กิจกรรมและงานแสดงระดับแนวหน้า ณ ศูนย์แสดงสินค้า อิมแพ็ค เมืองทองธานี แนะนำผู้เข้าร่วมงานจองห้องพักล่วงหน้าเพื่อหลีกเลี่ยงการจราจรหนาแน่นและเข้าพักผ่อนใกล้สถานที่จัดงานอย่างสะดวกสบาย",
-      "imageUrl": "https://www.impact.co.th/media/com_eventbooking/images/thumbs/0622-bct-2026.webp",
-      "category": "Exhibition",
-      "active": true
-    },
-    {
       "id": "scraped-5mz2q9s",
       "title": "นิทรรศการเครื่องจักรกลอุปกรณ์และเทคโนโลยีอาเซียนนานาชาติ 2569",
       "date": "02-04 กันยายน 2569",
@@ -204,112 +988,24 @@
       "active": true
     },
     {
-      "id": "scraped-405b8lq",
-      "title": "เดอะ ฟู้ดดิซึ่ม ไทยแลนด์ X ไทยแลนด์ เฮลท์ แอนด์ เวลเนส 2026",
-      "date": "27-29 สิงหาคม 2569",
+      "id": "scraped-5odcw9y",
+      "title": "Toyota Farm Expo 2026",
+      "date": "24-27 กันยายน 2569",
       "time": "",
       "venue": "ศูนย์แสดงสินค้า อิมแพ็ค เมืองทองธานี",
       "description": "กิจกรรมและงานแสดงระดับแนวหน้า ณ ศูนย์แสดงสินค้า อิมแพ็ค เมืองทองธานี แนะนำผู้เข้าร่วมงานจองห้องพักล่วงหน้าเพื่อหลีกเลี่ยงการจราจรหนาแน่นและเข้าพักผ่อนใกล้สถานที่จัดงานอย่างสะดวกสบาย",
-      "imageUrl": "https://www.impact.co.th/media/com_eventbooking/images/thumbs/0526-foodism.webp",
+      "imageUrl": "https://www.impact.co.th/media/com_eventbooking/images/thumbs/0724 farm expo 2026.webp",
       "category": "Exhibition",
       "active": true
     },
     {
-      "id": "scraped-3rmcyba",
-      "title": "FLURE Life",
-      "date": "22 สิงหาคม 2569",
-      "time": "",
-      "venue": "ธันเดอร์โดม",
-      "description": "กิจกรรมและงานแสดงระดับแนวหน้า ณ ธันเดอร์โดม แนะนำผู้เข้าร่วมงานจองห้องพักล่วงหน้าเพื่อหลีกเลี่ยงการจราจรหนาแน่นและเข้าพักผ่อนใกล้สถานที่จัดงานอย่างสะดวกสบาย",
-      "imageUrl": "https://www.impact.co.th/media/com_eventbooking/images/thumbs/0325-flure-life-2026.webp",
-      "category": "Concert",
-      "active": true
-    },
-    {
-      "id": "scraped-o0daj12",
-      "title": "มหกรรมวิทยาศาสตร์และเทคโนโลยีแห่งชาติ ประจำปี 2569",
-      "date": "15-23 สิงหาคม 2569",
+      "id": "scraped-5s75si1",
+      "title": "บางกอกดิจิทัล เท็กซ์ไทล์ พริ้นท์ เอ็กซ์โป 2026",
+      "date": "05-08 พฤศจิกายน 2569",
       "time": "",
       "venue": "ศูนย์แสดงสินค้า อิมแพ็ค เมืองทองธานี",
       "description": "กิจกรรมและงานแสดงระดับแนวหน้า ณ ศูนย์แสดงสินค้า อิมแพ็ค เมืองทองธานี แนะนำผู้เข้าร่วมงานจองห้องพักล่วงหน้าเพื่อหลีกเลี่ยงการจราจรหนาแน่นและเข้าพักผ่อนใกล้สถานที่จัดงานอย่างสะดวกสบาย",
-      "imageUrl": "https://www.impact.co.th/media/com_eventbooking/images/thumbs/0706 nst.webp",
-      "category": "Exhibition",
-      "active": true
-    },
-    {
-      "id": "scraped-8w5z4tm",
-      "title": "2026 NCT JNJM FANMEETING TOUR [DUALITY] # BANGKOK",
-      "date": "07-09 สิงหาคม 2569",
-      "time": "",
-      "venue": "อิมแพ็ค อารีน่า",
-      "description": "กิจกรรมและงานแสดงระดับแนวหน้า ณ อิมแพ็ค อารีน่า แนะนำผู้เข้าร่วมงานจองห้องพักล่วงหน้าเพื่อหลีกเลี่ยงการจราจรหนาแน่นและเข้าพักผ่อนใกล้สถานที่จัดงานอย่างสะดวกสบาย",
-      "imageUrl": "https://www.impact.co.th/media/com_eventbooking/images/thumbs/0701 nct.webp",
-      "category": "Concert",
-      "active": true
-    },
-    {
-      "id": "scraped-tmac3um",
-      "title": "แฟรนไชส์ เอ็กซ์โป ไทยแลนด์ บาย สมาร์ท เอสเอ็มอี เอ็กซ์โป",
-      "date": "06-09 สิงหาคม 2569",
-      "time": "",
-      "venue": "ศูนย์แสดงสินค้า อิมแพ็ค เมืองทองธานี",
-      "description": "กิจกรรมและงานแสดงระดับแนวหน้า ณ ศูนย์แสดงสินค้า อิมแพ็ค เมืองทองธานี แนะนำผู้เข้าร่วมงานจองห้องพักล่วงหน้าเพื่อหลีกเลี่ยงการจราจรหนาแน่นและเข้าพักผ่อนใกล้สถานที่จัดงานอย่างสะดวกสบาย",
-      "imageUrl": "https://www.impact.co.th/media/com_eventbooking/images/thumbs/0407-franchise-sme-expo-2026.webp",
-      "category": "Exhibition",
-      "active": true
-    },
-    {
-      "id": "scraped-d4hnwcp",
-      "title": "F✦FOREVER 1st World Tour in Bangkok",
-      "date": "01-02 สิงหาคม 2569",
-      "time": "",
-      "venue": "อิมแพ็ค อารีน่า",
-      "description": "กิจกรรมและงานแสดงระดับแนวหน้า ณ อิมแพ็ค อารีน่า แนะนำผู้เข้าร่วมงานจองห้องพักล่วงหน้าเพื่อหลีกเลี่ยงการจราจรหนาแน่นและเข้าพักผ่อนใกล้สถานที่จัดงานอย่างสะดวกสบาย",
-      "imageUrl": "https://www.impact.co.th/media/com_eventbooking/images/thumbs/0626 f4.webp",
-      "category": "Concert",
-      "active": true
-    },
-    {
-      "id": "scraped-vykf1sp",
-      "title": "ไทยแลนด์ เบบี้ แอนด์ คิดส์ เบสท์ บาย",
-      "date": "30 กรกฎาคม - 02 สิงหาคม 2569",
-      "time": "",
-      "venue": "อิมแพ็ค ชาเลนเจอร์",
-      "description": "กิจกรรมและงานแสดงระดับแนวหน้า ณ อิมแพ็ค ชาเลนเจอร์ แนะนำผู้เข้าร่วมงานจองห้องพักล่วงหน้าเพื่อหลีกเลี่ยงการจราจรหนาแน่นและเข้าพักผ่อนใกล้สถานที่จัดงานอย่างสะดวกสบาย",
-      "imageUrl": "https://www.impact.co.th/media/com_eventbooking/images/thumbs/0618-BBB.webp",
-      "category": "Exhibition",
-      "active": true
-    },
-    {
-      "id": "scraped-im8xof8",
-      "title": "BUS because of you i shine LIGHT AS ONE CONCERT Presented by Gangnam Clinic",
-      "date": "24-26 กรกฎาคม 2569",
-      "time": "",
-      "venue": "อิมแพ็ค อารีน่า",
-      "description": "กิจกรรมและงานแสดงระดับแนวหน้า ณ อิมแพ็ค อารีน่า แนะนำผู้เข้าร่วมงานจองห้องพักล่วงหน้าเพื่อหลีกเลี่ยงการจราจรหนาแน่นและเข้าพักผ่อนใกล้สถานที่จัดงานอย่างสะดวกสบาย",
-      "imageUrl": "https://www.impact.co.th/media/com_eventbooking/images/thumbs/0623 bus.webp",
-      "category": "Concert",
-      "active": true
-    },
-    {
-      "id": "scraped-ax69t3j",
-      "title": "Thailand–China Cooperation Expo 2026",
-      "date": "22-25 กรกฎาคม 2569",
-      "time": "",
-      "venue": "อิมแพ็ค ชาเลนเจอร์",
-      "description": "กิจกรรมและงานแสดงระดับแนวหน้า ณ อิมแพ็ค ชาเลนเจอร์ แนะนำผู้เข้าร่วมงานจองห้องพักล่วงหน้าเพื่อหลีกเลี่ยงการจราจรหนาแน่นและเข้าพักผ่อนใกล้สถานที่จัดงานอย่างสะดวกสบาย",
-      "imageUrl": "https://www.impact.co.th/media/com_eventbooking/images/thumbs/0616-thailand-china-cooperation-expo-2026.webp",
-      "category": "Exhibition",
-      "active": true
-    },
-    {
-      "id": "scraped-02ayaq6",
-      "title": "INTELLIGENT MANUFACTURING EXPO SOUTHEAST ASIA 2026 (IME)",
-      "date": "22-24 กรกฎาคม 2569",
-      "time": "",
-      "venue": "ศูนย์แสดงสินค้า อิมแพ็ค เมืองทองธานี",
-      "description": "กิจกรรมและงานแสดงระดับแนวหน้า ณ ศูนย์แสดงสินค้า อิมแพ็ค เมืองทองธานี แนะนำผู้เข้าร่วมงานจองห้องพักล่วงหน้าเพื่อหลีกเลี่ยงการจราจรหนาแน่นและเข้าพักผ่อนใกล้สถานที่จัดงานอย่างสะดวกสบาย",
-      "imageUrl": "https://www.impact.co.th/media/com_eventbooking/images/thumbs/0702-intelligent-manufacturing-expo.webp",
+      "imageUrl": "https://www.impact.co.th/media/com_eventbooking/images/thumbs/0527-bangkok-digital-textile-print-expo-2026.webp",
       "category": "Exhibition",
       "active": true
     },
@@ -325,6 +1021,160 @@
       "active": true
     },
     {
+      "id": "scraped-7ojqvng",
+      "title": "Thailand Mobile Expo 2026",
+      "date": "01-04 ตุลาคม 2569",
+      "time": "",
+      "venue": "อิมแพ็ค ชาเลนเจอร์",
+      "description": "กิจกรรมและงานแสดงระดับแนวหน้า ณ อิมแพ็ค ชาเลนเจอร์ แนะนำผู้เข้าร่วมงานจองห้องพักล่วงหน้าเพื่อหลีกเลี่ยงการจราจรหนาแน่นและเข้าพักผ่อนใกล้สถานที่จัดงานอย่างสะดวกสบาย",
+      "imageUrl": "https://www.impact.co.th/media/com_eventbooking/images/thumbs/0903-thailand-mobile-expo2026.webp",
+      "category": "Exhibition",
+      "active": true
+    },
+    {
+      "id": "scraped-8nmqm6m",
+      "title": "อเวนจ์ เซเว่นโฟลด์ เอเชียทัวร์ 2026 กรุงเทพฯ",
+      "date": "06-07 ตุลาคม 2569",
+      "time": "",
+      "venue": "ธันเดอร์โดม",
+      "description": "กิจกรรมและงานแสดงระดับแนวหน้า ณ ธันเดอร์โดม แนะนำผู้เข้าร่วมงานจองห้องพักล่วงหน้าเพื่อหลีกเลี่ยงการจราจรหนาแน่นและเข้าพักผ่อนใกล้สถานที่จัดงานอย่างสะดวกสบาย",
+      "imageUrl": "https://www.impact.co.th/media/com_eventbooking/images/thumbs/0908-avenged-sevenfold-2026.webp",
+      "category": "Concert",
+      "active": true
+    },
+    {
+      "id": "scraped-8rgz1l5",
+      "title": "งานแสดงสินค้าครบวงจรด้านอาหาร เครื่องดื่ม และวัตถุดิบจากจีน เพื่อธุรกิจบริการอาหารในอาเซียน",
+      "date": "19-21 พฤศจิกายน 2569",
+      "time": "",
+      "venue": "ศูนย์แสดงสินค้า อิมแพ็ค เมืองทองธานี",
+      "description": "กิจกรรมและงานแสดงระดับแนวหน้า ณ ศูนย์แสดงสินค้า อิมแพ็ค เมืองทองธานี แนะนำผู้เข้าร่วมงานจองห้องพักล่วงหน้าเพื่อหลีกเลี่ยงการจราจรหนาแน่นและเข้าพักผ่อนใกล้สถานที่จัดงานอย่างสะดวกสบาย",
+      "imageUrl": "https://www.impact.co.th/media/com_eventbooking/images/thumbs/0915-tiface.webp",
+      "category": "Exhibition",
+      "active": true
+    },
+    {
+      "id": "scraped-8w5z4tm",
+      "title": "2026 NCT JNJM FANMEETING TOUR [DUALITY] # BANGKOK",
+      "date": "07-09 สิงหาคม 2569",
+      "time": "",
+      "venue": "อิมแพ็ค อารีน่า",
+      "description": "กิจกรรมและงานแสดงระดับแนวหน้า ณ อิมแพ็ค อารีน่า แนะนำผู้เข้าร่วมงานจองห้องพักล่วงหน้าเพื่อหลีกเลี่ยงการจราจรหนาแน่นและเข้าพักผ่อนใกล้สถานที่จัดงานอย่างสะดวกสบาย",
+      "imageUrl": "https://www.impact.co.th/media/com_eventbooking/images/thumbs/0701 nct.webp",
+      "category": "Concert",
+      "active": true
+    },
+    {
+      "id": "scraped-8yers3k",
+      "title": "บางกอก แอด แอนด์ ไซน์ เอ็กซ์โป 2026",
+      "date": "05-08 พฤศจิกายน 2569",
+      "time": "",
+      "venue": "ศูนย์แสดงสินค้า อิมแพ็ค เมืองทองธานี",
+      "description": "กิจกรรมและงานแสดงระดับแนวหน้า ณ ศูนย์แสดงสินค้า อิมแพ็ค เมืองทองธานี แนะนำผู้เข้าร่วมงานจองห้องพักล่วงหน้าเพื่อหลีกเลี่ยงการจราจรหนาแน่นและเข้าพักผ่อนใกล้สถานที่จัดงานอย่างสะดวกสบาย",
+      "imageUrl": "https://www.impact.co.th/media/com_eventbooking/images/thumbs/0527-bangkok-ad--sign-expo-2026.webp",
+      "category": "Exhibition",
+      "active": true
+    },
+    {
+      "id": "scraped-ax69t3j",
+      "title": "Thailand–China Cooperation Expo 2026",
+      "date": "22-25 กรกฎาคม 2569",
+      "time": "",
+      "venue": "อิมแพ็ค ชาเลนเจอร์",
+      "description": "กิจกรรมและงานแสดงระดับแนวหน้า ณ อิมแพ็ค ชาเลนเจอร์ แนะนำผู้เข้าร่วมงานจองห้องพักล่วงหน้าเพื่อหลีกเลี่ยงการจราจรหนาแน่นและเข้าพักผ่อนใกล้สถานที่จัดงานอย่างสะดวกสบาย",
+      "imageUrl": "https://www.impact.co.th/media/com_eventbooking/images/thumbs/0616-thailand-china-cooperation-expo-2026.webp",
+      "category": "Exhibition",
+      "active": true
+    },
+    {
+      "id": "scraped-c9k509l",
+      "title": "Nunew 2nd concert",
+      "date": "31 ตุลาคม 2569",
+      "time": "",
+      "venue": "อิมแพ็ค อารีน่า",
+      "description": "กิจกรรมและงานแสดงระดับแนวหน้า ณ อิมแพ็ค อารีน่า แนะนำผู้เข้าร่วมงานจองห้องพักล่วงหน้าเพื่อหลีกเลี่ยงการจราจรหนาแน่นและเข้าพักผ่อนใกล้สถานที่จัดงานอย่างสะดวกสบาย",
+      "imageUrl": "https://www.impact.co.th/media/com_eventbooking/images/thumbs/0916-nunew-2026.webp",
+      "category": "Concert",
+      "active": true
+    },
+    {
+      "id": "scraped-cedoko7",
+      "title": "การประชุมสหพันธ์สมาคมเภสัชกรรมแห่งเอเชีย ครั้งที่ 31",
+      "date": "03-07 พฤศจิกายน 2569",
+      "time": "",
+      "venue": "อิมแพ็ค ฟอรั่ม",
+      "description": "กิจกรรมและงานแสดงระดับแนวหน้า ณ อิมแพ็ค ฟอรั่ม แนะนำผู้เข้าร่วมงานจองห้องพักล่วงหน้าเพื่อหลีกเลี่ยงการจราจรหนาแน่นและเข้าพักผ่อนใกล้สถานที่จัดงานอย่างสะดวกสบาย",
+      "imageUrl": "https://www.impact.co.th/media/com_eventbooking/images/thumbs/0216-fapa2026.webp",
+      "category": "Other",
+      "active": true
+    },
+    {
+      "id": "scraped-d4hnwcp",
+      "title": "F✦FOREVER 1st World Tour in Bangkok",
+      "date": "01-02 สิงหาคม 2569",
+      "time": "",
+      "venue": "อิมแพ็ค อารีน่า",
+      "description": "กิจกรรมและงานแสดงระดับแนวหน้า ณ อิมแพ็ค อารีน่า แนะนำผู้เข้าร่วมงานจองห้องพักล่วงหน้าเพื่อหลีกเลี่ยงการจราจรหนาแน่นและเข้าพักผ่อนใกล้สถานที่จัดงานอย่างสะดวกสบาย",
+      "imageUrl": "https://www.impact.co.th/media/com_eventbooking/images/thumbs/0626 f4.webp",
+      "category": "Concert",
+      "active": true
+    },
+    {
+      "id": "scraped-dphzzxv",
+      "title": "ATLAS RISING UP CONCERT LIVE AT IMPACT ARENA",
+      "date": "27 กันยายน 2569",
+      "time": "",
+      "venue": "อิมแพ็ค อารีน่า",
+      "description": "กิจกรรมและงานแสดงระดับแนวหน้า ณ อิมแพ็ค อารีน่า แนะนำผู้เข้าร่วมงานจองห้องพักล่วงหน้าเพื่อหลีกเลี่ยงการจราจรหนาแน่นและเข้าพักผ่อนใกล้สถานที่จัดงานอย่างสะดวกสบาย",
+      "imageUrl": "https://www.impact.co.th/media/com_eventbooking/images/thumbs/0810 atlas rising up.webp",
+      "category": "Concert",
+      "active": true
+    },
+    {
+      "id": "scraped-e4bkcmk",
+      "title": "Ryosuke Yamada ASIA TOUR 2026 Red.Y in Bangkok",
+      "date": "26 กันยายน 2569",
+      "time": "",
+      "venue": "ธันเดอร์โดม",
+      "description": "กิจกรรมและงานแสดงระดับแนวหน้า ณ ธันเดอร์โดม แนะนำผู้เข้าร่วมงานจองห้องพักล่วงหน้าเพื่อหลีกเลี่ยงการจราจรหนาแน่นและเข้าพักผ่อนใกล้สถานที่จัดงานอย่างสะดวกสบาย",
+      "imageUrl": "https://www.impact.co.th/media/com_eventbooking/images/thumbs/0909-ryosuke-yamada.webp",
+      "category": "Concert",
+      "active": true
+    },
+    {
+      "id": "scraped-g7yh9zm",
+      "title": "โดรนเทค เอเชีย 2026",
+      "date": "11-13 พฤศจิกายน 2569",
+      "time": "",
+      "venue": "ศูนย์แสดงสินค้า อิมแพ็ค เมืองทองธานี",
+      "description": "กิจกรรมและงานแสดงระดับแนวหน้า ณ ศูนย์แสดงสินค้า อิมแพ็ค เมืองทองธานี แนะนำผู้เข้าร่วมงานจองห้องพักล่วงหน้าเพื่อหลีกเลี่ยงการจราจรหนาแน่นและเข้าพักผ่อนใกล้สถานที่จัดงานอย่างสะดวกสบาย",
+      "imageUrl": "https://www.impact.co.th/media/com_eventbooking/images/thumbs/0717 drontech.webp",
+      "category": "Exhibition",
+      "active": true
+    },
+    {
+      "id": "scraped-ih51zfd",
+      "title": "มาม่า Presents NONT TANONT “THE MOMENT OF SPECTACLE : ARENA ENCORE”",
+      "date": "03-04 ตุลาคม 2569",
+      "time": "",
+      "venue": "อิมแพ็ค อารีน่า",
+      "description": "กิจกรรมและงานแสดงระดับแนวหน้า ณ อิมแพ็ค อารีน่า แนะนำผู้เข้าร่วมงานจองห้องพักล่วงหน้าเพื่อหลีกเลี่ยงการจราจรหนาแน่นและเข้าพักผ่อนใกล้สถานที่จัดงานอย่างสะดวกสบาย",
+      "imageUrl": "https://www.impact.co.th/media/com_eventbooking/images/thumbs/0828-nont-tanont.webp",
+      "category": "Concert",
+      "active": true
+    },
+    {
+      "id": "scraped-im8xof8",
+      "title": "BUS because of you i shine LIGHT AS ONE CONCERT Presented by Gangnam Clinic",
+      "date": "24-26 กรกฎาคม 2569",
+      "time": "",
+      "venue": "อิมแพ็ค อารีน่า",
+      "description": "กิจกรรมและงานแสดงระดับแนวหน้า ณ อิมแพ็ค อารีน่า แนะนำผู้เข้าร่วมงานจองห้องพักล่วงหน้าเพื่อหลีกเลี่ยงการจราจรหนาแน่นและเข้าพักผ่อนใกล้สถานที่จัดงานอย่างสะดวกสบาย",
+      "imageUrl": "https://www.impact.co.th/media/com_eventbooking/images/thumbs/0623 bus.webp",
+      "category": "Concert",
+      "active": true
+    },
+    {
       "id": "scraped-kpjqfjr",
       "title": "2026 &TEAM CONCERT TOUR 'BLAZE THE WAY' IN BANGKOK",
       "date": "18 กรกฎาคม 2569",
@@ -332,6 +1182,39 @@
       "venue": "ธันเดอร์โดม",
       "description": "กิจกรรมและงานแสดงระดับแนวหน้า ณ ธันเดอร์โดม แนะนำผู้เข้าร่วมงานจองห้องพักล่วงหน้าเพื่อหลีกเลี่ยงการจราจรหนาแน่นและเข้าพักผ่อนใกล้สถานที่จัดงานอย่างสะดวกสบาย",
       "imageUrl": "https://www.impact.co.th/media/com_eventbooking/images/thumbs/0709 blaze the way.webp",
+      "category": "Concert",
+      "active": true
+    },
+    {
+      "id": "scraped-o0daj12",
+      "title": "มหกรรมวิทยาศาสตร์และเทคโนโลยีแห่งชาติ ประจำปี 2569",
+      "date": "15-23 สิงหาคม 2569",
+      "time": "",
+      "venue": "ศูนย์แสดงสินค้า อิมแพ็ค เมืองทองธานี",
+      "description": "กิจกรรมและงานแสดงระดับแนวหน้า ณ ศูนย์แสดงสินค้า อิมแพ็ค เมืองทองธานี แนะนำผู้เข้าร่วมงานจองห้องพักล่วงหน้าเพื่อหลีกเลี่ยงการจราจรหนาแน่นและเข้าพักผ่อนใกล้สถานที่จัดงานอย่างสะดวกสบาย",
+      "imageUrl": "https://www.impact.co.th/media/com_eventbooking/images/thumbs/0706 nst.webp",
+      "category": "Exhibition",
+      "active": true
+    },
+    {
+      "id": "scraped-p3h451z",
+      "title": "งานแสดงสินค้าและเจรจาธุรกิจสำหรับอุตสาหกรรมอาคาร การก่อสร้าง และเหมืองแร่",
+      "date": "16-18 กันยายน 2569",
+      "time": "",
+      "venue": "ศูนย์แสดงสินค้า อิมแพ็ค เมืองทองธานี",
+      "description": "กิจกรรมและงานแสดงระดับแนวหน้า ณ ศูนย์แสดงสินค้า อิมแพ็ค เมืองทองธานี แนะนำผู้เข้าร่วมงานจองห้องพักล่วงหน้าเพื่อหลีกเลี่ยงการจราจรหนาแน่นและเข้าพักผ่อนใกล้สถานที่จัดงานอย่างสะดวกสบาย",
+      "imageUrl": "https://www.impact.co.th/media/com_eventbooking/images/thumbs/0622-bct-2026.webp",
+      "category": "Exhibition",
+      "active": true
+    },
+    {
+      "id": "scraped-qq0ocl4",
+      "title": "LYKN REFLEXION CONCERT",
+      "date": "23-25 ตุลาคม 2569",
+      "time": "",
+      "venue": "อิมแพ็ค อารีน่า",
+      "description": "กิจกรรมและงานแสดงระดับแนวหน้า ณ อิมแพ็ค อารีน่า แนะนำผู้เข้าร่วมงานจองห้องพักล่วงหน้าเพื่อหลีกเลี่ยงการจราจรหนาแน่นและเข้าพักผ่อนใกล้สถานที่จัดงานอย่างสะดวกสบาย",
+      "imageUrl": "https://www.impact.co.th/media/com_eventbooking/images/thumbs/0916-lykn2026.webp",
       "category": "Concert",
       "active": true
     },
@@ -347,640 +1230,340 @@
       "active": true
     },
     {
-      "id": "scraped-3q3j2yz",
-      "title": "2026 JAY B tape: roots bangkok",
-      "date": "11-12 กรกฎาคม 2569",
+      "id": "scraped-r1xgfwn",
+      "title": "2026-27 WORLD TOUR [춤 (CHOOM)] IN BANGKOK",
+      "date": "07-08 พฤศจิกายน 2569",
       "time": "",
       "venue": "อิมแพ็ค อารีน่า",
       "description": "กิจกรรมและงานแสดงระดับแนวหน้า ณ อิมแพ็ค อารีน่า แนะนำผู้เข้าร่วมงานจองห้องพักล่วงหน้าเพื่อหลีกเลี่ยงการจราจรหนาแน่นและเข้าพักผ่อนใกล้สถานที่จัดงานอย่างสะดวกสบาย",
-      "imageUrl": "https://www.impact.co.th/media/com_eventbooking/images/thumbs/0622-2026-jay-b.webp",
+      "imageUrl": "https://www.impact.co.th/media/com_eventbooking/images/thumbs/0716 choom.webp",
+      "category": "Concert",
+      "active": true
+    },
+    {
+      "id": "scraped-r355sib",
+      "title": "บ้านและสวนแฟร์ Living Festival 2026",
+      "date": "23 ตุลาคม - 01 พฤศจิกายน 2569",
+      "time": "",
+      "venue": "อิมแพ็ค ชาเลนเจอร์",
+      "description": "กิจกรรมและงานแสดงระดับแนวหน้า ณ อิมแพ็ค ชาเลนเจอร์ แนะนำผู้เข้าร่วมงานจองห้องพักล่วงหน้าเพื่อหลีกเลี่ยงการจราจรหนาแน่นและเข้าพักผ่อนใกล้สถานที่จัดงานอย่างสะดวกสบาย",
+      "imageUrl": "https://www.impact.co.th/media/com_eventbooking/images/thumbs/0916-baanlaesuan-fair-2026.webp",
+      "category": "Exhibition",
+      "active": true
+    },
+    {
+      "id": "scraped-rp4dl85",
+      "title": "manutsawee ขอให้มีความสุขกับเพลงเศร้า Concert",
+      "date": "03 ตุลาคม 2569",
+      "time": "",
+      "venue": "ธันเดอร์โดม",
+      "description": "กิจกรรมและงานแสดงระดับแนวหน้า ณ ธันเดอร์โดม แนะนำผู้เข้าร่วมงานจองห้องพักล่วงหน้าเพื่อหลีกเลี่ยงการจราจรหนาแน่นและเข้าพักผ่อนใกล้สถานที่จัดงานอย่างสะดวกสบาย",
+      "imageUrl": "https://www.impact.co.th/media/com_eventbooking/images/thumbs/0915-manutsawee.webp",
+      "category": "Concert",
+      "active": true
+    },
+    {
+      "id": "scraped-si0wepb",
+      "title": "งานแสดงสินค้าเครื่องเล่นสวนสนุก และแหล่งท่องเที่ยว ประเทศไทยประจำปี 2569",
+      "date": "29-31 ตุลาคม 2569",
+      "time": "",
+      "venue": "ศูนย์แสดงสินค้า อิมแพ็ค เมืองทองธานี",
+      "description": "กิจกรรมและงานแสดงระดับแนวหน้า ณ ศูนย์แสดงสินค้า อิมแพ็ค เมืองทองธานี แนะนำผู้เข้าร่วมงานจองห้องพักล่วงหน้าเพื่อหลีกเลี่ยงการจราจรหนาแน่นและเข้าพักผ่อนใกล้สถานที่จัดงานอย่างสะดวกสบาย",
+      "imageUrl": "https://www.impact.co.th/media/com_eventbooking/images/thumbs/0402-taape-2026.webp",
+      "category": "Exhibition",
+      "active": true
+    },
+    {
+      "id": "scraped-spas9nm",
+      "title": "LINGORM THE WORLD BETWEEN US CONCERT",
+      "date": "17-18 ตุลาคม 2569",
+      "time": "",
+      "venue": "อิมแพ็ค อารีน่า",
+      "description": "กิจกรรมและงานแสดงระดับแนวหน้า ณ อิมแพ็ค อารีน่า แนะนำผู้เข้าร่วมงานจองห้องพักล่วงหน้าเพื่อหลีกเลี่ยงการจราจรหนาแน่นและเข้าพักผ่อนใกล้สถานที่จัดงานอย่างสะดวกสบาย",
+      "imageUrl": "https://www.impact.co.th/media/com_eventbooking/images/thumbs/0916-lingorm-2026.webp",
+      "category": "Concert",
+      "active": true
+    },
+    {
+      "id": "scraped-tmac3um",
+      "title": "แฟรนไชส์ เอ็กซ์โป ไทยแลนด์ บาย สมาร์ท เอสเอ็มอี เอ็กซ์โป",
+      "date": "06-09 สิงหาคม 2569",
+      "time": "",
+      "venue": "ศูนย์แสดงสินค้า อิมแพ็ค เมืองทองธานี",
+      "description": "กิจกรรมและงานแสดงระดับแนวหน้า ณ ศูนย์แสดงสินค้า อิมแพ็ค เมืองทองธานี แนะนำผู้เข้าร่วมงานจองห้องพักล่วงหน้าเพื่อหลีกเลี่ยงการจราจรหนาแน่นและเข้าพักผ่อนใกล้สถานที่จัดงานอย่างสะดวกสบาย",
+      "imageUrl": "https://www.impact.co.th/media/com_eventbooking/images/thumbs/0407-franchise-sme-expo-2026.webp",
+      "category": "Exhibition",
+      "active": true
+    },
+    {
+      "id": "scraped-vwkkgjq",
+      "title": "Thailand Billiards Expo (TBE 2026)",
+      "date": "29-31 ตุลาคม 2569",
+      "time": "",
+      "venue": "ศูนย์แสดงสินค้า อิมแพ็ค เมืองทองธานี",
+      "description": "กิจกรรมและงานแสดงระดับแนวหน้า ณ ศูนย์แสดงสินค้า อิมแพ็ค เมืองทองธานี แนะนำผู้เข้าร่วมงานจองห้องพักล่วงหน้าเพื่อหลีกเลี่ยงการจราจรหนาแน่นและเข้าพักผ่อนใกล้สถานที่จัดงานอย่างสะดวกสบาย",
+      "imageUrl": "https://www.impact.co.th/media/com_eventbooking/images/thumbs/0428-tbe-2026.webp",
+      "category": "Exhibition",
+      "active": true
+    },
+    {
+      "id": "scraped-vykf1sp",
+      "title": "ไทยแลนด์ เบบี้ แอนด์ คิดส์ เบสท์ บาย",
+      "date": "30 กรกฎาคม - 02 สิงหาคม 2569",
+      "time": "",
+      "venue": "อิมแพ็ค ชาเลนเจอร์",
+      "description": "กิจกรรมและงานแสดงระดับแนวหน้า ณ อิมแพ็ค ชาเลนเจอร์ แนะนำผู้เข้าร่วมงานจองห้องพักล่วงหน้าเพื่อหลีกเลี่ยงการจราจรหนาแน่นและเข้าพักผ่อนใกล้สถานที่จัดงานอย่างสะดวกสบาย",
+      "imageUrl": "https://www.impact.co.th/media/com_eventbooking/images/thumbs/0618-BBB.webp",
+      "category": "Exhibition",
+      "active": true
+    },
+    {
+      "id": "scraped-w9jcwrk",
+      "title": "งานแสดงสินค้านานาชาติด้านแว่นตาระดับอาเซียน",
+      "date": "09-11 ตุลาคม 2569",
+      "time": "",
+      "venue": "ศูนย์แสดงสินค้า อิมแพ็ค เมืองทองธานี",
+      "description": "กิจกรรมและงานแสดงระดับแนวหน้า ณ ศูนย์แสดงสินค้า อิมแพ็ค เมืองทองธานี แนะนำผู้เข้าร่วมงานจองห้องพักล่วงหน้าเพื่อหลีกเลี่ยงการจราจรหนาแน่นและเข้าพักผ่อนใกล้สถานที่จัดงานอย่างสะดวกสบาย",
+      "imageUrl": "https://www.impact.co.th/media/com_eventbooking/images/thumbs/0630 optics expo.webp",
+      "category": "Exhibition",
+      "active": true
+    },
+    {
+      "id": "scraped-xvjg5w2",
+      "title": "2026 PLAVE World Tour [KEEP IT MANIC] in Bangkok",
+      "date": "10 ตุลาคม 2569",
+      "time": "",
+      "venue": "อิมแพ็ค อารีน่า",
+      "description": "กิจกรรมและงานแสดงระดับแนวหน้า ณ อิมแพ็ค อารีน่า แนะนำผู้เข้าร่วมงานจองห้องพักล่วงหน้าเพื่อหลีกเลี่ยงการจราจรหนาแน่นและเข้าพักผ่อนใกล้สถานที่จัดงานอย่างสะดวกสบาย",
+      "imageUrl": "https://www.impact.co.th/media/com_eventbooking/images/thumbs/0730 plave.webp",
       "category": "Concert",
       "active": true
     }
   ],
-  "faqs": [],
-  "reviews": [],
-  "gallery": [
+  "notifications": [
     {
-      "id": 475,
-      "url": "/api/assets/e639a767-d9f3-43f6-9620-8991a38f6a2f",
-      "title": "",
-      "cat": "ทั่วไป"
+      "channel": "email",
+      "bookingId": "B-2894",
+      "status": "sent",
+      "recipient": "booking@them5residence.com, admin@1234.com",
+      "createdAt": "2026-09-29T09:51:07.749Z",
+      "id": "notif-email-1790675467749-136",
+      "message": "ส่งอีเมลแจ้งเตือนสำเร็จ (แอดมิน: booking@them5residence.com | ลูกค้า: admin@1234.com)"
     },
     {
-      "id": 476,
-      "url": "/api/assets/4615a57d-483d-4912-95ac-bf0ebea87203",
-      "title": "",
-      "cat": "ทั่วไป"
+      "recipient": "LINE (รอระบุ Token)",
+      "bookingId": "B-2894",
+      "channel": "line",
+      "id": "notif-line-1790675462431-654",
+      "status": "simulated",
+      "message": "🏨 [THE M5 RESIDENCE] การจองใหม่!\n────────────────\n🔖 หมายเลขจอง: #B-2894\n🛏️ ห้องพัก: deluxe\n📅 เช็คอิน: 2026-09-30 (หลัง 14:00 น.)\n📅 เช็คเอาท์: 2026-10-01 (ก่อน 12:00 น.)\n⏳ ระยะเวลา: 1 คืน (2 ท่าน)\n💰 ยอดสุทธิ: ฿1,250 บาท\n🏷️ สถานะ: รอชำระเงิน / ตรวจสอบ\n────────────────\n👤 ผู้จอง: คุณ ทดสอบระบบ\n📞 เบอร์โทร: 0987654321\n✉️ อีเมล: admin@1234.com\n💬 คำขอพิเศษ: ไม่มี\n────────────────\n⏰ เวลาทำรายการ: 29/9/2569 16:51:02",
+      "createdAt": "2026-09-29T09:51:02.431Z"
     },
     {
-      "id": 477,
-      "url": "/api/assets/00482a07-265e-4e94-9844-47790c90b049",
-      "title": "",
-      "cat": "ทั่วไป"
+      "channel": "email",
+      "recipient": "booking@them5residence.com, admin@admin.com",
+      "bookingId": "B-2816",
+      "id": "notif-email-1790654465787-364",
+      "createdAt": "2026-09-29T04:01:05.787Z",
+      "status": "failed",
+      "message": "ส่งอีเมลไม่สำเร็จ: C0BC2EA9EE7F0000:error:0A00010B:SSL routines:tls_validate_record_header:wrong version number:../deps/openssl/openssl/ssl/record/methods/tlsany_meth.c:77:\n"
     },
     {
-      "id": 478,
-      "url": "/api/assets/1a48e0ef-075d-4bfd-b261-5591c97029de",
-      "title": "",
-      "cat": "ทั่วไป"
+      "message": "🎉 [ลูกค้ากดยืนยันสั่งจองจากใบเสนอราคา!]\n────────────────\n🔖 เลขที่เอกสาร: #QT-2569-09-412\n🏢 หน่วยงาน/ลูกค้า: ทดสอบ\n👤 ผู้ติดต่อ: คุณ ทดสอบ\n📞 เบอร์โทรศัพท์: 098765432\n✉️ อีเมล: admin@admin.com\n📅 วันที่เข้าพัก: 2026-09-30 ถึง 2026-10-01\n💰 ยอดรวมทั้งสิ้น: ฿1,800 บาท\n🏷️ สถานะเอกสาร: ยืนยันสั่งจองแล้ว (Approved)\n💬 หมายเหตุ: [ยืนยันสั่งจองสำเร็จ]: สร้างรายการจองหมายเลข #B-2816\n────────────────\n⏰ เวลาทำรายการ: 29/9/2569 11:01:05",
+      "status": "simulated",
+      "createdAt": "2026-09-29T04:01:05.435Z",
+      "recipient": "LINE",
+      "id": "notif-line-1790654465435-32",
+      "bookingId": "QT-2569-09-412",
+      "channel": "line"
     },
     {
-      "id": 479,
-      "url": "/api/assets/6e75ebd4-0b82-4247-991d-ce80048830c3",
-      "title": "",
-      "cat": "ทั่วไป"
+      "recipient": "LINE (รอระบุ Token)",
+      "message": "🏨 [THE M5 RESIDENCE] การจองใหม่!\n────────────────\n🔖 หมายเลขจอง: #B-2816\n🛏️ ห้องพัก: ซูพีเรียร์ ลอฟท์ สวีท (1 ห้อง x 1 คืน)\n📅 เช็คอิน: 2026-09-30 (หลัง 14:00 น.)\n📅 เช็คเอาท์: 2026-10-01 (ก่อน 12:00 น.)\n⏳ ระยะเวลา: 1 คืน (2 ท่าน)\n💰 ยอดสุทธิ: ฿1,800 บาท\n🏷️ สถานะ: รอชำระเงิน / ตรวจสอบ\n────────────────\n👤 ผู้จอง: คุณ ทดสอบ (คุณ ทดสอบ)\n📞 เบอร์โทร: 098765432\n✉️ อีเมล: admin@admin.com\n💬 คำขอพิเศษ: [อนุมัติสั่งจองจากใบเสนอราคา #QT-2569-09-412] ผู้ติดต่อ: ทดสอบ (098765432)\n────────────────\n⏰ เวลาทำรายการ: 29/9/2569 11:01:05",
+      "bookingId": "B-2816",
+      "channel": "line",
+      "id": "notif-line-1790654465218-944",
+      "status": "simulated",
+      "createdAt": "2026-09-29T04:01:05.218Z"
     },
     {
-      "id": 480,
-      "url": "/api/assets/d776ae17-af7a-4165-b813-14811605a90b",
-      "title": "",
-      "cat": "ทั่วไป"
+      "bookingId": "QT-2569-09-412",
+      "recipient": "LINE",
+      "message": "💼 [ขอใบเสนอราคาออนไลน์ใหม่จากหน้าเว็บ!]\n────────────────\n🔖 เลขที่เอกสาร: #QT-2569-09-412\n🏢 หน่วยงาน/ลูกค้า: ทดสอบ\n👤 ผู้ติดต่อ: คุณ ทดสอบ\n📞 เบอร์โทรศัพท์: 098765432\n✉️ อีเมล: admin@admin.com\n📅 วันที่เข้าพัก: 2026-09-30 ถึง 2026-10-01\n💰 ยอดรวมทั้งสิ้น: ฿1,800 บาท\n🏷️ สถานะเอกสาร: รอตรวจสอบ (Draft / Pending)\n💬 หมายเหตุ: [คำขอใบเสนอราคาผ่านหน้าเว็บไซต์]\n────────────────\n⏰ เวลาทำรายการ: 29/9/2569 11:00:17",
+      "id": "notif-line-1790654417021-787",
+      "status": "simulated",
+      "createdAt": "2026-09-29T04:00:17.021Z",
+      "channel": "line"
     },
     {
-      "id": 481,
-      "url": "/api/assets/86e63964-41cf-48e3-8036-6367ac495eb8",
-      "title": "",
-      "cat": "ทั่วไป"
+      "createdAt": "2026-09-29T04:00:16.919Z",
+      "channel": "email",
+      "id": "notif-email-1790654416919-119",
+      "bookingId": "QT-2569-09-412",
+      "message": "ส่งอีเมลใบเสนอราคาไม่สำเร็จ: C0BC2EA9EE7F0000:error:0A00010B:SSL routines:tls_validate_record_header:wrong version number:../deps/openssl/openssl/ssl/record/methods/tlsany_meth.c:77:\n",
+      "recipient": "admin@admin.com, booking@them5residence.com",
+      "status": "failed"
     },
     {
-      "id": 482,
-      "url": "/api/assets/e7bd4b0e-41f4-4902-898f-26f688164286",
-      "title": "",
-      "cat": "ทั่วไป"
+      "channel": "email",
+      "createdAt": "2026-09-23T11:05:11.507Z",
+      "recipient": "booking@them5residence.com, admin@asdad.com",
+      "message": "ส่งอีเมลไม่สำเร็จ: C06C8C34C57F0000:error:0A00010B:SSL routines:tls_validate_record_header:wrong version number:../deps/openssl/openssl/ssl/record/methods/tlsany_meth.c:77:\n",
+      "id": "notif-email-1790161511507-200",
+      "status": "failed",
+      "bookingId": "B-4172"
     },
     {
-      "id": 483,
-      "url": "/api/assets/0c36e779-a207-4297-a149-1fd6e50dbef9",
-      "title": "",
-      "cat": "ทั่วไป"
+      "id": "notif-line-1790161510928-958",
+      "message": "🏨 [THE M5 RESIDENCE] การจองใหม่!\n────────────────\n🔖 หมายเลขจอง: #B-4172\n🛏️ ห้องพัก: sup_queen_01\n📅 เช็คอิน: 2026-09-24 (หลัง 14:00 น.)\n📅 เช็คเอาท์: 2026-09-25 (ก่อน 12:00 น.)\n⏳ ระยะเวลา: 1 คืน (2 ท่าน)\n💰 ยอดสุทธิ: ฿1,350 บาท\n🏷️ สถานะ: รอชำระเงิน / ตรวจสอบ\n────────────────\n👤 ผู้จอง: คุณ ทดสอบ\n📞 เบอร์โทร: 0987654688\n✉️ อีเมล: admin@asdad.com\n💬 คำขอพิเศษ: ไม่มี\n────────────────\n⏰ เวลาทำรายการ: 23/9/2569 18:05:10",
+      "status": "simulated",
+      "createdAt": "2026-09-23T11:05:10.928Z",
+      "recipient": "LINE (รอระบุ Token)",
+      "bookingId": "B-4172",
+      "channel": "line"
+    }
+  ],
+  "admins": [
+    {
+      "name": "soothirotenik",
+      "username": "soothirotenik",
+      "adminId": "admin-2",
+      "id": "admin-2",
+      "password": "asd024865",
+      "role": "Super Admin"
     },
     {
-      "id": 484,
-      "url": "/api/assets/e2f9d3a5-456e-454a-bcac-f844322eb6c5",
-      "title": "",
-      "cat": "ทั่วไป"
-    },
-    {
-      "id": 485,
-      "url": "/api/assets/c5750a15-0660-4746-9343-4d9b240ed383",
-      "title": "",
-      "cat": "ทั่วไป"
-    },
-    {
-      "id": 486,
-      "url": "/api/assets/8c4c8853-2d1f-40f8-b8e9-08fbdf65879b",
-      "title": "",
-      "cat": "ทั่วไป"
-    },
-    {
-      "id": 487,
-      "url": "/api/assets/7e4dd730-27d1-4e27-9b08-980ceb60ee75",
-      "title": "",
-      "cat": "ทั่วไป"
-    },
-    {
-      "id": 488,
-      "url": "/api/assets/2b96fccc-878c-452a-9e8c-bdd6e6aa2b97",
-      "title": "",
-      "cat": "ทั่วไป"
-    },
-    {
-      "id": 489,
-      "url": "/api/assets/4f4e3479-bb3e-482b-b93b-139eef50858e",
-      "title": "",
-      "cat": "ทั่วไป"
-    },
-    {
-      "id": 490,
-      "url": "/api/assets/da286551-e525-4a68-83a7-1c6cf24ec669",
-      "title": "",
-      "cat": "ทั่วไป"
-    },
-    {
-      "id": 491,
-      "url": "/api/assets/34c3413b-5c1e-40f9-9f63-9f332c53da22",
-      "title": "",
-      "cat": "ทั่วไป"
-    },
-    {
-      "id": 492,
-      "url": "/api/assets/de332c16-15d7-4a35-a6cd-64c3412b43fd",
-      "title": "",
-      "cat": "ทั่วไป"
-    },
-    {
-      "id": 493,
-      "url": "/api/assets/52922adb-c40d-4da0-857b-8f2b089894de",
-      "title": "",
-      "cat": "ทั่วไป"
-    },
-    {
-      "id": 494,
-      "url": "/api/assets/1623e68d-25ed-4f7a-8b18-d1a272f5bbdb",
-      "title": "",
-      "cat": "ทั่วไป"
-    },
-    {
-      "id": 495,
-      "url": "/api/assets/850457e8-73b2-463a-b0ba-da539ef42cb6",
-      "title": "",
-      "cat": "ทั่วไป"
-    },
-    {
-      "id": 496,
-      "url": "/api/assets/98f58d1e-bfd9-4620-adf4-ebbbdbd67869",
-      "title": "",
-      "cat": "ทั่วไป"
-    },
-    {
-      "id": 497,
-      "url": "/api/assets/91e6e30d-6f73-4bdb-a774-c37d79a68a10",
-      "title": "",
-      "cat": "ทั่วไป"
-    },
-    {
-      "id": 498,
-      "url": "/api/assets/8ce764fa-8712-4dcd-b916-b110a84f0e70",
-      "title": "",
-      "cat": "ทั่วไป"
-    },
-    {
-      "id": 499,
-      "url": "/api/assets/60b510ee-bfb5-4700-8961-3836128991de",
-      "title": "",
-      "cat": "ทั่วไป"
-    },
-    {
-      "id": 500,
-      "url": "/api/assets/bc65c121-c3a2-40f5-a5c7-d3d9b291d6d4",
-      "title": "",
-      "cat": "ทั่วไป"
-    },
-    {
-      "id": 501,
-      "url": "/api/assets/906e7469-9310-4f08-ac0b-5b1963546846",
-      "title": "",
-      "cat": "ทั่วไป"
-    },
-    {
-      "id": 502,
-      "url": "/api/assets/a5ff3971-ec28-4697-a4c8-3b250407d922",
-      "title": "",
-      "cat": "ทั่วไป"
-    },
-    {
-      "id": 503,
-      "url": "/api/assets/b739a1d0-d217-4235-aefc-2283266724c9",
-      "title": "",
-      "cat": "ทั่วไป"
-    },
-    {
-      "id": 504,
-      "url": "/api/assets/e65080fd-d317-4fc4-909f-01f450a7c753",
-      "title": "",
-      "cat": "ทั่วไป"
-    },
-    {
-      "id": 505,
-      "url": "/api/assets/93b0a40d-9bae-4df1-862b-899226a81d67",
-      "title": "",
-      "cat": "ทั่วไป"
-    },
-    {
-      "id": 506,
-      "url": "/api/assets/546e807d-9cb2-4cff-823b-922cb5f8ddb7",
-      "title": "",
-      "cat": "ทั่วไป"
-    },
-    {
-      "id": 507,
-      "url": "/api/assets/5d7e3c5f-e6fc-4670-a2d6-c58670beaf56",
-      "title": "",
-      "cat": "ทั่วไป"
-    },
-    {
-      "id": 508,
-      "url": "/api/assets/ec72dcab-3323-432a-8856-b7b215eec379",
-      "title": "",
-      "cat": "ทั่วไป"
-    },
-    {
-      "id": 509,
-      "url": "/api/assets/75084a58-0018-47f2-86b6-22e7e0017d79",
-      "title": "",
-      "cat": "ทั่วไป"
-    },
-    {
-      "id": 510,
-      "url": "/api/assets/0d77e3e3-38f4-4588-b93b-0eab8c148879",
-      "title": "",
-      "cat": "ทั่วไป"
-    },
-    {
-      "id": 511,
-      "url": "/api/assets/8421b2a0-835f-4a45-bed7-438a0a6ce571",
-      "title": "",
-      "cat": "ทั่วไป"
-    },
-    {
-      "id": 512,
-      "url": "/api/assets/4f424daf-c3dc-4e5b-b5ae-3d2abccc2234",
-      "title": "",
-      "cat": "ทั่วไป"
-    },
+      "role": "Super Admin",
+      "username": "admin",
+      "id": "admin-1",
+      "password": "asd024865",
+      "name": "admin",
+      "adminId": "admin-1"
+    }
+  ],
+  "faqs": [
     {
       "id": 513,
-      "url": "/api/assets/0a0c2e0a-344c-4776-9a0b-583f2b321a5c",
-      "title": "",
-      "cat": "ทั่วไป"
+      "q": "หากต้องการจองห้องพักจำนวนมากหรือจัดกลุ่มสัมมนา สามารถติดต่อได้อย่างไร?",
+      "a": "สำหรับการจองแบบหมู่คณะหรือการจัดงานอีเวนต์ กรุณาติดต่อเราโดยตรงผ่านทางช่องทางโซเชียลมีเดียของโรงแรม หรือเบอร์โทรศัพท์ที่แจ้งไว้บนหน้าเว็บไซต์ เพื่อรับข้อเสนอพิเศษครับ"
     },
     {
       "id": 514,
-      "url": "/api/assets/44dc68df-deeb-4a60-8b58-454e1d7cb8f4",
-      "title": "",
-      "cat": "ทั่วไป"
+      "q": "นโยบายการสูบบุหรี่เป็นอย่างไร?",
+      "a": "โรงแรมของเราเป็นที่พักปลอดบุหรี่ (Non-smoking room) เพื่อสุขอนามัยที่ดีของผู้เข้าพักทุกท่านครับ"
     },
     {
       "id": 515,
-      "url": "/api/assets/783334f0-66de-47ab-861f-3636be6a4d68",
-      "title": "",
-      "cat": "ทั่วไป"
+      "q": "มีบริการรถรับ-ส่งหรือไม่?",
+      "a": "เรามีบริการรถรับส่งในพื้นที่ เพื่ออำนวยความสะดวกให้ผู้เข้าพักสามารถเดินทางไปยังสถานที่ต่างๆ หรือจุดนัดพบในย่านใกล้เคียงได้อย่างรวดเร็วครับ"
     },
     {
       "id": 516,
-      "url": "/api/assets/2b5c0adc-0ec5-45d7-bea8-c375d347ed79",
-      "title": "",
-      "cat": "ทั่วไป"
+      "q": "ภายในห้องพักมีสิ่งอำนวยความสะดวกอะไรบ้าง?",
+      "a": "ห้องพักของเราทุกประเภทมาพร้อมกับ เครื่องปรับอากาศ, ทีวี, ตู้เย็น, เครื่องทำน้ำอุ่น และอินเทอร์เน็ต Wi-Fi ความเร็วสูง นอกจากนี้ยังมีระเบียงส่วนตัวให้คุณได้ผ่อนคลายในบรรยากาศส่วนตัวครับ"
     },
     {
       "id": 517,
-      "url": "/api/assets/69d290e5-bca6-433a-b6a5-f556a874d9c0",
-      "title": "",
-      "cat": "ทั่วไป"
+      "q": "มีบริการอาหารเช้าหรือไม่?",
+      "a": "เรามีบริการอาหารเช้าเพื่อเตรียมความพร้อมให้คุณก่อนเริ่มต้นวันใหม่ สามารถสอบถามรายละเอียดเพิ่มเติมได้ที่เคาน์เตอร์เช็คอินครับ"
     },
     {
       "id": 518,
-      "url": "/api/assets/c3f538a6-2847-45a3-8cb7-dae316e4da17",
-      "title": "",
-      "cat": "ทั่วไป"
+      "q": "เวลาเช็คอินและเช็คเอาท์คือเมื่อไหร่?",
+      "a": "เวลาเช็คอินปกติคือตั้งแต่เวลา 14.00 น. เป็นต้นไป และเวลาเช็คเอาท์คือไม่เกิน 12.00 น. (เที่ยงวัน) หากต้องการเช็คอินก่อนหรือเช็คเอาท์ล่าช้า กรุณาติดต่อเจ้าหน้าที่ล่วงหน้าครับ"
     },
     {
       "id": 519,
-      "url": "/api/assets/3de80bdb-570d-4cd4-bc39-1afc6b87f7cc",
-      "title": "",
-      "cat": "ทั่วไป"
-    },
-    {
-      "id": 520,
-      "url": "/api/assets/e6e3e375-8a30-4381-aab9-3eaa8dd5ec36",
-      "title": "",
-      "cat": "ทั่วไป"
-    },
-    {
-      "id": 521,
-      "url": "/api/assets/06d02023-6e61-4234-af8f-a21566c6fbb3",
-      "title": "",
-      "cat": "ทั่วไป"
-    },
-    {
-      "id": 522,
-      "url": "/api/assets/ce31948a-2cbc-45f4-a55c-d6cb6d1b2c57",
-      "title": "",
-      "cat": "ทั่วไป"
-    },
-    {
-      "id": 523,
-      "url": "/api/assets/74e8f261-24bf-4e18-a30f-6269a0dc1c3c",
-      "title": "",
-      "cat": "ทั่วไป"
-    },
-    {
-      "id": 524,
-      "url": "/api/assets/09b04901-6711-491e-a2e4-7fb55d3bbc12",
-      "title": "",
-      "cat": "ทั่วไป"
-    },
-    {
-      "id": 525,
-      "url": "/api/assets/c4f78aa5-c74b-45dd-b584-dd7e0ea5901b",
-      "title": "",
-      "cat": "ทั่วไป"
-    },
-    {
-      "id": 526,
-      "url": "/api/assets/ab81e66c-381b-454a-841c-e10cdf892f9c",
-      "title": "",
-      "cat": "ทั่วไป"
-    },
-    {
-      "id": 527,
-      "url": "/api/assets/f075de67-52a0-4a7e-89d4-c9515c27b474",
-      "title": "",
-      "cat": "ทั่วไป"
-    },
-    {
-      "id": 528,
-      "url": "",
-      "title": "",
-      "cat": "ทั่วไป"
-    },
-    {
-      "id": 529,
-      "url": "/api/assets/b176f1c4-dae6-4536-9429-e8b2e0c08137",
-      "title": "",
-      "cat": "ทั่วไป"
-    },
-    {
-      "id": 530,
-      "url": "/api/assets/6017f240-d001-4f12-9772-9301e17ebbe4",
-      "title": "",
-      "cat": "ทั่วไป"
-    },
-    {
-      "id": 531,
-      "url": "/api/assets/aa19dda0-ec95-4064-8428-c3c79e42c738",
-      "title": "",
-      "cat": "ทั่วไป"
-    },
-    {
-      "id": 532,
-      "url": "/api/assets/430829c1-3bd5-4221-81b0-190a4faba525",
-      "title": "",
-      "cat": "ทั่วไป"
-    },
-    {
-      "id": 533,
-      "url": "/api/assets/5056b1be-5fe4-40ce-a885-68016a200136",
-      "title": "",
-      "cat": "ทั่วไป"
-    },
-    {
-      "id": 534,
-      "url": "/api/assets/444b1642-bce4-40d5-b3b3-5bbf6a208f80",
-      "title": "",
-      "cat": "ทั่วไป"
-    },
-    {
-      "id": 535,
-      "url": "/api/assets/b5a5a940-f133-4193-8a8e-e23ce6e0b141",
-      "title": "",
-      "cat": "ทั่วไป"
-    },
-    {
-      "id": 536,
-      "url": "/api/assets/e639a767-d9f3-43f6-9620-8991a38f6a2f",
-      "title": "",
-      "cat": "ทั่วไป"
-    },
-    {
-      "id": 537,
-      "url": "/api/assets/3f632e74-e491-4bbf-800f-46fc1bc1d59a",
-      "title": "",
-      "cat": "ทั่วไป"
-    },
-    {
-      "id": 538,
-      "url": "/api/assets/68f4b328-1a05-4b81-9e83-b0227f703eff",
-      "title": "",
-      "cat": "ทั่วไป"
-    },
-    {
-      "id": 539,
-      "url": "/api/assets/4615a57d-483d-4912-95ac-bf0ebea87203",
-      "title": "",
-      "cat": "ทั่วไป"
-    },
-    {
-      "id": 540,
-      "url": "/api/assets/d055038d-b0ae-43cf-9d21-fc3064deb48f",
-      "title": "",
-      "cat": "ทั่วไป"
-    },
-    {
-      "id": 541,
-      "url": "/api/assets/65804873-0ac8-41a8-8d3c-a523239acb71",
-      "title": "",
-      "cat": "ทั่วไป"
-    },
-    {
-      "id": 542,
-      "url": "/api/assets/00482a07-265e-4e94-9844-47790c90b049",
-      "title": "",
-      "cat": "ทั่วไป"
-    },
-    {
-      "id": 543,
-      "url": "/api/assets/004342c2-14d7-4780-b469-748e6f58e931",
-      "title": "",
-      "cat": "ทั่วไป"
-    },
-    {
-      "id": 544,
-      "url": "/api/assets/7be8ee67-d9bd-4d6e-a7d8-8525061eef79",
-      "title": "",
-      "cat": "ทั่วไป"
-    },
-    {
-      "id": 545,
-      "url": "/api/assets/1a48e0ef-075d-4bfd-b261-5591c97029de",
-      "title": "",
-      "cat": "ทั่วไป"
-    },
-    {
-      "id": 546,
-      "url": "/api/assets/5d9f89e0-f574-4af2-9ae4-c9dd1e1153c1",
-      "title": "",
-      "cat": "ทั่วไป"
-    },
-    {
-      "id": 547,
-      "url": "/api/assets/c5f8d657-57e5-4253-900f-c207347f0056",
-      "title": "",
-      "cat": "ทั่วไป"
-    },
-    {
-      "id": 548,
-      "url": "/api/assets/6e75ebd4-0b82-4247-991d-ce80048830c3",
-      "title": "",
-      "cat": "ทั่วไป"
-    },
-    {
-      "id": 549,
-      "url": "/api/assets/9260e196-69e3-49e1-bcea-a13089ac956b",
-      "title": "",
-      "cat": "ทั่วไป"
-    },
-    {
-      "id": 550,
-      "url": "/api/assets/d776ae17-af7a-4165-b813-14811605a90b",
-      "title": "",
-      "cat": "ทั่วไป"
-    },
-    {
-      "id": 551,
-      "url": "/api/assets/be2a63af-1c03-4662-bd5b-d200a792c3f8",
-      "title": "",
-      "cat": "ทั่วไป"
-    },
-    {
-      "id": 552,
-      "url": "/api/assets/e6ac5a59-50ee-4954-8c9c-129628cedf8a",
-      "title": "",
-      "cat": "ทั่วไป"
-    },
-    {
-      "id": 553,
-      "url": "/api/assets/86e63964-41cf-48e3-8036-6367ac495eb8",
-      "title": "",
-      "cat": "ทั่วไป"
-    },
-    {
-      "id": 554,
-      "url": "/api/assets/dd771f13-cbf9-4a63-adcb-c71286df8d38",
-      "title": "",
-      "cat": "ทั่วไป"
-    },
-    {
-      "id": 555,
-      "url": "/api/assets/e7bd4b0e-41f4-4902-898f-26f688164286",
-      "title": "",
-      "cat": "ทั่วไป"
-    },
-    {
-      "id": 556,
-      "url": "/api/assets/5794970b-b1a1-40c7-ac4f-2ca961bdca56",
-      "title": "",
-      "cat": "ทั่วไป"
-    },
-    {
-      "id": 557,
-      "url": "/api/assets/787bd5e3-bab1-460a-9751-fc9c9af4109c",
-      "title": "",
-      "cat": "ทั่วไป"
-    },
-    {
-      "id": 558,
-      "url": "/api/assets/0c36e779-a207-4297-a149-1fd6e50dbef9",
-      "title": "",
-      "cat": "ทั่วไป"
-    },
-    {
-      "id": 559,
-      "url": "/api/assets/49acd4c8-e9c7-40d4-8a3d-bb7fdfc29314",
-      "title": "",
-      "cat": "ทั่วไป"
-    },
-    {
-      "id": 560,
-      "url": "/api/assets/4e869a8e-9b6d-4992-93e6-e4f82614c9af",
-      "title": "",
-      "cat": "ทั่วไป"
-    },
-    {
-      "id": 561,
-      "url": "/api/assets/e2f9d3a5-456e-454a-bcac-f844322eb6c5",
-      "title": "",
-      "cat": "ทั่วไป"
-    },
-    {
-      "id": 562,
-      "url": "/api/assets/9c9cd9d9-59f4-4828-8f29-8127286f6162",
-      "title": "",
-      "cat": "ทั่วไป"
-    },
-    {
-      "id": 563,
-      "url": "/api/assets/7d19f1f9-5678-4375-941c-96580b3967e4",
-      "title": "",
-      "cat": "ทั่วไป"
-    },
-    {
-      "id": 564,
-      "url": "/api/assets/c5750a15-0660-4746-9343-4d9b240ed383",
-      "title": "",
-      "cat": "ทั่วไป"
-    },
-    {
-      "id": 565,
-      "url": "/api/assets/565aa62b-9384-43a2-ac92-699105aa9e09",
-      "title": "",
-      "cat": "ทั่วไป"
-    },
-    {
-      "id": 566,
-      "url": "/api/assets/8c4c8853-2d1f-40f8-b8e9-08fbdf65879b",
-      "title": "",
-      "cat": "ทั่วไป"
-    },
-    {
-      "id": 567,
-      "url": "/api/assets/670be5e5-cfbb-4def-a44c-bcbb3a77c602",
-      "title": "",
-      "cat": "ทั่วไป"
-    },
-    {
-      "id": 568,
-      "url": "/api/assets/2079d312-7a2e-4ffa-a29d-ad845510ce87",
-      "title": "",
-      "cat": "ทั่วไป"
-    },
-    {
-      "id": 569,
-      "url": "/api/assets/7e4dd730-27d1-4e27-9b08-980ceb60ee75",
-      "title": "",
-      "cat": "ทั่วไป"
-    },
-    {
-      "id": 570,
-      "url": "/api/assets/acfe56b6-339b-4e8d-8576-c49c8877cfdd",
-      "title": "",
-      "cat": "ทั่วไป"
-    },
-    {
-      "id": 571,
-      "url": "/api/assets/459f77d9-9d8f-4309-b163-11a23fde2051",
-      "title": "",
-      "cat": "ทั่วไป"
-    },
-    {
-      "id": 572,
-      "url": "/api/assets/2b96fccc-878c-452a-9e8c-bdd6e6aa2b97",
-      "title": "",
-      "cat": "ทั่วไป"
-    },
-    {
-      "id": 573,
-      "url": "/api/assets/941ac18d-8485-4ab0-949b-0b7e1f9382b6",
-      "title": "",
-      "cat": "ทั่วไป"
-    },
-    {
-      "id": 574,
-      "url": "/api/assets/454b052d-d04d-4ff5-aab3-d362d0447991",
-      "title": "",
-      "cat": "ทั่วไป"
-    }
-  ],
-  "slides": [
-    {
-      "url": "/api/assets/120b2b41-8272-44e0-8b3e-036dc12780a0",
-      "label": "โรงแรม them5residence",
-      "desc": ""
+      "q": "โรงแรมตั้งอยู่ใกล้สถานที่จัดงานสำคัญอย่างไรบ้าง?",
+      "a": "The M5 Residence ตั้งอยู่ในทำเลที่สะดวกสบายมากสำหรับการเดินทางไปชมคอนเสิร์ตหรือร่วมงานอีเวนต์ที่ IMPACT Arena เมืองทองธานี โดยใช้เวลาเดินทางเพียงไม่กี่นาทีครับ"
     }
   ],
   "googlePlaceId": "ChIJXWlJMC-e4jARLqX9OidpWjY",
-  "googleReviewsEnabled": true,
-  "initialized": true,
-  "deletedBookingIds": [],
-  "deletedMemberIds": [
-    "M5-MEM-1001",
-    "M5-MEM-1002",
-    "M5-MEM-1003"
+  "partners": [],
+  "rooms": [
+    {
+      "id": "dlx_queen_01",
+      "name": "STANDARD ROOM AND STANDARD TWIN BEN ROOM",
+      "thaiName": "ห้องพักมาตรฐาน และ ห้องพักมาตรฐานแบบเตียงคู่",
+      "price": 1250,
+      "size": 20,
+      "capacity": 2,
+      "bedType": "เตียงควีนไซส์ 5 ฟุต (1 Queen Bed)",
+      "description": "สัมผัสการพักผ่อนสไตล์โมเดิร์นลอฟท์สุดเท่ ใกล้อิมแพ็ค เมืองทองธานี ครบครันด้วยสิ่งอำนวยความสะดวก เพื่อความคุ้มค่าและเป็นส่วนตัว",
+      "longDescription": "ยินดีต้อนรับสู่ The M5 Residence ที่พักสไตล์อินดัสเทรียลลอฟท์ร่วมสมัย บนทำเลศักยภาพย่านปากเกร็ด-แจ้งวัฒนะ ตอบโจทย์ทั้งผู้มาร่วมงานคอนเสิร์ต งานแสดงสินค้าที่ IMPACT เมืองทองธานี และกลุ่มลูกค้าติดต่อธุรกิจ ตัวห้องพักออกแบบโปร่งสบายด้วยโทนปูนเปลือยและงานเหล็กอันเป็นเอกลักษณ์ พร้อมเตียงนอนระดับพรีเมียม เครื่องปรับอากาศเย็นฉ่ำ สมาร์ททีวี และอินเทอร์เน็ตความเร็วสูง ให้คุณรีชาร์จพลังได้อย่างเต็มอิ่มในบรรยากาศที่เงียบสงบและปลอดภัยตลอด 24 ชั่วโมง",
+      "imageUrl": "/uploads/1790671799446_682hst_DSC05884.jpg",
+      "amenities": [
+        "Wi-Fi ความเร็วสูง",
+        "เครื่องปรับอากาศ",
+        "ทีวีจอแบน",
+        "ตู้เย็น",
+        "เครื่องทำน้ำอุ่น",
+        "ระเบียง"
+      ],
+      "matterportUrl": "https://discover.matterport.com/space/4mbZem6RjGN",
+      "active": true
+    },
+    {
+      "id": "sup_queen_01",
+      "name": "Superior Room",
+      "thaiName": "ห้องซูพีเรีย",
+      "price": 1350,
+      "size": 20,
+      "capacity": 2,
+      "bedType": "เตียงควีนไซส์ 5 ฟุต (1 Queen Bed)",
+      "description": "ห้องพักสไตล์ลอฟท์พื้นที่กว้างขวาง จัดสรรฟังก์ชันลงตัว พร้อมระเบียงส่วนตัวเพื่อการพักผ่อนที่เหนือระดับ",
+      "longDescription": "ยกระดับวันพักผ่อนของคุณด้วยห้อง Superior ของ The M5 Residence โดดเด่นด้วยการจัดวางพื้นที่ใช้สอยขนาดกำลังพอดี มอบความรู้สึกโล่งโปร่งด้วยการดีไซน์โทนสีอบอุ่นตัดกับความดิบเท่สไตล์ลอฟท์ เพียบพร้อมด้วยเตียงนอนหนานุ่ม โต๊ะทำงาน มุมพักผ่อน และระเบียงเปิดรับลมธรรมชาติ เหมาะสำหรับคู่รัก นักเดินทาง หรือผู้เข้าร่วมงานสัมมนาที่ต้องการความสะดวกสบายและความเป็นส่วนตัวอย่างแท้จริง",
+      "imageUrl": "/uploads/1790671806790_78vek9_DSC05912.jpg",
+      "amenities": [
+        "Wi-Fi ความเร็วสูง",
+        "เครื่องปรับอากาศ",
+        "ทีวีจอแบน",
+        "ตู้เย็น",
+        "เครื่องทำน้ำอุ่น",
+        "ระเบียง"
+      ],
+      "matterportUrl": "https://discover.matterport.com/space/hDvz1nJbtRV",
+      "active": true
+    },
+    {
+      "id": "superior",
+      "name": "Deluxe",
+      "thaiName": "ห้องดีลักซ์ลอฟท์",
+      "price": 2550,
+      "size": 30,
+      "capacity": 2,
+      "bedType": "King Size Bed (เตียงคิงไซส์ 5 ฟุต)",
+      "description": "ที่สุดของห้องพักดีไซน์ลอฟท์เพดานสูง มอบพื้นที่กว้างขวางเป็นพิเศษ พร้อมสิ่งอำนวยความสะดวกระดับพรีเมียม",
+      "longDescription": "ดื่มด่ำกับประสบการณ์การพักผ่อนที่เปี่ยมไปด้วยสไตล์และความกว้างขวางระดับพรีเมียม ด้วยการออกแบบเพดานสูงโปร่ง โชว์ผิวสัมผัสอิฐธรรมชาติและโครงสร้างลอฟท์แท้ ภายในจัดสรรพื้นที่เป็นสัดส่วน ทั้งโซนนั่งเล่นผ่อนคลายและมุมเตียงนอนขนาดใหญ่ พร้อมชุดเครื่องนอนเกรดโรงแรมชั้นนำ ระบบฝักบัว Rain Shower และอุปกรณ์อำนวยความสะดวกครบเซ็ต เติมเต็มช่วงเวลาพักผ่อนหลังจบคอนเสิร์ตหรือวันทำงานหนักได้อย่างสมบูรณ์แบบที่สุด",
+      "imageUrl": "/uploads/1790672090989_q2url3_DSC05912.jpg",
+      "amenities": [
+        "Free High-speed Wi-Fi 1000Mbps",
+        "Smart TV 55\" พร้อม Netflix",
+        "มินิบาร์และสแน็คบาร์จัดเตรียมครบ",
+        "โซฟาเบดเกรดพรีเมียมสำหรับพักผ่อน",
+        "เครื่องเป่าผม และเสื้อคลุมอาบน้ำสไตล์ลอฟท์",
+        "ตู้เซฟอิเล็กทรอนิกส์ส่วนตัว"
+      ],
+      "matterportUrl": "https://my.matterport.com/show/?m=Pcjj9wmA98W",
+      "active": true
+    }
   ],
-  "directus": {
-    "url": "https://data.them5residence.com",
-    "internalUrl": "https://data.them5residence.com",
-    "token": "lQQ9k-PdtLixFi2LUA-MSxF2n8ucQ96a"
-  }
+  "bookings": [
+    {
+      "id": "B-2894",
+      "roomType": "deluxe",
+      "roomName": null,
+      "checkIn": "2026-09-30",
+      "checkOut": "2026-10-01",
+      "guests": 2,
+      "guestName": "ทดสอบระบบ",
+      "guestEmail": "admin@1234.com",
+      "guestPhone": "0987654321",
+      "totalPrice": 1250,
+      "status": "Pending",
+      "specialRequest": "",
+      "createdAt": "2026-09-29T09:51:04.778Z"
+    }
+  ],
+  "blockedDates": []
 }

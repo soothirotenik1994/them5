@@ -19,7 +19,7 @@
 
 /* Global Font Override & Readability Scale */
 html {
-  font-size: 104.5%; /* Scaling base rem from 16px to 16.72px to easily make all text slightly larger */
+  font-size: 104.5%; /* Scaling base rem from 16px to 16.72px */
 }
 
 html, body, button, input, select, textarea, span, p, h1, h2, h3, h4, h5, h6, div, label {
@@ -79,6 +79,30 @@ html, body, button, input, select, textarea, span, p, h1, h2, h3, h4, h5, h6, di
 }
 
 /* Dynamic Font Scaling for Admin readability */
+.admin-small-text {
+  font-size: 0.82rem !important;
+}
+.admin-small-text input, 
+.admin-small-text select, 
+.admin-small-text textarea {
+  font-size: 0.78rem !important;
+  padding-top: 0.35rem !important;
+  padding-bottom: 0.35rem !important;
+}
+.admin-small-text label {
+  font-size: 0.75rem !important;
+}
+.admin-small-text p {
+  font-size: 0.72rem !important;
+}
+.admin-small-text button {
+  font-size: 0.75rem !important;
+}
+.admin-small-text nav button {
+  font-size: 0.8rem !important;
+  padding: 0.45rem 0.75rem !important;
+}
+
 .admin-large-text {
   font-size: 1.05rem !important;
 }
@@ -94,11 +118,11 @@ html, body, button, input, select, textarea, span, p, h1, h2, h3, h4, h5, h6, di
   font-weight: 600 !important;
 }
 .admin-large-text p {
-  font-size: 0.85rem !important;
+  font-size: 0.88rem !important;
   line-height: 1.6 !important;
 }
 .admin-large-text button {
-  font-size: 0.85rem !important;
+  font-size: 0.88rem !important;
   padding-top: 0.6rem !important;
   padding-bottom: 0.6rem !important;
 }
@@ -109,26 +133,70 @@ html, body, button, input, select, textarea, span, p, h1, h2, h3, h4, h5, h6, di
   font-size: 1.25rem !important;
 }
 .admin-large-text .text-xs {
-  font-size: 0.85rem !important;
+  font-size: 0.88rem !important;
 }
 .admin-large-text .text-[10px] {
-  font-size: 0.75rem !important;
+  font-size: 0.8rem !important;
 }
 .admin-large-text .text-[9px] {
-  font-size: 0.75rem !important;
+  font-size: 0.78rem !important;
 }
 .admin-large-text nav button {
-  font-size: 0.9rem !important;
-  padding-top: 0.75rem !important;
-  padding-bottom: 0.75rem !important;
+  font-size: 0.95rem !important;
+  padding-top: 0.85rem !important;
+  padding-bottom: 0.85rem !important;
 }
 .admin-large-text table th {
-  font-size: 0.85rem !important;
+  font-size: 0.88rem !important;
   padding: 0.75rem 1rem !important;
 }
 .admin-large-text table td {
-  font-size: 0.9rem !important;
+  font-size: 0.92rem !important;
   padding: 1rem !important;
+}
+
+.admin-xlarge-text {
+  font-size: 1.2rem !important;
+}
+.admin-xlarge-text input, 
+.admin-xlarge-text select, 
+.admin-xlarge-text textarea {
+  font-size: 1.1rem !important;
+  padding-top: 0.9rem !important;
+  padding-bottom: 0.9rem !important;
+}
+.admin-xlarge-text label {
+  font-size: 1.1rem !important;
+  font-weight: 700 !important;
+}
+.admin-xlarge-text p {
+  font-size: 1rem !important;
+  line-height: 1.7 !important;
+}
+.admin-xlarge-text button {
+  font-size: 1rem !important;
+  padding-top: 0.75rem !important;
+  padding-bottom: 0.75rem !important;
+}
+.admin-xlarge-text h3 {
+  font-size: 1.9rem !important;
+}
+.admin-xlarge-text h4 {
+  font-size: 1.45rem !important;
+}
+.admin-xlarge-text .text-xs {
+  font-size: 1rem !important;
+}
+.admin-xlarge-text .text-[10px] {
+  font-size: 0.92rem !important;
+}
+.admin-xlarge-text .text-[9px] {
+  font-size: 0.88rem !important;
+}
+.admin-xlarge-text nav button {
+  font-size: 1.1rem !important;
+  padding-top: 1rem !important;
+  padding-bottom: 1rem !important;
 }
 
 /* Admin Light Theme overrides */

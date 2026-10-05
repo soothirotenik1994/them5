@@ -4,10 +4,12 @@ import {
   DollarSign, Plus, Trash2, Check, RefreshCw, Key, LogOut,
   Sparkles, ShieldCheck, Mail, Phone, MapPin, User, Edit2, AlertCircle, Clock,
   Coffee, HelpCircle, MessageSquare, Images, ShieldAlert, Tag, Ticket, Wallpaper,
-  Search, Home, Bell, Sun, Moon, Database, Globe, ExternalLink
+  Search, Home, Bell, Sun, Moon, Database, Globe, ExternalLink, Handshake, Link,
+  FileText, Receipt, Save, Loader2
 } from "lucide-react";
-import { useSettings, BookingRecord, WebSettings, defaultGallery } from "../context/SettingsContext";
+import { useSettings, BookingRecord, WebSettings, defaultGallery, defaultQuotationAddOns } from "../context/SettingsContext";
 import { RoomType } from "../types";
+import { DocumentType, defaultCompanyProfile } from "../types/billing";
 import CalendarTabContent from "./CalendarTabContent";
 import SmtpTabContent from "./SmtpTabContent";
 import BlockedDatesTabContent from "./BlockedDatesTabContent";
@@ -18,6 +20,13 @@ import ImageUploadButton from "./ImageUploadButton";
 import MultiImageUploadButton from "./MultiImageUploadButton";
 import ImpactEventsTab from "./ImpactEventsTab";
 import DirectusTabContent from "./DirectusTabContent";
+import PartnersTabContent from "./PartnersTabContent";
+import AdminLoginPortal from "./AdminLoginPortal";
+import MenuManagementTabContent, { renderDynamicIcon } from "./MenuManagementTabContent";
+import BillingTabContent from "./billing/BillingTabContent";
+import DocumentEditorModal from "./billing/DocumentEditorModal";
+import { defaultAdminMenuConfig, defaultAdminRoles } from "../context/SettingsContext";
+import { AdminMenuItemConfig } from "../types";
 
 interface AdminDashboardProps {
   isOpen: boolean;
@@ -33,6 +42,8 @@ export default function AdminDashboard({ isOpen, onClose, isFullPage = false }: 
     updateBookingStatus, 
     updateBooking, 
     deleteBooking, 
+    clearAllBookings,
+    clearAllGallery,
     addBooking, 
     reseedDatabase,
     members,
@@ -40,12 +51,24 @@ export default function AdminDashboard({ isOpen, onClose, isFullPage = false }: 
     deleteMemberOnServer,
     addMemberOnServer,
     refreshSettings,
-    dbStatus
-  } = useSettings();
+    dbStatus,
+    billingDocuments,
+    saveBillingDocument,
+    companyProfile,
+    showToast
+  } = useSettings() as any;
+  
+  const [isSavingGeneral, setIsSavingGeneral] = useState(false);
+  const [isSavingGallery, setIsSavingGallery] = useState(false);
+  
+  // Quick Document Generation from Bookings
+  const [quickDocBooking, setQuickDocBooking] = useState<BookingRecord | null>(null);
+  const [quickDocType, setQuickDocType] = useState<DocumentType>("tax_invoice");
+  const [showQuickDocModal, setShowQuickDocModal] = useState(false);
   
   // Auth state
   const [isAuthenticated, setIsAuthenticated] = useState(() => {
-    return sessionStorage.getItem("m5_admin_authed") === "true";
+    return sessionStorage.getItem("m5_admin_authed") === "true" || localStorage.getItem("m5_admin_authed") === "true";
   });
   const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
@@ -61,17 +84,13 @@ export default function AdminDashboard({ isOpen, onClose, isFullPage = false }: 
   const [currentAdmin, setCurrentAdmin] = useState<any>(null);
 
   // Tab State
-  const [activeTab, setActiveTab] = useState<"dashboard" | "general" | "rooms" | "promotions" | "bookings" | "amenities" | "faqs" | "reviews" | "gallery" | "members" | "calendar" | "smtp" | "blocked" | "coupons" | "backgrounds" | "seo" | "admins" | "impact" | "directus">("dashboard");
+  const [activeTab, setActiveTab] = useState<string>("dashboard");
 
-  // Admin Theme state (defaulting to "light" loft clean theme per user picture mockup)
-  const [adminTheme, setAdminTheme] = useState<"light" | "dark">(() => {
-    return (localStorage.getItem("m5_admin_theme") as "light" | "dark") || "light";
-  });
+  // Admin Theme state (Uniform Dark Industrial Loft Theme)
+  const [adminTheme, setAdminTheme] = useState<"light" | "dark">("dark");
 
   const toggleAdminTheme = () => {
-    const nextVal = adminTheme === "light" ? "dark" : "light";
-    setAdminTheme(nextVal);
-    localStorage.setItem("m5_admin_theme", nextVal);
+    setAdminTheme("dark");
   };
 
   const getTabTitleName = (tab: string) => {
@@ -81,6 +100,7 @@ export default function AdminDashboard({ isOpen, onClose, isFullPage = false }: 
       case "rooms": return "Room Types (จัดการประเภทห้องพัก)";
       case "promotions": return "Promotions (โปรโมชั่นแคมเปญ)";
       case "bookings": return "Booking List (รายการจอง)";
+      case "billing": return "Invoices & Quotations (ใบกำกับภาษี & ใบเสนอราคา)";
       case "calendar": return "Bookings Calendar (ปฏิทินการจอง)";
       case "amenities": return "Amenities (สิ่งอำนวยความสะดวก)";
       case "faqs": return "FAQs (คำถามที่พบบ่อย)";
@@ -92,20 +112,26 @@ export default function AdminDashboard({ isOpen, onClose, isFullPage = false }: 
       case "coupons": return "Coupons (ส่วนลดคูปอง)";
       case "backgrounds": return "Backgrounds (พื้นหลังเว็บไซต์)";
       case "seo": return "SEO Settings (จัดการคีย์เวิร์ดกูเกิล)";
-      case "smtp": return "SMTP Settings (ระบบส่งอีเมล)";
+      case "partners": return "Partners (จัดการพันธมิตร)";
+      case "directus": return "Directus CMS (เชื่อมต่อ Directus)";
+      case "impact": return "IMPACT Events (ตารางงาน IMPACT)";
+      case "smtp": return "Notifications (แจ้งเตือน LINE & อีเมล)";
+      case "menu_management": return "Menu Management & Roles (จัดลำดับเมนูและสิทธิ์)";
       default: return "Control Center";
     }
   };
 
-  // Dynamic text size readability state ("ขยายดูหนังสือ")
-  const [textLarge, setTextLarge] = useState(() => {
-    return localStorage.getItem("m5_admin_text_large") === "true";
+  // Dynamic text size readability state for Admin (ลด, ปกติ, ขยาย: "sm" | "base" | "lg" | "xl")
+  const [adminTextSize, setAdminTextSize] = useState<"sm" | "base" | "lg" | "xl">(() => {
+    const saved = localStorage.getItem("m5_admin_text_size");
+    if (saved === "sm" || saved === "base" || saved === "lg" || saved === "xl") return saved as any;
+    return localStorage.getItem("m5_admin_text_large") === "true" ? "lg" : "base";
   });
 
-  const handleToggleTextSize = () => {
-    const newVal = !textLarge;
-    setTextLarge(newVal);
-    localStorage.setItem("m5_admin_text_large", String(newVal));
+  const handleSetAdminTextSize = (size: "sm" | "base" | "lg" | "xl") => {
+    setAdminTextSize(size);
+    localStorage.setItem("m5_admin_text_size", size);
+    localStorage.setItem("m5_admin_text_large", size === "lg" || size === "xl" ? "true" : "false");
   };
 
 
@@ -147,8 +173,9 @@ export default function AdminDashboard({ isOpen, onClose, isFullPage = false }: 
   const [reviewsEdit, setReviewsEdit] = useState(JSON.parse(JSON.stringify(settings.reviews || [])));
   const [galleryEdit, setGalleryEdit] = useState(() => {
     const list = settings.gallery;
-    return JSON.parse(JSON.stringify(Array.isArray(list) ? list : defaultGallery));
+    return JSON.parse(JSON.stringify(Array.isArray(list) ? list : []));
   });
+  const [visibleGalleryCount, setVisibleGalleryCount] = useState(20);
 
   // Google Reviews Integration state
   const [googlePlaceIdEdit, setGooglePlaceIdEdit] = useState(settings.googlePlaceId || "ChIJXWlJMC-e4jARLqX9OidpWjY");
@@ -167,7 +194,7 @@ export default function AdminDashboard({ isOpen, onClose, isFullPage = false }: 
       pass: "",
       fromName: "The M5 Residence",
       fromEmail: "",
-      adminNotifyEmail: "admin@m5residence.com"
+      adminNotifyEmail: "booking@them5residence.com, soothirote.nik@gmail.com"
     };
   });
 
@@ -279,7 +306,7 @@ export default function AdminDashboard({ isOpen, onClose, isFullPage = false }: 
       setAmenitiesEdit(JSON.parse(JSON.stringify(settings.amenities || [])));
       setFaqsEdit(JSON.parse(JSON.stringify(settings.faqs || [])));
       setReviewsEdit(JSON.parse(JSON.stringify(settings.reviews || [])));
-      setGalleryEdit(JSON.parse(JSON.stringify(Array.isArray(settings.gallery) ? settings.gallery : defaultGallery)));
+      setGalleryEdit(JSON.parse(JSON.stringify(Array.isArray(settings.gallery) ? settings.gallery : [])));
       setGooglePlaceIdEdit(settings.googlePlaceId || "ChIJXWlJMC-e4jARLqX9OidpWjY");
       setGoogleReviewsEnabledEdit(settings.googleReviewsEnabled !== undefined ? settings.googleReviewsEnabled : true);
       setGoogleReviewsSyncIntervalEdit(settings.general?.googleReviewsSyncInterval || "manual");
@@ -362,20 +389,39 @@ export default function AdminDashboard({ isOpen, onClose, isFullPage = false }: 
     setIsAuthenticated(false);
     sessionStorage.removeItem("m5_admin_authed");
     sessionStorage.removeItem("m5_admin_username");
+    localStorage.removeItem("m5_admin_authed");
+    localStorage.removeItem("m5_admin_username");
     setCurrentAdmin(null);
   };
 
   // Save General settings
-  const handleSaveGeneral = async (e: React.FormEvent) => {
-    e.preventDefault();
-    const success = await updateSettings({
-      ...settings,
-      general: generalEdit
-    });
-    if (success) {
-      alert("บันทึกข้อมูลหลักของโรงแรมสำเร็จเรียบร้อยแล้ว!");
-    } else {
-      alert("เกิดข้อขัดข้องในการบันทึกข้อมูล ลองใหม่อีกครั้ง");
+  const handleSaveGeneral = async (e?: React.FormEvent) => {
+    if (e && e.preventDefault) e.preventDefault();
+    setIsSavingGeneral(true);
+    try {
+      const success = await updateSettings({
+        ...settings,
+        general: generalEdit
+      });
+      if (success) {
+        if (showToast) {
+          showToast("บันทึกข้อมูลหลักของโรงแรมสำเร็จเรียบร้อยแล้ว! ✨", "success");
+        } else {
+          alert("บันทึกข้อมูลหลักของโรงแรมสำเร็จเรียบร้อยแล้ว!");
+        }
+      } else {
+        if (showToast) {
+          showToast("เกิดข้อขัดข้องในการบันทึกข้อมูล ลองใหม่อีกครั้ง", "error");
+        } else {
+          alert("เกิดข้อขัดข้องในการบันทึกข้อมูล ลองใหม่อีกครั้ง");
+        }
+      }
+    } catch (err: any) {
+      if (showToast) {
+        showToast(err?.message || "เกิดข้อขัดข้องในการบันทึกข้อมูล", "error");
+      }
+    } finally {
+      setIsSavingGeneral(false);
     }
   };
 
@@ -385,10 +431,10 @@ export default function AdminDashboard({ isOpen, onClose, isFullPage = false }: 
       ...settings,
       rooms: roomsEdit
     });
-    if (success) {
-      alert("บันทึกข้อมูลห้องพักทั้งหมด (รูปภาพ/ราคา/รายละเอียด) สำเร็จเรียบร้อยแล้ว! ✨🎨");
+    if (showToast) {
+      showToast(success ? "บันทึกข้อมูลห้องพักทั้งหมด (รูปภาพ/ราคา/รายละเอียด) สำเร็จเรียบร้อยแล้ว! ✨🎨" : "เกิดข้อขัดข้องในการบันทึกข้อมูลห้องพัก กรุณาลองใหม่อีกครั้ง", success ? "success" : "error");
     } else {
-      alert("เกิดข้อขัดข้องในการบันทึกข้อมูลห้องพัก กรุณาลองใหม่อีกครั้ง");
+      alert(success ? "บันทึกข้อมูลห้องพักทั้งหมด (รูปภาพ/ราคา/รายละเอียด) สำเร็จเรียบร้อยแล้ว! ✨🎨" : "เกิดข้อขัดข้องในการบันทึกข้อมูลห้องพัก กรุณาลองใหม่อีกครั้ง");
     }
   };
 
@@ -398,10 +444,10 @@ export default function AdminDashboard({ isOpen, onClose, isFullPage = false }: 
       ...settings,
       promotions: promotionsEdit
     });
-    if (success) {
-      alert("บันทึกข้อมูลแคมเปญโปรโมชั่นเรียบร้อยแล้ว!");
+    if (showToast) {
+      showToast(success ? "บันทึกข้อมูลแคมเปญโปรโมชั่นเรียบร้อยแล้ว! ✨" : "เกิดข้อขัดข้องในการบันทึกข้อมูล", success ? "success" : "error");
     } else {
-      alert("เกิดข้อขัดข้อง");
+      alert(success ? "บันทึกข้อมูลแคมเปญโปรโมชั่นเรียบร้อยแล้ว!" : "เกิดข้อขัดข้อง");
     }
   };
 
@@ -411,10 +457,10 @@ export default function AdminDashboard({ isOpen, onClose, isFullPage = false }: 
       ...settings,
       amenities: amenitiesEdit
     });
-    if (success) {
-      alert("บันทึกสิ่งอำนวยความสะดวกสำเร็จเรียบร้อยแล้ว!");
+    if (showToast) {
+      showToast(success ? "บันทึกสิ่งอำนวยความสะดวกสำเร็จเรียบร้อยแล้ว! ✨" : "เกิดข้อขัดข้องในการบันทึกข้อมูล", success ? "success" : "error");
     } else {
-      alert("เกิดข้อขัดข้อง");
+      alert(success ? "บันทึกสิ่งอำนวยความสะดวกสำเร็จเรียบร้อยแล้ว!" : "เกิดข้อขัดข้อง");
     }
   };
 
@@ -424,10 +470,10 @@ export default function AdminDashboard({ isOpen, onClose, isFullPage = false }: 
       ...settings,
       faqs: faqsEdit
     });
-    if (success) {
-      alert("บันทึกข้อมูลคำถามที่พบบ่อย (FAQs) สำเร็จเรียบร้อยแล้ว!");
+    if (showToast) {
+      showToast(success ? "บันทึกข้อมูลคำถามที่พบบ่อย (FAQs) สำเร็จเรียบร้อยแล้ว! ✨" : "เกิดข้อขัดข้องในการบันทึกข้อมูล", success ? "success" : "error");
     } else {
-      alert("เกิดข้อขัดข้อง");
+      alert(success ? "บันทึกข้อมูลคำถามที่พบบ่อย (FAQs) สำเร็จเรียบร้อยแล้ว!" : "เกิดข้อขัดข้อง");
     }
   };
 
@@ -444,23 +490,40 @@ export default function AdminDashboard({ isOpen, onClose, isFullPage = false }: 
         googleReviewsApiKey: customApiKeyEdit
       }
     });
-    if (success) {
-      alert("บันทึกข้อมูลรีวิวและตั้งค่า Google Reviews สำเร็จเรียบร้อยแล้ว!");
+    if (showToast) {
+      showToast(success ? "บันทึกข้อมูลรีวิวและตั้งค่า Google Reviews สำเร็จเรียบร้อยแล้ว! ✨" : "เกิดข้อขัดข้องในการบันทึกข้อมูล", success ? "success" : "error");
     } else {
-      alert("เกิดข้อขัดข้อง");
+      alert(success ? "บันทึกข้อมูลรีวิวและตั้งค่า Google Reviews สำเร็จเรียบร้อยแล้ว!" : "เกิดข้อขัดข้อง");
     }
   };
 
   // Save Gallery settings
   const handleSaveGallery = async () => {
-    const success = await updateSettings({
-      ...settings,
-      gallery: galleryEdit
-    });
-    if (success) {
-      alert("บันทึกข้อมูลรูปภาพแกลเลอรีสำเร็จเรียบร้อยแล้ว!");
-    } else {
-      alert("เกิดข้อขัดข้อง");
+    setIsSavingGallery(true);
+    try {
+      const success = await updateSettings({
+        ...settings,
+        gallery: galleryEdit
+      });
+      if (success) {
+        if (showToast) {
+          showToast("บันทึกข้อมูลรูปภาพแกลเลอรีสำเร็จเรียบร้อยแล้ว! ✨", "success");
+        } else {
+          alert("บันทึกข้อมูลรูปภาพแกลเลอรีสำเร็จเรียบร้อยแล้ว!");
+        }
+      } else {
+        if (showToast) {
+          showToast("เกิดข้อขัดข้องในการบันทึกข้อมูล", "error");
+        } else {
+          alert("เกิดข้อขัดข้อง");
+        }
+      }
+    } catch (err: any) {
+      if (showToast) {
+        showToast(err?.message || "เกิดข้อขัดข้อง", "error");
+      }
+    } finally {
+      setIsSavingGallery(false);
     }
   };
 
@@ -522,39 +585,118 @@ export default function AdminDashboard({ isOpen, onClose, isFullPage = false }: 
 
   const isLight = adminTheme === "light";
 
+  // Menu configuration and role permissions
+  const menuConfig = (settings.adminMenuConfig && settings.adminMenuConfig.length > 0)
+    ? settings.adminMenuConfig
+    : defaultAdminMenuConfig;
+
+  const currentRole = currentAdmin?.role || "Super Admin";
+
+  const permittedMenuItems = menuConfig
+    .filter(item => {
+      if (item.visible === false) return false;
+      if (currentRole === "Super Admin") return true;
+      const allowed = item.allowedRoles || [];
+      if (allowed.includes("*")) return true;
+      return allowed.includes(currentRole);
+    })
+    .sort((a, b) => a.order - b.order);
+
+  // If active tab is not permitted, auto-select first permitted tab
+  React.useEffect(() => {
+    if (permittedMenuItems.length > 0 && !permittedMenuItems.some(m => m.id === activeTab)) {
+      setActiveTab(permittedMenuItems[0].id);
+    }
+  }, [permittedMenuItems, activeTab]);
+
+  const renderMenuBadge = (item: AdminMenuItemConfig) => {
+    if (item.id === "billing") {
+      const webReqCount = (billingDocuments || []).filter((d: any) => d.isWebRequest).length;
+      if (webReqCount > 0) {
+        return (
+          <span className="px-1.5 py-0.5 bg-cyan-600 text-[10px] text-white font-mono rounded-full font-bold shadow-sm" title="มีคำขอใบเสนอราคาจากหน้าเว็บ">
+            {webReqCount} Web
+          </span>
+        );
+      }
+    } else if (item.id === "bookings" || item.badgeType === "pendingBookings") {
+      if (pendingBookings > 0) {
+        return (
+          <span className="px-2 py-0.5 bg-brick text-xs text-white font-mono rounded-full font-bold shadow-sm">
+            {pendingBookings}
+          </span>
+        );
+      }
+    } else if (item.id === "members" || item.badgeType === "membersCount") {
+      return (
+        <span className="px-2 py-0.5 bg-neutral-950 text-xs text-neutral-400 font-mono rounded-full font-bold border border-neutral-800">
+          {members ? members.length : 0}
+        </span>
+      );
+    } else if (item.id === "admins" || item.badgeType === "adminsCount") {
+      return (
+        <span className="px-2 py-0.5 bg-neutral-950 text-xs text-neutral-400 font-mono rounded-full font-bold border border-neutral-800">
+          {adminUsers.length}
+        </span>
+      );
+    } else if (item.id === "partners" || item.badgeType === "partnersCount") {
+      return (
+        <span className="px-2 py-0.5 bg-neutral-950 text-xs text-neutral-400 font-mono rounded-full font-bold border border-neutral-800">
+          {settings.partners ? settings.partners.length : 0}
+        </span>
+      );
+    } else if (item.id === "impact" || item.badgeType === "text") {
+      return (
+        <span className="px-2 py-0.5 bg-amber-950/40 border border-amber-900/50 text-[10px] text-amber-400 font-mono rounded-full font-bold uppercase tracking-wider">
+          {item.badgeText || "API"}
+        </span>
+      );
+    }
+    return null;
+  };
+
+  if (!isAuthenticated) {
+    return (
+      <AdminLoginPortal
+        isFullPage={isFullPage}
+        onClose={onClose}
+        isLight={isLight}
+        toggleTheme={toggleAdminTheme}
+        dbStatus={dbStatus}
+        adminUsers={adminUsers}
+        onSuccessLogin={(admin) => {
+          setIsAuthenticated(true);
+          sessionStorage.setItem("m5_admin_authed", "true");
+          sessionStorage.setItem("m5_admin_username", admin.username);
+          setCurrentAdmin(admin);
+        }}
+      />
+    );
+  }
+
   const outerContainerClass = isFullPage
-    ? `min-h-screen ${isLight ? "bg-neutral-100 text-neutral-800 m5-light-theme" : "bg-[#050505] text-neutral-250"} font-sans p-0 flex flex-col w-full h-screen overflow-hidden`
-    : `fixed inset-0 z-50 overflow-y-auto ${isLight ? "bg-black/30" : "bg-neutral-950/80"} backdrop-blur-md flex items-center justify-center p-2 sm:p-4 font-sans ${isLight ? "text-neutral-800 m5-light-theme" : "text-neutral-200"}`;
+    ? `min-h-screen bg-[#0a0a0a] text-neutral-200 font-sans p-0 flex flex-col w-full h-screen overflow-hidden`
+    : `fixed inset-0 z-50 overflow-y-auto bg-neutral-950/85 backdrop-blur-md flex items-center justify-center p-2 sm:p-4 font-sans text-neutral-200`;
 
   const cardContainerClass = isFullPage
-    ? `${isLight ? "bg-white border-neutral-200 text-neutral-800 m5-light-theme" : "bg-neutral-900 border-neutral-800"} border-none rounded-none w-full max-w-none h-screen flex flex-col overflow-hidden shadow-none relative`
-    : `${isLight ? "bg-white border-neutral-200 text-neutral-800 m5-light-theme" : "bg-neutral-900 border-neutral-800"} border rounded-lg w-full max-w-6xl h-[90vh] flex flex-col overflow-hidden shadow-2xl relative`;
+    ? `bg-[#111111] border-neutral-800 text-neutral-100 border-none rounded-none w-full max-w-none h-screen flex flex-col overflow-hidden shadow-none relative`
+    : `bg-[#111111] border-neutral-800 text-neutral-100 border rounded-xl w-full max-w-6xl h-[90vh] flex flex-col overflow-hidden shadow-2xl relative`;
 
   return (
     <div className={outerContainerClass}>
       <div id="m5-admin-card-container" className={cardContainerClass}>
         <style>{`
-          /* COMPACT SIDEBAR AND LAYOUT */
+          /* SIDEBAR SCROLLBAR AND STYLING */
           #m5-admin-sidebar {
             max-height: 100%;
           }
           #m5-admin-sidebar::-webkit-scrollbar {
-            width: 4px;
-            height: 4px;
+            width: 5px;
+            height: 5px;
           }
           #m5-admin-sidebar::-webkit-scrollbar-thumb {
-            background: rgba(120, 120, 120, 0.2) !important;
-            border-radius: 2px;
-          }
-          #m5-admin-sidebar nav button {
-            padding-top: 5px !important;
-            padding-bottom: 5px !important;
-            padding-left: 10px !important;
-            padding-right: 10px !important;
-            font-size: 11px !important;
-          }
-          #m5-admin-sidebar nav {
-            gap: 1px !important;
+            background: rgba(120, 120, 120, 0.25) !important;
+            border-radius: 3px;
           }
 
           /* LIGHT THEME OVERRIDES */
@@ -745,18 +887,62 @@ export default function AdminDashboard({ isOpen, onClose, isFullPage = false }: 
               )}
             </button>
 
-            {/* Accessibility Readability Font Size Toggler */}
-            <button
-              onClick={handleToggleTextSize}
-              className={`flex items-center space-x-1.5 px-3 py-1.5 text-xs rounded border transition-all cursor-pointer font-mono ${
-                textLarge 
-                  ? "bg-brick/20 border-brick/50 text-brick-light font-bold shadow-md" 
-                  : "bg-neutral-900/50 border-neutral-800 text-neutral-450 hover:text-white hover:border-neutral-700"
-              }`}
-              title="สลับขนาดตัวหนังสือเพื่อให้อ่านง่ายขึ้น (Enlarge Text Readable Mode)"
-            >
-              <span>🔍 ขนาดหนังสือ: {textLarge ? "ตัวใหญ่ (A+)" : "ปกติ (A)"}</span>
-            </button>
+            {/* Accessibility Readability Font Size Selector (ลด / ปกติ / ขยาย) */}
+            <div className="flex items-center bg-neutral-900/70 border border-neutral-800 rounded-md p-1 text-xs font-mono shadow-sm">
+              <span className="text-[11px] text-neutral-400 pl-1 pr-1.5 flex items-center space-x-1 select-none">
+                <span>🔍 ขนาดหนังสือ:</span>
+              </span>
+              <div className="flex items-center space-x-1">
+                <button
+                  type="button"
+                  onClick={() => handleSetAdminTextSize("sm")}
+                  className={`px-2 py-0.5 rounded text-[11px] font-bold transition-all cursor-pointer ${
+                    adminTextSize === "sm"
+                      ? "bg-brick text-white shadow-sm shadow-brick/40"
+                      : "text-neutral-400 hover:text-white hover:bg-neutral-800"
+                  }`}
+                  title="ลดขนาดตัวหนังสือ (A- เล็ก)"
+                >
+                  A- ลด
+                </button>
+                <button
+                  type="button"
+                  onClick={() => handleSetAdminTextSize("base")}
+                  className={`px-2 py-0.5 rounded text-[11px] font-bold transition-all cursor-pointer ${
+                    adminTextSize === "base"
+                      ? "bg-brick text-white shadow-sm shadow-brick/40"
+                      : "text-neutral-400 hover:text-white hover:bg-neutral-850"
+                  }`}
+                  title="ขนาดตัวหนังสือปกติ (A ปกติ)"
+                >
+                  A ปกติ
+                </button>
+                <button
+                  type="button"
+                  onClick={() => handleSetAdminTextSize("lg")}
+                  className={`px-2 py-0.5 rounded text-[11px] font-bold transition-all cursor-pointer ${
+                    adminTextSize === "lg"
+                      ? "bg-brick text-white shadow-sm shadow-brick/40"
+                      : "text-neutral-400 hover:text-white hover:bg-neutral-850"
+                  }`}
+                  title="ขยายตัวหนังสือ (A+ ตัวใหญ่)"
+                >
+                  A+ ขยาย
+                </button>
+                <button
+                  type="button"
+                  onClick={() => handleSetAdminTextSize("xl")}
+                  className={`px-2 py-0.5 rounded text-[11px] font-bold transition-all cursor-pointer ${
+                    adminTextSize === "xl"
+                      ? "bg-brick text-white shadow-sm shadow-brick/40"
+                      : "text-neutral-400 hover:text-white hover:bg-neutral-850"
+                  }`}
+                  title="ขยายตัวหนังสือใหญ่พิเศษ (A++ ใหญ่มาก)"
+                >
+                  A++
+                </button>
+              </div>
+            </div>
 
             {/* Public Link Button to open public website */}
             <a
@@ -781,300 +967,78 @@ export default function AdminDashboard({ isOpen, onClose, isFullPage = false }: 
           </div>
         </div>
 
-        {!isAuthenticated ? (
-          /* Authentication Screen */
-          <div className="flex-1 flex flex-col items-center justify-center p-6 bg-radial-gradient from-brick/5 to-transparent">
-            <form onSubmit={handleLogin} className="bg-neutral-950 border border-neutral-800/80 rounded-lg p-8 max-w-md w-full space-y-6 shadow-xl relative">
-              <div className="absolute top-2 right-3 font-mono text-[9px] text-neutral-600">SECURE_GATEWAY_V2</div>
-              <div className="text-center space-y-2">
-                <div className="w-12 h-12 bg-neutral-900 border border-neutral-800 rounded-full mx-auto flex items-center justify-center text-brick shadow-md">
-                  <ShieldCheck className="h-6 w-6" />
-                </div>
-                <h3 className="text-lg font-bold text-white uppercase font-mono tracking-widest">Admin Authorization</h3>
-                <p className="text-xs text-neutral-400 font-light">เจ้าหน้าที่กรุณาป้อนรักษารวมเพื่อเข้าพอร์ตดูแลระบบ</p>
-              </div>
-
-              <div className="space-y-4">
-                <div className="space-y-1.5">
-                  <label className="text-[10px] text-neutral-400 uppercase font-mono tracking-wider block">Username (ชื่อผู้ใช้งาน)</label>
-                  <input 
-                    type="text"
-                    value={username}
-                    onChange={(e) => setUsername(e.target.value)}
-                    placeholder="ระบุชื่อผู้ใช้งาน"
-                    className="w-full px-4 py-2.5 bg-neutral-900 border border-neutral-850 rounded text-sm text-neutral-100 placeholder-neutral-500 focus:outline-none focus:border-brick font-mono"
-                    required
-                    autoFocus
-                  />
-                </div>
-
-                <div className="space-y-1.5">
-                  <label className="text-[10px] text-neutral-400 uppercase font-mono tracking-wider block">Password (รหัสผ่านสิทธิ์)</label>
-                  <input 
-                    type="password"
-                    value={password}
-                    onChange={(e) => setPassword(e.target.value)}
-                    placeholder="ระบุรหัสผ่านแอดมิน"
-                    className="w-full px-4 py-2.5 bg-neutral-900 border border-neutral-850 rounded text-sm text-neutral-100 placeholder-neutral-500 focus:outline-none focus:border-brick font-mono"
-                    required
-                  />
-                </div>
-
-                {/* Database Connection Status Block on Login Screen */}
-                <div className="p-3 bg-neutral-900/60 border border-neutral-850 rounded mt-4">
-                  <div className="flex items-center justify-between">
-                    <span className="text-[9px] text-neutral-500 font-bold tracking-widest uppercase font-mono">DATABASE STATUS</span>
-                    <span className="flex items-center space-x-1.5">
-                      <span className={`w-2 h-2 rounded-full inline-block ${dbStatus?.connected ? "bg-emerald-500 animate-pulse" : "bg-amber-500 animate-pulse"}`}></span>
-                      <span className={`text-[10px] font-mono font-bold uppercase ${dbStatus?.connected ? "text-emerald-400" : "text-amber-500"}`}>
-                        {dbStatus?.connected ? "ONLINE" : "OFFLINE"}
-                      </span>
-                    </span>
-                  </div>
-                </div>
-
-
-              </div>
-
-              {authError && (
-                <div className="p-3 bg-red-950/20 border border-red-900/30 rounded flex items-center space-x-2 text-xs text-red-400">
-                  <AlertCircle className="h-4 w-4 shrink-0" />
-                  <span>{authError}</span>
-                </div>
-              )}
-
-              <button
-                type="submit"
-                className="w-full py-2.5 rounded bg-brick hover:bg-brick-dark text-white font-semibold text-xs tracking-widest uppercase cursor-pointer shadow-md shadow-brick/15 transition-all text-center"
-              >
-                เข้าสู่ระบบส่วนควบคุม (Login to Portal)
-              </button>
-            </form>
-          </div>
-        ) : (
-          /* Main Dashboard Workspace */
-          <div className="flex-1 flex flex-col md:flex-row h-full overflow-hidden">
+        {/* Main Dashboard Workspace */}
+        <div className={`flex-1 flex flex-col md:flex-row h-full overflow-hidden ${
+          adminTextSize === "sm" ? "admin-small-text" : adminTextSize === "lg" ? "admin-large-text" : adminTextSize === "xl" ? "admin-xlarge-text" : ""
+        }`}>
             
             {/* Sidebar Controller Tab Controls */}
-            <div id="m5-admin-sidebar" className="w-full md:w-64 border-b md:border-b-0 md:border-r border-neutral-800 bg-neutral-950 flex flex-row md:flex-col overflow-x-auto md:overflow-y-auto md:overflow-x-hidden shrink-0 md:h-full">
-              <div className="hidden md:block p-4 border-b border-neutral-800/60">
-                <span className="text-[9px] text-brick font-bold tracking-widest uppercase block mb-1">Authenticated user</span>
-                <div className="flex items-center space-x-2">
-                  <div className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></div>
-                  <div>
-                    <span className="text-xs font-mono text-neutral-200 block font-semibold">{currentAdmin?.name || "System Chief Manager"}</span>
-                    <span className="text-[10px] text-neutral-500 font-mono block">Role: {currentAdmin?.role || "Super Admin"}</span>
-                  </div>
-                </div>
-              </div>
-
-              {/* Database Connection Status Block */}
-              <div className="hidden md:block p-4 border-b border-neutral-800/60">
-                <span className="text-[9px] text-neutral-500 font-bold tracking-widest uppercase block mb-1.5 font-mono">DATABASE CONNECTION</span>
-                <div className="flex flex-col space-y-1">
-                  <div className="flex items-center space-x-2">
-                    <div className={`w-2 h-2 rounded-full shrink-0 ${dbStatus?.connected ? "bg-emerald-500 animate-pulse" : "bg-amber-500 animate-pulse"}`}></div>
-                    <span className="text-[11px] font-mono font-medium text-neutral-200 leading-tight">
-                      {dbStatus?.connected ? "Directus Cloud Connected" : "Local db.json (Offline)"}
-                    </span>
-                  </div>
-                  {dbStatus && !dbStatus.connected && (
-                    <div className="text-[9px] text-amber-500/90 font-mono leading-normal mt-1 bg-amber-950/20 border border-amber-900/30 p-1.5 rounded">
-                      <span className="block font-semibold">Status: Offline Fallback</span>
-                      <span className="block text-neutral-400 mt-0.5 truncate" title={dbStatus.reason}>Reason: {dbStatus.reason || "Server 502 Bad Gateway"}</span>
-                    </div>
-                  )}
-                  {dbStatus && dbStatus.connected && (
-                    <span className="text-[9px] text-neutral-500 font-mono block truncate">
-                      Host: data.them5residence.com
-                    </span>
-                  )}
-                </div>
-              </div>
-              
-              {/* Public Website External Test Link Section */}
-              <div className="hidden md:block p-4 border-b border-neutral-800/60">
-                <span className="text-[9px] text-neutral-500 font-bold tracking-widest uppercase block mb-1.5 font-mono">EXTERNAL ACCESS / TEST</span>
-                <a
-                  href={window.location.origin}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="flex items-center justify-between px-3 py-2 bg-neutral-900 hover:bg-neutral-850 border border-neutral-800 hover:border-emerald-850/50 rounded text-xs font-mono text-neutral-300 hover:text-emerald-400 cursor-pointer transition-all w-full"
-                >
-                  <div className="flex items-center space-x-2">
-                    <Globe className="h-3.5 w-3.5 text-emerald-500 animate-spin-slow" />
-                    <span>เปิดหน้าหลัก (Public)</span>
-                  </div>
-                  <ExternalLink className="h-3 w-3 shrink-0" />
-                </a>
-                <span className="text-[9px] text-neutral-500 font-light block leading-snug pt-1">
-                  * ใช้สำหรับเปิดทดสอบระบบหน้าบ้าน และดูป๊อปอัพกิจกรรมจากอุปกรณ์ภายนอก
-                </span>
-              </div>
-
-              <nav className="flex flex-row md:flex-col p-2 md:space-y-1.5 flex-1 min-w-max md:min-w-0">
-                <button
-                  onClick={() => setActiveTab("dashboard")}
-                  className={`flex items-center space-x-3 px-4 py-2.5 rounded text-xs font-medium cursor-pointer transition-colors w-full ${activeTab === "dashboard" ? "bg-neutral-850 text-white border-l-2 border-brick font-semibold" : "text-neutral-400 hover:text-white hover:bg-neutral-900/40"}`}
-                >
-                  <LayoutDashboard className="h-4 w-4" />
-                  <span>แดชบอร์ดสรุป (Summary)</span>
-                </button>
-                <button
-                  onClick={() => setActiveTab("general")}
-                  className={`flex items-center space-x-3 px-4 py-2.5 rounded text-xs font-medium cursor-pointer transition-colors w-full ${activeTab === "general" ? "bg-neutral-850 text-white border-l-2 border-brick font-semibold" : "text-neutral-400 hover:text-white hover:bg-neutral-900/40"}`}
-                >
-                  <Hotel className="h-4 w-4" />
-                  <span>ตั้งค่าโรงแรมหลัก</span>
-                </button>
-                <button
-                  onClick={() => setActiveTab("rooms")}
-                  className={`flex items-center space-x-3 px-4 py-2.5 rounded text-xs font-medium cursor-pointer transition-colors w-full ${activeTab === "rooms" ? "bg-neutral-850 text-white border-l-2 border-brick font-semibold" : "text-neutral-400 hover:text-white hover:bg-neutral-900/40"}`}
-                >
-                  <Bed className="h-4 w-4" />
-                  <span>จัดการประเภทห้องพัก</span>
-                </button>
-                <button
-                  onClick={() => setActiveTab("promotions")}
-                  className={`flex items-center space-x-3 px-4 py-2.5 rounded text-xs font-medium cursor-pointer transition-colors w-full ${activeTab === "promotions" ? "bg-neutral-850 text-white border-l-2 border-brick font-semibold" : "text-neutral-400 hover:text-white hover:bg-neutral-900/40"}`}
-                >
-                  <Gift className="h-4 w-4" />
-                  <span>แคมเปญโปรโมชั่น</span>
-                </button>
-                <button
-                  onClick={() => setActiveTab("bookings")}
-                  className={`flex items-center space-x-3 px-4 py-2.5 rounded text-xs font-medium cursor-pointer transition-colors w-full ${activeTab === "bookings" ? "bg-neutral-850 text-white border-l-2 border-brick font-semibold" : "text-neutral-400 hover:text-white hover:bg-neutral-900/40"}`}
-                >
-                  <Calendar className="h-4 w-4" />
-                  <span className="flex-1 text-left">รายการจองห้องพัก</span>
-                  {pendingBookings > 0 && (
-                    <span className="px-1.5 py-0.5 bg-brick text-[9px] text-white font-mono rounded-full font-bold">
-                      {pendingBookings}
-                    </span>
-                  )}
-                </button>
-                <button
-                  onClick={() => setActiveTab("amenities")}
-                  className={`flex items-center space-x-3 px-4 py-2.5 rounded text-xs font-medium cursor-pointer transition-colors w-full ${activeTab === "amenities" ? "bg-neutral-850 text-white border-l-2 border-brick font-semibold" : "text-neutral-400 hover:text-white hover:bg-neutral-900/40"}`}
-                >
-                  <Coffee className="h-4 w-4" />
-                  <span>สิ่งอำนวยความสะดวก</span>
-                </button>
-                <button
-                  onClick={() => setActiveTab("faqs")}
-                  className={`flex items-center space-x-3 px-4 py-2.5 rounded text-xs font-medium cursor-pointer transition-colors w-full ${activeTab === "faqs" ? "bg-neutral-850 text-white border-l-2 border-brick font-semibold" : "text-neutral-400 hover:text-white hover:bg-neutral-900/40"}`}
-                >
-                  <HelpCircle className="h-4 w-4" />
-                  <span>คำถามที่พบบ่อย (FAQs)</span>
-                </button>
-                <button
-                  onClick={() => setActiveTab("reviews")}
-                  className={`flex items-center space-x-3 px-4 py-2.5 rounded text-xs font-medium cursor-pointer transition-colors w-full ${activeTab === "reviews" ? "bg-neutral-850 text-white border-l-2 border-brick font-semibold" : "text-neutral-400 hover:text-white hover:bg-neutral-900/40"}`}
-                >
-                  <MessageSquare className="h-4 w-4" />
-                  <span>รีวิวจำลองคุณลูกค้า</span>
-                </button>
-                <button
-                  onClick={() => setActiveTab("gallery")}
-                  className={`flex items-center space-x-3 px-4 py-2.5 rounded text-xs font-medium cursor-pointer transition-colors w-full ${activeTab === "gallery" ? "bg-neutral-850 text-white border-l-2 border-brick font-semibold" : "text-neutral-400 hover:text-white hover:bg-neutral-900/40"}`}
-                >
-                  <Images className="h-4 w-4" />
-                  <span>รูปภาพแกลเลอรี</span>
-                </button>
-                <button
-                  onClick={() => setActiveTab("members")}
-                  className={`flex items-center space-x-3 px-4 py-2.5 rounded text-xs font-medium cursor-pointer transition-colors w-full ${activeTab === "members" ? "bg-neutral-850 text-white border-l-2 border-brick font-semibold" : "text-neutral-400 hover:text-white hover:bg-neutral-900/40"}`}
-                >
-                  <User className="h-4 w-4" />
-                  <span className="flex-1 text-left">จัดการระบบสมาชิก</span>
-                  <span className="px-1.5 py-0.5 bg-neutral-950 text-[9px] text-neutral-400 font-mono rounded font-bold border border-neutral-850">
-                    {members ? members.length : 0}
-                  </span>
-                </button>
-                <button
-                  onClick={() => setActiveTab("admins")}
-                  className={`flex items-center space-x-3 px-4 py-2.5 rounded text-xs font-medium cursor-pointer transition-colors w-full ${activeTab === "admins" ? "bg-neutral-850 text-white border-l-2 border-brick font-semibold" : "text-neutral-400 hover:text-white hover:bg-neutral-900/40"}`}
-                >
-                  <ShieldCheck className="h-4 w-4" />
-                  <span className="flex-1 text-left">จัดการสิทธิ์แอดมิน</span>
-                  <span className="px-1.5 py-0.5 bg-neutral-950 text-[9px] text-neutral-400 font-mono rounded font-bold border border-neutral-850">
-                    {adminUsers.length}
-                  </span>
-                </button>
-                <button
-                  onClick={() => setActiveTab("calendar")}
-                  className={`flex items-center space-x-3 px-4 py-2.5 rounded text-xs font-medium cursor-pointer transition-colors w-full ${activeTab === "calendar" ? "bg-neutral-850 text-white border-l-2 border-brick font-semibold" : "text-neutral-400 hover:text-white hover:bg-neutral-900/40"}`}
-                >
-                  <Calendar className="h-4 w-4" />
-                  <span className="flex-1 text-left">ปฏิทินการจองห้อง</span>
-                </button>
-                <button
-                  onClick={() => setActiveTab("impact")}
-                  className={`flex items-center space-x-3 px-4 py-2.5 rounded text-xs font-medium cursor-pointer transition-colors w-full ${activeTab === "impact" ? "bg-neutral-850 text-white border-l-2 border-brick font-semibold" : "text-neutral-400 hover:text-white hover:bg-neutral-900/40"}`}
-                >
-                  <Sparkles className="h-4 w-4 text-amber-500 animate-pulse" />
-                  <span className="flex-1 text-left font-semibold text-amber-300">ตารางงาน IMPACT</span>
-                  <span className="px-1.5 py-0.5 bg-amber-950/40 border border-amber-900/50 text-[9px] text-amber-400 font-mono rounded font-bold uppercase tracking-wider">
-                    API
-                  </span>
-                </button>
-                <button
-                  onClick={() => setActiveTab("blocked")}
-                  className={`flex items-center space-x-3 px-4 py-2.5 rounded text-xs font-medium cursor-pointer transition-colors w-full ${activeTab === "blocked" ? "bg-neutral-850 text-white border-l-2 border-brick font-semibold" : "text-neutral-400 hover:text-white hover:bg-neutral-900/40"}`}
-                >
-                  <ShieldAlert className="h-4 w-4" />
-                  <span className="flex-1 text-left">กำหนดวันปิดรับจอง</span>
-                </button>
-                <button
-                  onClick={() => setActiveTab("coupons")}
-                  className={`flex items-center space-x-3 px-4 py-2.5 rounded text-xs font-medium cursor-pointer transition-colors w-full ${activeTab === "coupons" ? "bg-neutral-850 text-white border-l-2 border-brick font-semibold" : "text-neutral-400 hover:text-white hover:bg-neutral-900/40"}`}
-                >
-                  <Ticket className="h-4 w-4" />
-                  <span className="flex-1 text-left">จัดการส่วนลดคูปอง</span>
-                </button>
-                <button
-                  onClick={() => setActiveTab("backgrounds")}
-                  className={`flex items-center space-x-3 px-4 py-2.5 rounded text-xs font-medium cursor-pointer transition-colors w-full ${activeTab === "backgrounds" ? "bg-neutral-850 text-white border-l-2 border-brick font-semibold" : "text-neutral-400 hover:text-white hover:bg-neutral-900/40"}`}
-                >
-                  <Wallpaper className="h-4 w-4" />
-                  <span className="flex-1 text-left">จัดการพื้นหลังเว็บ</span>
-                </button>
-                <button
-                  onClick={() => setActiveTab("seo")}
-                  className={`flex items-center space-x-3 px-4 py-2.5 rounded text-xs font-medium cursor-pointer transition-colors w-full ${activeTab === "seo" ? "bg-neutral-850 text-white border-l-2 border-brick font-semibold" : "text-neutral-400 hover:text-white hover:bg-neutral-900/40"}`}
-                >
-                  <Sparkles className="h-4 w-4" />
-                  <span className="flex-1 text-left">ตั้งค่า SEO / คีย์เวิร์ด</span>
-                </button>
-                <button
-                  onClick={() => setActiveTab("directus")}
-                  className={`flex items-center space-x-3 px-4 py-2.5 rounded text-xs font-medium cursor-pointer transition-colors w-full ${activeTab === "directus" ? "bg-neutral-850 text-white border-l-2 border-brick font-semibold" : "text-neutral-400 hover:text-white hover:bg-neutral-900/40"}`}
-                >
-                  <Database className="h-4 w-4" />
-                  <span className="flex-1 text-left">ตั้งค่าเชื่อมต่อ Directus</span>
-                </button>
-                <button
-                  onClick={() => setActiveTab("smtp")}
-                  className={`flex items-center space-x-3 px-4 py-2.5 rounded text-xs font-medium cursor-pointer transition-colors w-full ${activeTab === "smtp" ? "bg-neutral-850 text-white border-l-2 border-brick font-semibold" : "text-neutral-400 hover:text-white hover:bg-neutral-900/40"}`}
-                >
-                  <Mail className="h-4 w-4" />
-                  <span className="flex-1 text-left">ตั้งค่าอีเมล SMTP</span>
-                </button>
+            <div id="m5-admin-sidebar" className="w-full md:w-72 lg:w-80 border-b md:border-b-0 md:border-r border-neutral-800 bg-neutral-950 flex flex-row md:flex-col overflow-x-auto md:overflow-y-auto md:overflow-x-hidden shrink-0 md:h-full">
+              <nav className="flex flex-row md:flex-col p-3 md:p-4 md:space-y-2 flex-1 min-w-max md:min-w-0">
+                {permittedMenuItems.map((item) => {
+                  const isActive = activeTab === item.id;
+                  return (
+                    <button
+                      key={item.id}
+                      onClick={() => {
+                        if (item.customUrl) {
+                          window.open(item.customUrl, "_blank");
+                        } else {
+                          setActiveTab(item.id);
+                        }
+                      }}
+                      className={`flex items-center space-x-3.5 px-4 py-3.5 rounded-lg text-sm sm:text-base font-medium cursor-pointer transition-all w-full text-left ${
+                        isActive
+                          ? "bg-neutral-850 text-white border-l-4 border-brick font-semibold shadow-sm"
+                          : "text-neutral-400 hover:text-white hover:bg-neutral-900/60"
+                      }`}
+                    >
+                      {renderDynamicIcon(
+                        item.iconName,
+                        `h-5 w-5 shrink-0 ${
+                          isActive
+                            ? "text-brick-light"
+                            : item.id === "impact"
+                            ? "text-amber-500 animate-pulse"
+                            : item.id === "partners"
+                            ? "text-emerald-500"
+                            : item.id === "menu_management"
+                            ? "text-amber-400"
+                            : ""
+                        }`
+                      )}
+                      <span className={`flex-1 text-left ${
+                        item.id === "impact" 
+                          ? "font-semibold text-amber-300" 
+                          : item.id === "partners" 
+                            ? "font-semibold text-emerald-400" 
+                            : item.id === "menu_management"
+                              ? "font-semibold text-amber-200"
+                              : ""
+                      }`}>
+                        {item.label}
+                      </span>
+                      {renderMenuBadge(item)}
+                    </button>
+                  );
+                })}
               </nav>
 
-              <div className="p-3 border-t border-neutral-850 space-y-2 mt-auto">
+              <div className="p-4 border-t border-neutral-850 space-y-2 mt-auto">
                 <button
                   onClick={handleLogout}
-                  className="w-full py-2 bg-neutral-950 hover:bg-neutral-900 border border-neutral-850 text-[10px] uppercase font-mono text-neutral-400 hover:text-red-400 rounded transition-all cursor-pointer flex items-center justify-center space-x-1.5"
+                  className="w-full py-3 bg-neutral-950 hover:bg-neutral-900 border border-neutral-850 text-xs sm:text-sm uppercase font-mono text-neutral-400 hover:text-red-400 rounded-lg transition-all cursor-pointer flex items-center justify-center space-x-2 font-semibold"
                 >
-                  <LogOut className="h-3 w-3" />
+                  <LogOut className="h-4 w-4" />
                   <span>Log Out (ออกจากระบบ)</span>
                 </button>
               </div>
             </div>
 
             {/* Scrollable Workspace Panels */}
-            <div className={`flex-1 p-6 overflow-y-auto bg-neutral-900/90 flex flex-col space-y-6 ${textLarge ? "admin-large-text" : ""}`}>
+            <div className={`flex-1 p-6 overflow-y-auto bg-neutral-900/90 flex flex-col space-y-6 ${
+              adminTextSize === "sm" ? "admin-small-text" : adminTextSize === "lg" ? "admin-large-text" : adminTextSize === "xl" ? "admin-xlarge-text" : ""
+            }`}>
               
               {/* TAB 1: EXECUTIVE SUMMARY */}
               {activeTab === "dashboard" && (
@@ -1190,7 +1154,7 @@ export default function AdminDashboard({ isOpen, onClose, isFullPage = false }: 
 
               {/* TAB 2: GENERAL HOTEL INFORMATION */}
               {activeTab === "general" && (
-                <form onSubmit={handleSaveGeneral} className="space-y-6">
+                <form onSubmit={handleSaveGeneral} noValidate className="space-y-6">
                   <div>
                     <h3 className="text-xl font-bold text-white">ตั้งค่าประวัติและข้อมูลหลักของโรงแรม</h3>
                     <p className="text-xs text-neutral-450 font-light font-mono text-[10px]">CONFIG_FILE: /db.json#general</p>
@@ -1462,6 +1426,129 @@ export default function AdminDashboard({ isOpen, onClose, isFullPage = false }: 
                       </div>
                     )}
 
+                    {/* QUOTATION REQUEST SYSTEM TOGGLE */}
+                    <div className="pt-4 border-t border-neutral-900 flex items-center justify-between">
+                      <div>
+                        <div className="flex items-center space-x-2">
+                          <span className="text-xs font-semibold text-white block">ระบบขอใบเสนอราคาออนไลน์หน้าแรก (Online Quotation System)</span>
+                          <span className="px-1.5 py-0.2 bg-amber-950/60 border border-amber-800 text-amber-400 text-[9px] font-mono rounded font-bold">
+                            NEW
+                          </span>
+                        </div>
+                        <span className="text-[10px] text-neutral-400 block font-light">เปิดหรือปิดฟอร์มขอใบเสนอราคาสำหรับลูกค้าและองค์กรบนหน้าแรกเว็บไซต์</span>
+                      </div>
+                      <button
+                        type="button"
+                        onClick={() => setGeneralEdit({ 
+                          ...generalEdit, 
+                          quotationRequestEnabled: (generalEdit.quotationRequestEnabled !== false) ? false : true 
+                        })}
+                        className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors cursor-pointer outline-none ${
+                          (generalEdit.quotationRequestEnabled !== false) ? "bg-amber-600" : "bg-neutral-800"
+                        }`}
+                      >
+                        <span
+                          className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${
+                            (generalEdit.quotationRequestEnabled !== false) ? "translate-x-6" : "translate-x-1"
+                          }`}
+                        />
+                      </button>
+                    </div>
+
+                    {generalEdit.quotationRequestEnabled === false && (
+                      <div className="pt-4 border-t border-neutral-900 space-y-1">
+                        <label className="text-xs text-amber-500 font-mono font-semibold">ข้อความแจ้งเตือนเมื่อปิดรับขอใบเสนอราคา (Quotation Disabled Message)</label>
+                        <textarea 
+                          rows={2}
+                          value={generalEdit.quotationDisabledMessage || ""}
+                          onChange={(e) => setGeneralEdit({ ...generalEdit, quotationDisabledMessage: e.target.value })}
+                          placeholder="เช่น ขออภัย ระบบขอใบเสนอราคาออนไลน์ของทางโรงแรมปิดทำการชั่วคราวเพื่อปรับปรุงระบบ หากท่านต้องการขอใบเสนอราคาด่วน สามารถติดต่อผ่าน Line หรือเบอร์โทรศัพท์ได้โดยตรงครับ"
+                          className="w-full px-3 py-2 bg-neutral-900 border border-neutral-800 rounded text-sm text-white focus:outline-none focus:border-brick"
+                        />
+                      </div>
+                    )}
+
+                    {/* QUOTATION ADD-ON OPTIONS & PRICING PREVIEW & EDIT */}
+                    <div className="pt-4 border-t border-neutral-900 space-y-3">
+                      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
+                        <div>
+                          <div className="flex items-center space-x-2">
+                            <span className="text-xs font-semibold text-white block">ออฟชั่น & ราคาบริการเสริมใบเสนอราคา (Quotation Options & Pricing)</span>
+                            <span className="px-1.5 py-0.2 bg-amber-950/60 border border-amber-800 text-amber-400 text-[9px] font-mono rounded font-bold">
+                              CONFIG
+                            </span>
+                          </div>
+                          <span className="text-[10px] text-neutral-400 block font-light">
+                            เปิด-ปิดการใช้งาน และกำหนดราคาบริการเสริมในแบบฟอร์มขอใบเสนอราคา (สามารถจัดการละเอียดได้ในแท็บใบเสนอราคา)
+                          </span>
+                        </div>
+                        <button
+                          type="button"
+                          onClick={() => setActiveTab("billing")}
+                          className="px-2.5 py-1 bg-amber-950/40 hover:bg-amber-900/50 text-amber-300 border border-amber-800/60 rounded text-[11px] font-mono font-bold flex items-center space-x-1 cursor-pointer transition-all self-start sm:self-auto"
+                        >
+                          <Sparkles className="h-3 w-3" />
+                          <span>จัดการละเอียดในแท็บใบเสนอราคา ↗</span>
+                        </button>
+                      </div>
+
+                      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-2.5">
+                        {((generalEdit.quotationAddOns && generalEdit.quotationAddOns.length > 0) ? generalEdit.quotationAddOns : defaultQuotationAddOns).map((opt: any) => {
+                          const isEnabled = opt.enabled !== false;
+                          return (
+                            <div key={opt.id} className="p-3 bg-neutral-900/80 border border-neutral-800 rounded-lg space-y-2">
+                              <div className="flex items-center justify-between">
+                                <span className="text-xs font-bold text-white truncate max-w-[140px]" title={opt.name}>
+                                  {opt.name}
+                                </span>
+                                <button
+                                  type="button"
+                                  onClick={() => {
+                                    const currentList = (generalEdit.quotationAddOns && generalEdit.quotationAddOns.length > 0) 
+                                      ? [...generalEdit.quotationAddOns] 
+                                      : JSON.parse(JSON.stringify(defaultQuotationAddOns));
+                                    const updated = currentList.map((item: any) => item.id === opt.id ? { ...item, enabled: item.enabled === false ? true : false } : item);
+                                    setGeneralEdit({ ...generalEdit, quotationAddOns: updated });
+                                  }}
+                                  className={`relative inline-flex h-4.5 w-8 shrink-0 items-center rounded-full transition-colors cursor-pointer outline-none ${
+                                    isEnabled ? "bg-emerald-600" : "bg-neutral-800"
+                                  }`}
+                                  title={isEnabled ? "เปิดใช้งาน (คลิกเพื่อปิด)" : "ปิดใช้งาน (คลิกเพื่อเปิด)"}
+                                >
+                                  <span className={`inline-block h-3 w-3 transform rounded-full bg-white transition-transform ${isEnabled ? "translate-x-4" : "translate-x-0.5"}`} />
+                                </button>
+                              </div>
+                              <div className="flex items-center justify-between text-xs pt-1 border-t border-neutral-850">
+                                <span className="text-neutral-400 font-mono text-[10px]">ราคา:</span>
+                                <div className="flex items-center space-x-1">
+                                  <span className="text-amber-400 font-mono font-bold text-xs">฿</span>
+                                  <input
+                                    type="number"
+                                    min={0}
+                                    value={opt.price}
+                                    onChange={(e) => {
+                                      const currentList = (generalEdit.quotationAddOns && generalEdit.quotationAddOns.length > 0) 
+                                        ? [...generalEdit.quotationAddOns] 
+                                        : JSON.parse(JSON.stringify(defaultQuotationAddOns));
+                                      const updated = currentList.map((item: any) => item.id === opt.id ? { ...item, price: Math.max(0, Number(e.target.value) || 0) } : item);
+                                      setGeneralEdit({ ...generalEdit, quotationAddOns: updated });
+                                    }}
+                                    className="w-16 px-1.5 py-0.5 bg-neutral-950 border border-neutral-750 focus:border-amber-500 rounded text-xs font-mono font-bold text-white text-right outline-none"
+                                  />
+                                  <span className="text-[10px] text-neutral-400 font-mono">/{opt.unit || "รายการ"}</span>
+                                </div>
+                              </div>
+                              <div className="text-[10px] font-mono text-right">
+                                <span className={isEnabled ? "text-emerald-400" : "text-neutral-500"}>
+                                  {isEnabled ? "● เปิดใช้งาน" : "○ ปิดใช้งาน"}
+                                </span>
+                              </div>
+                            </div>
+                          );
+                        })}
+                      </div>
+                    </div>
+
                     {/* EVENT POPUP SETTINGS */}
                     <div className="pt-6 border-t border-neutral-900 space-y-4">
                       <div>
@@ -1630,10 +1717,13 @@ export default function AdminDashboard({ isOpen, onClose, isFullPage = false }: 
 
                   <div className="flex justify-end pt-2">
                     <button
-                      type="submit"
-                      className="px-6 py-2.5 bg-brick hover:bg-brick-dark text-white rounded text-xs font-semibold uppercase font-mono tracking-widest cursor-pointer shadow-lg shadow-brick/20"
+                      type="button"
+                      onClick={() => handleSaveGeneral()}
+                      disabled={isSavingGeneral}
+                      className="px-6 py-2.5 bg-brick hover:bg-brick-dark text-white rounded text-xs font-semibold uppercase font-mono tracking-widest cursor-pointer shadow-lg shadow-brick/20 flex items-center space-x-2 transition-all disabled:opacity-50"
                     >
-                      บันทึกข้อมูลหลักโรงแรม (Save General Info)
+                      {isSavingGeneral ? <Loader2 className="h-4 w-4 animate-spin" /> : <Save className="h-4 w-4" />}
+                      <span>{isSavingGeneral ? "กำลังบันทึกข้อมูล..." : "บันทึกข้อมูลหลักโรงแรม (Save General Info)"}</span>
                     </button>
                   </div>
                 </form>
@@ -1788,7 +1878,7 @@ export default function AdminDashboard({ isOpen, onClose, isFullPage = false }: 
                                 className="h-full w-full object-cover rounded" 
                                 onError={(e) => {
                                   e.currentTarget.style.border = '1px solid #d97706';
-                                  e.currentTarget.src = "https://images.unsplash.com/photo-1590490360182-c33d57733427?auto=format&fit=crop&w=400&q=80";
+                                  e.currentTarget.src = "/images/bedroom_superior_m5_1782203272229.jpg";
                                 }}
                               />
                             ) : (
@@ -2859,12 +2949,11 @@ export default function AdminDashboard({ isOpen, onClose, isFullPage = false }: 
                               }
                             });
                           }}
-                          className="absolute top-4 right-4 p-1 text-neutral-500 hover:text-red-400 transition-colors cursor-pointer z-10"
+                          className="absolute top-4 right-4 p-1 text-neutral-500 hover:text-red-400 transition-colors cursor-pointer z-20"
                           title="ลบคำถามนี้"
                         >
                           <Trash2 className="h-4 w-4" />
                         </button>
-                        
                         <div className="text-xs font-mono text-brick font-bold uppercase">QUESTION & ANSWER BLOCK #{idx + 1}</div>
                         
                         <div className="space-y-1 pr-8">
@@ -2900,7 +2989,6 @@ export default function AdminDashboard({ isOpen, onClose, isFullPage = false }: 
                       <div className="p-8 text-center text-xs text-neutral-500 font-mono">ไม่มีรายการคำถามที่บันทึกไว้ในระบบ</div>
                     )}
                   </div>
-
                   <div className="flex justify-end pt-2">
                     <button
                       onClick={handleSaveFaqs}
@@ -3092,11 +3180,38 @@ export default function AdminDashboard({ isOpen, onClose, isFullPage = false }: 
                         <Plus className="h-4 w-4" />
                         <span>เพิ่มกรอบข้อมูล (Add Slot)</span>
                       </button>
+
+                      <button
+                        type="button"
+                        disabled={galleryEdit.length === 0}
+                        onClick={() => {
+                          setConfirmDeleteModal({
+                            title: "ยืนยันการลบรูปภาพแกลเลอรีทั้งหมด",
+                            message: `คุณแน่ใจหรือไม่ว่าต้องการลบรูปภาพแกลเลอรีทั้งหมดจำนวน ${galleryEdit.length} ภาพ ออกจากระบบถาวร? การกระทำนี้จะล้างรายการรูปภาพทั้งหมดออกจากฐานข้อมูลทันทีทั้ง Directus, Firestore และเซิร์ฟเวอร์ (ไม่สามารถกู้คืนได้)`,
+                            onConfirm: async () => {
+                              setGalleryEdit([]);
+                              const success = await clearAllGallery();
+                              if (showToast) {
+                                if (success) {
+                                  showToast("ล้างรูปภาพแกลเลอรีทั้งหมดออกจากฐานข้อมูลถาวรเรียบร้อยแล้ว! 🗑️", "success");
+                                } else {
+                                  showToast("เกิดข้อผิดพลาดในการบันทึกข้อมูล", "error");
+                                }
+                              }
+                            }
+                          });
+                        }}
+                        className="px-3 py-1.5 bg-red-950/40 hover:bg-red-900/60 border border-red-800/60 text-red-300 hover:text-white rounded text-xs font-sans font-bold cursor-pointer flex items-center space-x-1.5 transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
+                        title="ลบรูปภาพแกลเลอรีทั้งหมด"
+                      >
+                        <Trash2 className="h-4 w-4 text-red-400" />
+                        <span>ลบภาพทั้งหมด ({galleryEdit.length})</span>
+                      </button>
                     </div>
                   </div>
 
                   <div className="space-y-4">
-                    {galleryEdit.map((item: any, idx: number) => (
+                    {galleryEdit.slice(0, visibleGalleryCount).map((item: any, idx: number) => (
                       <div key={idx} className="p-5 bg-neutral-950 border border-neutral-850 rounded-lg space-y-4 relative">
                         <button
                           onClick={() => {
@@ -3202,17 +3317,54 @@ export default function AdminDashboard({ isOpen, onClose, isFullPage = false }: 
                         </div>
                       </div>
                     ))}
+                    {visibleGalleryCount < galleryEdit.length && (
+                      <button 
+                        onClick={() => setVisibleGalleryCount(prev => prev + 20)}
+                        className="w-full py-3 bg-neutral-800 text-white font-bold text-sm rounded hover:bg-neutral-700 transition-colors"
+                      >
+                        โหลดเพิ่มเติม (Load More)
+                      </button>
+                    )}
                     {galleryEdit.length === 0 && (
                       <div className="p-8 text-center text-xs text-neutral-500 font-mono">ไม่มีรูปภาพแสดงในส่วนแกลเลอรี</div>
                     )}
                   </div>
 
-                  <div className="flex justify-end pt-2">
+                  <div className="flex flex-wrap justify-between items-center gap-3 pt-2">
                     <button
-                      onClick={handleSaveGallery}
-                      className="px-6 py-2.5 bg-brick hover:bg-brick-dark text-white rounded text-xs font-semibold uppercase font-mono tracking-widest cursor-pointer shadow-lg shadow-brick/20"
+                      type="button"
+                      disabled={galleryEdit.length === 0}
+                      onClick={() => {
+                        setConfirmDeleteModal({
+                          title: "ยืนยันการลบรูปภาพแกลเลอรีทั้งหมด",
+                          message: `คุณแน่ใจหรือไม่ว่าต้องการลบรูปภาพแกลเลอรีทั้งหมดจำนวน ${galleryEdit.length} ภาพ ออกจากระบบถาวร? การกระทำนี้จะล้างรายการรูปภาพทั้งหมดออกจากฐานข้อมูลทันทีทั้ง Directus, Firestore และเซิร์ฟเวอร์ (ไม่สามารถกู้คืนได้)`,
+                          onConfirm: async () => {
+                            setGalleryEdit([]);
+                            const success = await clearAllGallery();
+                            if (showToast) {
+                              if (success) {
+                                showToast("ล้างรูปภาพแกลเลอรีทั้งหมดออกจากฐานข้อมูลถาวรเรียบร้อยแล้ว! 🗑️", "success");
+                              } else {
+                                showToast("เกิดข้อผิดพลาดในการบันทึกข้อมูล", "error");
+                              }
+                            }
+                          }
+                        });
+                      }}
+                      className="px-4 py-2 bg-red-950/40 hover:bg-red-900/60 border border-red-800/60 text-red-300 hover:text-white rounded text-xs font-mono font-semibold cursor-pointer flex items-center space-x-1.5 transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
                     >
-                      บันทึกรูปภาพทั้งหมด
+                      <Trash2 className="h-3.5 w-3.5 text-red-400" />
+                      <span>ลบภาพทั้งหมด ({galleryEdit.length})</span>
+                    </button>
+
+                    <button
+                      type="button"
+                      onClick={handleSaveGallery}
+                      disabled={isSavingGallery}
+                      className="px-6 py-2.5 bg-brick hover:bg-brick-dark text-white rounded text-xs font-semibold uppercase font-mono tracking-widest cursor-pointer shadow-lg shadow-brick/20 flex items-center space-x-2 transition-all disabled:opacity-50"
+                    >
+                      {isSavingGallery ? <Loader2 className="h-4 w-4 animate-spin" /> : <Save className="h-4 w-4" />}
+                      <span>{isSavingGallery ? "กำลังบันทึกรูปภาพ..." : "บันทึกรูปภาพทั้งหมด"}</span>
                     </button>
                   </div>
                 </div>
@@ -3657,9 +3809,11 @@ export default function AdminDashboard({ isOpen, onClose, isFullPage = false }: 
                             onChange={(e) => setAdmRole(e.target.value)}
                             className="w-full bg-neutral-900 border border-neutral-800 focus:border-brick rounded px-3 py-2 text-xs text-white focus:outline-none transition-colors cursor-pointer"
                           >
-                            <option value="Super Admin">Super Admin (ผู้ควบคุมระดับสูงสุด)</option>
-                            <option value="Loft Admin">Loft Admin (ผู้ดูแลห้อง M5 Loft)</option>
-                            <option value="General Admin">General Admin (เจ้าหน้าที่ต้อนรับทั่วไป)</option>
+                            {(settings.adminRoles && settings.adminRoles.length > 0 ? settings.adminRoles : defaultAdminRoles).map((role) => (
+                              <option key={role.id} value={role.name}>
+                                {role.name} {role.description ? `(${role.description})` : ""}
+                              </option>
+                            ))}
                           </select>
                         </div>
 
@@ -3718,6 +3872,8 @@ export default function AdminDashboard({ isOpen, onClose, isFullPage = false }: 
                                     <span className={`px-2 py-0.5 rounded font-mono font-bold text-[10px] ${
                                       adm.role === "Super Admin" ? "bg-amber-400/10 text-amber-400 border border-amber-400/20" :
                                       adm.role === "Loft Admin" ? "bg-cyan-500/10 text-cyan-500 border border-cyan-500/20" :
+                                      adm.role === "Front Desk" ? "bg-emerald-500/10 text-emerald-500 border border-emerald-500/20" :
+                                      adm.role === "Marketing" ? "bg-purple-500/10 text-purple-500 border border-purple-500/20" :
                                       "bg-zinc-400/10 text-zinc-300 border border-zinc-400/20"
                                     }`}>
                                       {adm.role}
@@ -3831,13 +3987,34 @@ export default function AdminDashboard({ isOpen, onClose, isFullPage = false }: 
                       <p className="text-xs text-neutral-450 font-light">ตารางรายงานข้อมูลการจองใบแจ้งหนี้เพื่อควบคุมสถานะการชำระเงินของแขก</p>
                     </div>
                     
-                    <button
-                      onClick={() => setShowAddBooking(!showAddBooking)}
-                      className="px-4 py-2 bg-emerald-600 hover:bg-emerald-700 text-white rounded text-xs font-mono uppercase tracking-wider font-semibold cursor-pointer shadow flex items-center justify-center space-x-1.5 ml-auto sm:ml-0"
-                    >
-                      <Plus className="h-4 w-4" />
-                      <span>{showAddBooking ? "ปิดแบบฟอร์ม" : "สร้างรายการจองด้วยมือ (Walk-In)"}</span>
-                    </button>
+                    <div className="flex items-center space-x-2 ml-auto sm:ml-0">
+                      {bookings && bookings.length > 0 && (
+                        <button
+                          type="button"
+                          onClick={async () => {
+                            if (window.confirm(`คุณต้องการลบข้อมูลการจองทั้งหมด (${bookings.length} รายการ) รวมถึงข้อมูลจำลอง (Mock Data) ใช่หรือไม่?\n\nข้อมูลการจองจะถูกเคลียร์เป็น 0 เพื่อเริ่มใช้ข้อมูลจริง`)) {
+                              const ok = await clearAllBookings();
+                              if (showToast) {
+                                showToast(ok ? "เคลียร์ข้อมูลการจองเรียบร้อยแล้ว พร้อมสำหรับข้อมูลจริง! ✨" : "เกิดข้อผิดพลาดในการเคลียร์ข้อมูล", ok ? "success" : "error");
+                              }
+                            }
+                          }}
+                          className="px-3.5 py-2 bg-red-950/60 hover:bg-red-900 border border-red-800 text-red-200 rounded text-xs font-mono font-semibold cursor-pointer shadow flex items-center justify-center space-x-1.5 transition-all"
+                          title="ล้างข้อมูลการจองทั้งหมดเพื่อใช้ข้อมูลจริง"
+                        >
+                          <Trash2 className="h-4 w-4 text-red-400" />
+                          <span>ล้างรายการจองทั้งหมด ({bookings.length})</span>
+                        </button>
+                      )}
+
+                      <button
+                        onClick={() => setShowAddBooking(!showAddBooking)}
+                        className="px-4 py-2 bg-emerald-600 hover:bg-emerald-700 text-white rounded text-xs font-mono uppercase tracking-wider font-semibold cursor-pointer shadow flex items-center justify-center space-x-1.5"
+                      >
+                        <Plus className="h-4 w-4" />
+                        <span>{showAddBooking ? "ปิดแบบฟอร์ม" : "สร้างรายการจองด้วยมือ (Walk-In)"}</span>
+                      </button>
+                    </div>
                   </div>
 
                   {/* Walk-In Form Overlay block */}
@@ -4018,11 +4195,34 @@ export default function AdminDashboard({ isOpen, onClose, isFullPage = false }: 
                                 </td>
                                 <td className="p-3 text-center whitespace-nowrap space-x-1.5">
                                   <button
+                                    onClick={() => {
+                                      setQuickDocBooking(booking);
+                                      setQuickDocType("tax_invoice");
+                                      setShowQuickDocModal(true);
+                                    }}
+                                    className="p-1 px-2 bg-emerald-950/40 border border-emerald-800/70 text-emerald-400 rounded hover:bg-emerald-900/50 transition-all cursor-pointer font-sans text-[10px] font-bold inline-flex items-center space-x-1 shadow-sm"
+                                    title="ออกใบกำกับภาษี/ใบเสร็จรับเงินสำหรับรายการจองนี้"
+                                  >
+                                    <FileText className="h-3 w-3 inline text-emerald-400" />
+                                    <span>ออกใบกำกับ</span>
+                                  </button>
+                                  <button
+                                    onClick={() => {
+                                      setQuickDocBooking(booking);
+                                      setQuickDocType("quotation");
+                                      setShowQuickDocModal(true);
+                                    }}
+                                    className="p-1 px-2 bg-amber-950/40 border border-amber-800/70 text-amber-400 rounded hover:bg-amber-900/50 transition-all cursor-pointer font-sans text-[10px] font-bold inline-flex items-center space-x-1 shadow-sm"
+                                    title="ออกใบเสนอราคาสำหรับรายการจองนี้"
+                                  >
+                                    <span>ใบเสนอราคา</span>
+                                  </button>
+                                  <button
                                     onClick={() => setEditingBooking({ ...booking })}
-                                    className="p-1 px-2.5 bg-emerald-950/20 border border-emerald-900/30 text-emerald-500 rounded hover:bg-emerald-900/20 hover:text-emerald-400 transition-all cursor-pointer font-sans text-[10px]"
+                                    className="p-1 px-2 bg-neutral-800 hover:bg-neutral-750 text-neutral-300 hover:text-white border border-neutral-700 rounded transition-all cursor-pointer font-sans text-[10px] inline-flex items-center"
                                     title="แก้ไขข้อมูลการจอง"
                                   >
-                                    <Edit2 className="h-3.5 w-3.5 inline mr-1" />
+                                    <Edit2 className="h-3 w-3 inline mr-0.5" />
                                     <span>แก้ไข</span>
                                   </button>
                                    {deletingBookingId === booking.id ? (
@@ -4271,6 +4471,10 @@ export default function AdminDashboard({ isOpen, onClose, isFullPage = false }: 
                 <SeoTabContent settings={settings} updateSettings={updateSettings} />
               )}
 
+              {activeTab === "partners" && (
+                <PartnersTabContent settings={settings} updateSettings={updateSettings} />
+              )}
+
               {activeTab === "directus" && (
                 <DirectusTabContent />
               )}
@@ -4283,11 +4487,50 @@ export default function AdminDashboard({ isOpen, onClose, isFullPage = false }: 
                 <ImpactEventsTab />
               )}
 
+              {activeTab === "menu_management" && (
+                <MenuManagementTabContent currentAdminRole={currentAdmin?.role} theme={adminTheme} />
+              )}
+
+              {activeTab === "billing" && (
+                <BillingTabContent 
+                  currentAdminRole={currentAdmin?.role} 
+                  theme={adminTheme} 
+                  onOpenBookingTab={() => setActiveTab("bookings")}
+                />
+              )}
+
             </div>
           </div>
-        )}
 
       </div>
+
+      {/* QUICK DOCUMENT GENERATION MODAL FROM BOOKING */}
+      {showQuickDocModal && quickDocBooking && (
+        <DocumentEditorModal
+          isOpen={showQuickDocModal}
+          onClose={() => {
+            setShowQuickDocModal(false);
+            setQuickDocBooking(null);
+          }}
+          onSave={async (savedDoc) => {
+            if (saveBillingDocument) {
+              const ok = await saveBillingDocument(savedDoc);
+              if (ok) {
+                alert(`ออกเอกสาร "${savedDoc.documentNumber}" จากรายการจองสำเร็จเรียบร้อยแล้ว! ✨`);
+                setShowQuickDocModal(false);
+                setQuickDocBooking(null);
+                setActiveTab("billing");
+                return true;
+              }
+            }
+            return false;
+          }}
+          bookings={bookings}
+          companyProfile={companyProfile || defaultCompanyProfile}
+          initialBookingForPrefill={quickDocBooking}
+          initialType={quickDocType}
+        />
+      )}
 
       {/* UNIFIED CONFIRM DELETE MODAL */}
       {confirmDeleteModal && (
